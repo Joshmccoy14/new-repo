@@ -599,7 +599,7 @@ MainEnchantLoop:
         }
 
         emptymaterialslot()
-        emptyadditionalmaterialslot(9)
+        emptyadditionalmaterialslot(9. erepair)
 
         if (currentLevel >= 17 && IHaveEProtect) {
             Gosub, EnchantArmorusingdefcubeandeprotect
@@ -679,7 +679,7 @@ MainEnchantLoop:
         }
 
         emptymaterialslot()
-        emptyadditionalmaterialslot(9)
+        emptyadditionalmaterialslot(9, erepair)
 
         if (currentLevel >= 17 && IHaveEProtect) {
             Gosub, Enchantweaponusingstrikecubeandeprotect
