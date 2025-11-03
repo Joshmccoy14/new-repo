@@ -13432,22 +13432,24 @@ AssignHealKeys:
                                                         Gui, Commands: Add, Button, x140 y30 w70 h25 gLoadWaypointCmd, Load
                                                         Gui, Commands: Add, Button, x215 y30 w70 h25 gShowExamples, Examples
                                                         Gui, Commands: Add, Button, x290 y30 w70 h25 gListWaypoints, List Points
+                                                        Gui, Commands: Add, Button, x365 y30 w70 h25 gSelectWin2Btn, Select Win2
 
                                                         ; Command editing area
-                                                        Gui, Commands: Add, Text, x10 y65 w400 h15 cWhite, Command Editor (simple commands, functions, and full scripts):
-                                                        Gui, Commands: Add, Edit, x10 y85 w400 h140 vCommandText Multi VScroll Background0xFFFFFF cBlack
+                                                        Gui, Commands: Add, Text, x10 y65 w440 h15 cWhite, Command Editor (simple commands, functions, and full scripts):
+                                                        Gui, Commands: Add, Edit, x10 y85 w440 h140 vCommandText Multi VScroll Background0xFFFFFF cBlack
 
                                                         ; Action buttons
                                                         Gui, Commands: Add, Button, x10 y235 w75 h25 gSaveWaypointCmd, Save
                                                         Gui, Commands: Add, Button, x90 y235 w75 h25 gClearWaypointCmd, Clear
                                                         Gui, Commands: Add, Button, x170 y235 w75 h25 gTestWaypointCmd, Test
-                                                        Gui, Commands: Add, Button, x330 y235 w80 h25 gCloseCommandGUI, Close
+                                                        Gui, Commands: Add, Button, x370 y235 w80 h25 gCloseCommandGUI, Close
 
                                                         ; Status line
-                                                        Gui, Commands: Add, Text, x10 y270 w400 h15 vCommandStatus cWhite, Ready to edit commands
+                                                        Gui, Commands: Add, Text, x10 y270 w440 h15 vCommandStatus cWhite, Ready to edit commands
 
-                                                        Gui, Commands: Show, w420 h295
+                                                        Gui, Commands: Show, w460 h295
                                                     }
+
 
                                                     LoadWaypointCmd:
                                                         Gui, Commands: Submit, NoHide
