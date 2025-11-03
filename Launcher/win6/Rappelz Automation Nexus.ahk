@@ -13432,7 +13432,7 @@ AssignHealKeys:
                                                         Gui, Commands: Add, Button, x140 y30 w70 h25 gLoadWaypointCmd, Load
                                                         Gui, Commands: Add, Button, x215 y30 w70 h25 gShowExamples, Examples
                                                         Gui, Commands: Add, Button, x290 y30 w70 h25 gListWaypoints, List Points
-                                                        Gui, Commands: Add, Button, x365 y30 w70 h25 gSelectWin2Btn, Select Win2
+                                                        Gui, Commands: Add, Button, x365 y30 w70 h25 gSelectWin2, Select Win2
 
                                                         ; Command editing area
                                                         Gui, Commands: Add, Text, x10 y65 w440 h15 cWhite, Command Editor (simple commands, functions, and full scripts):
