@@ -10,8 +10,8 @@ CoordMode, Mouse, Screen
 global startEnchantingProcessFromBeginning := False 
 global EnchantWeapon := False
 global EnchantArmor := False
-global IHaveERep := True  ; Enable searching for level 1-19 in inventory (checked by default)
-global IHaveEProtect := True  ; Enable switching to eprotect method at level 17 (checked by default)
+global IHaveERep := True ; Enable searching for level 1-19 in inventory (checked by default)
+global IHaveEProtect := True ; Enable switching to eprotect method at level 17 (checked by default)
 
 ; Statistics variables
 global statsStartTime := 0
@@ -23,7 +23,7 @@ global r7FortuneDefenseCubeUsed := 0
 global r7FortuneStrikeCubeUsed := 0
 global level20Found := 0
 global enchantingActive := false
-global statsExpanded := true  ; Track if statistics section is expanded
+global statsExpanded := true ; Track if statistics section is expanded
 
 global erepair:="|<erepair>*147$29.zzjzzzzTzzyzzzzzzyTzzDbxzARnzy71szwM1MCnU1syC01tss018FU07cC00Nsm00lvU01mT000Hu000nk001/s006Ts00Wys003sz05zkTzzy01zy000001"
 global r7defensecube:="|<r7defensecube>5A8DA9-0.83$26.09ww0/kyk9wDD4DS7kwTVsT7bUXC3w/7kS2stk0YEy0967021U00g9U08"
@@ -142,8 +142,6 @@ ArmorFood.="|<voidwarpgauntlets>*30$32.zzwzzzzy1zzznUDzzkE2zzsQ8jzyC3/z7rVnzXrwT
 ArmorFood.="|<nemisisarmor>**50$31.0IQ3KUO21WkQ31XkDblXM6zxXCDsmnz6tj/eVxAqZFKa1TcvbQmkPsQ5cDyA1Q1dh09UoyUYEOTEP8DtcBY5lY6m2Eo3N19G0YUgz0HILS09cbx06MLQk1b"
 ArmorFood.="|<bdmagewall>**40$23.0ZE01CbU4Nv0Una310Q4U0k801wJg50fE0FqE10C0C0w8U3l10j6mBmTY2Psm4hW08SQ0EA00UE017k01J000000E"
 
-
- 
 global weaponfood:="|<bd2hsword>**50$29.003y600C0000E3k01fwk06Dy008s000n1E0362U0AABU0kEN037Za0AS680FUP0363Y0AMC01lUE0261U04A6009kM00H3U03Lc0003U002XU005m000+Y000U40000E007U00000E00E"
 weaponfood.="|<bd1hsword>**50$23.R82sT8/WTESCT1NqO5XASSA4tskg3m1Q7A0iwk03n00L810Cs2VNc57Vd8S3cEwHl1k32V4a16EYFA1BU222c403E"
 weaponfood.="|<bd2hstaff>**40$29.0080001M0000M0004E05LAU0+ddUUC1hs0I3ao0/bic3L//M2AJCcL82zE8E048SW0M1h000HMUUE3w00E1k80EM0000k000X60015000024000AU0008k000EU000kU0001U2001040E"
@@ -188,10 +186,6 @@ weaponfood.="|<2hmace>**50$23.5As+dD0pIIH44NAX3Mp23P+2mwq+yEgKoRdaT6O6G8pgWVoz1h
 weaponfood.="|<1hstaff>**50$23.0Ew40kcA1Wkk33106gC0MzS0Unc1K3ETtHUURaFx2AUV0LTxEwbs1tsNmbMQb+QNQJhs8vvvllTb08cX6PF+AHbwE"
 weaponfood.="|<1hstaff>**50$23.0QE40fk81UEM140U24205MA0/yU0NZI082UPaX10F4Uc0N020eQW1l7r20UvZ6EtA4sGsVPwE0IrU3yi00FIAGWsE"
 weaponfood.="|<1hstaff>**50$23.0710044008M80J0k0ju01aJ00U+1jOA41002s1U082Vm074OQ8+2iEF3gUFVDW0fV003Sk3vs055E1O/U2Qj0BK0E"
-
-
-
-
 
 global processing:="|<>C9C9C9-0.68$70.z0000000U00220000000000880000000000UZC73VksZVc22N4WF8YGN9UDl4G14UE94W0U4F87lksYG820F4UE0UGF8U814G94WF94a0U4C73VksYFd40000000000U0000000000W00000000001k2"
 
@@ -254,7 +248,7 @@ f4:: ShowLevel20Celebration()
 ToggleStats:
     global statsExpanded
     statsExpanded := !statsExpanded
-    
+
     if (statsExpanded) {
         ; Expand statistics - show all stats elements
         GuiControl, Main:, ToggleStatsBtn, [-]
@@ -276,13 +270,13 @@ ToggleStats:
         GuiControl, Main:Show, Level20Label
         GuiControl, Main:Show, Level20Text
         GuiControl, Main:Show, StatsHint
-        
+
         ; Move controls section down
         GuiControl, Main:Move, ControlsGroupBox, y465
         GuiControl, Main:Move, ReloadText, y485
         GuiControl, Main:Move, StartBtn, y510
         GuiControl, Main:Move, StopBtn, y510
-        
+
         ; Resize window
         Gui, Main:Show, w300 h575
     } else {
@@ -306,13 +300,13 @@ ToggleStats:
         GuiControl, Main:Hide, Level20Label
         GuiControl, Main:Hide, Level20Text
         GuiControl, Main:Hide, StatsHint
-        
+
         ; Move controls section up
         GuiControl, Main:Move, ControlsGroupBox, y285
         GuiControl, Main:Move, ReloadText, y305
         GuiControl, Main:Move, StartBtn, y330
         GuiControl, Main:Move, StopBtn, y330
-        
+
         ; Resize window
         Gui, Main:Show, w300 h395
     }
@@ -371,7 +365,7 @@ StartEnchanting:
     r7FortuneDefenseCubeUsed := 0
     r7FortuneStrikeCubeUsed := 0
     level20Found := 0
-    
+
     ; Update GUI statistics
     UpdateStatisticsGUI()
     InitializeCoordinates()
@@ -599,7 +593,7 @@ MainEnchantLoop:
         }
 
         emptymaterialslot()
-        emptyadditionalmaterialslot(9. erepair)
+        emptyadditionalmaterialslot(9)
 
         if (currentLevel >= 17 && IHaveEProtect) {
             Gosub, EnchantArmorusingdefcubeandeprotect
@@ -679,7 +673,7 @@ MainEnchantLoop:
         }
 
         emptymaterialslot()
-        emptyadditionalmaterialslot(9, erepair)
+        emptyadditionalmaterialslot(9)
 
         if (currentLevel >= 17 && IHaveEProtect) {
             Gosub, Enchantweaponusingstrikecubeandeprotect
@@ -752,7 +746,7 @@ EnchantArmorusingdefcubeandeprotect:
         ; Increment counters for materials being used
         r7DefenseCubeUsed++
         eProtectUsed++
-        
+
         Send, {Space}
         Sleep, 100
 
@@ -796,6 +790,32 @@ EnchantArmorusingdefcubeandeprotect:
     }
 return
 EnchantArmorusingr7fortuneanderepair:
+    if (IHaveERepair) {
+        ; Search material slot for erepair
+        if (ok := FindText(x, y, matX, matY, matX+matW, matY+matH, 0, 0, erepair)) {
+            eRepairUsed++ ; Increment erepair counter when found in material slot
+
+            Send, {Space}
+            Sleep, 100
+
+            ; Wait for processing to appear
+            Loop, 60000 { ; Timeout after 10 seconds
+                if (ok := FindText(x, y, 0, 0, A_ScreenWidth, A_ScreenHeight, 0, 0, processing)) {
+                    break
+                }
+                Sleep, 50
+            }
+
+            ; Wait for processing to disappear
+            Loop, 30000 { ; Timeout after 30 seconds
+                if (!FindText(x, y, 0, 0, A_ScreenWidth, A_ScreenHeight, 0, 0, processing)) {
+                    Sleep, 100
+                    break
+                }
+                Sleep, 50
+            }
+        }
+    }
     ; Search for fortune cube and e-repair in inventory and double click them both
     if (ok := FindText(x, y, invX, invY, invX+invW, invY+invH, 0, 0, r7fortunedefensecube)) {
         FindText().Click(ok[1].1 + ok[1].3/2, ok[1].2 + ok[1].4/2, "L")
@@ -820,7 +840,7 @@ EnchantArmorusingr7fortuneanderepair:
     Loop {
         ; Increment counter for fortune defense cube being used
         r7FortuneDefenseCubeUsed++
-        
+
         Send, {Space}
         Sleep, 100
 
@@ -841,10 +861,12 @@ EnchantArmorusingr7fortuneanderepair:
             Sleep, 10
         }
 
-        ; Search material slot for erepair
-        if (ok := FindText(x, y, matX, matY, matX+matW, matY+matH, 0, 0, erepair)) {
-            eRepairUsed++  ; Increment erepair counter when found in material slot
-            continue ; Press space again
+        if (IHaveERepair) {
+            ; Search material slot for erepair
+            if (ok := FindText(x, y, matX, matY, matX+matW, matY+matH, 0, 0, erepair)) {
+                eRepairUsed++ ; Increment erepair counter when found in material slot
+                continue ; Press space again
+            }
         }
         ; Check if enchantment slot is empty
         if (ok := FindText(x, y, enchX, enchY, enchX+enchW, enchY+enchH, 0, 0, EmptySlotPattern)) {
@@ -958,7 +980,7 @@ Enchantweaponusingstrikecubeandeprotect:
         ; Increment counter for strike cube being used
         r7StrikeCubeUsed++
         eProtectUsed++
-        
+
         Send, {Space}
         Sleep, 100
 
@@ -1002,6 +1024,32 @@ Enchantweaponusingstrikecubeandeprotect:
     }
 return
 Enchantweaponusingr7fortuneanderepair:
+    if (IHaveERepair) {
+        ; Search material slot for erepair
+        if (ok := FindText(x, y, matX, matY, matX+matW, matY+matH, 0, 0, erepair)) {
+            eRepairUsed++ ; Increment erepair counter when found in material slot
+
+            Send, {Space}
+            Sleep, 100
+
+            ; Wait for processing to appear
+            Loop, 60000 { ; Timeout after 10 seconds
+                if (ok := FindText(x, y, 0, 0, A_ScreenWidth, A_ScreenHeight, 0, 0, processing)) {
+                    break
+                }
+                Sleep, 50
+            }
+
+            ; Wait for processing to disappear
+            Loop, 30000 { ; Timeout after 30 seconds
+                if (!FindText(x, y, 0, 0, A_ScreenWidth, A_ScreenHeight, 0, 0, processing)) {
+                    Sleep, 100
+                    break
+                }
+                Sleep, 50
+            }
+        }
+    }
     ; Search for fortune cube and e-repair in inventory and double click them both
     if (ok := FindText(x, y, invX, invY, invX+invW, invY+invH, 0, 0, r7fortunestrikecube)) {
         FindText().Click(ok[1].1 + ok[1].3/2, ok[1].2 + ok[1].4/2, "L")
@@ -1026,7 +1074,7 @@ Enchantweaponusingr7fortuneanderepair:
     Loop {
         ; Increment counter for fortune strike cube being used
         r7FortuneStrikeCubeUsed++
-        
+
         Send, {Space}
         Sleep, 100
 
@@ -1046,12 +1094,14 @@ Enchantweaponusingr7fortuneanderepair:
             }
             Sleep, 10
         }
-
-        ; Search material slot for erepair
-        if (ok := FindText(x, y, matX, matY, matX+matW, matY+matH, 0, 0, erepair)) {
-            eRepairUsed++  ; Increment erepair counter when found in material slot
-            continue ; Press space again
+        if (IHaveERepair) {
+            ; Search material slot for erepair
+            if (ok := FindText(x, y, matX, matY, matX+matW, matY+matH, 0, 0, erepair)) {
+                eRepairUsed++ ; Increment erepair counter when found in material slot
+                continue ; Press space again
+            }
         }
+
         ; Check if enchantment slot is empty
         if (ok := FindText(x, y, enchX, enchY, enchX+enchW, enchY+enchH, 0, 0, EmptySlotPattern)) {
             goto MainEnchantLoop
@@ -1516,18 +1566,18 @@ ShowLevel20Celebration() {
     global WB
     ; Get the position and size of the main GUI
     WinGetPos, mainX, mainY, mainW, mainH, Gear Enchanter
-    
+
     ; Create a celebration GUI with the animated GIF
-    Gui, Celebration:Destroy  ; Destroy any existing celebration window
+    Gui, Celebration:Destroy ; Destroy any existing celebration window
     Gui, Celebration:+AlwaysOnTop +Owner -Caption +Border
     Gui, Celebration:Color, Black
-    
+
     ; Add the GIF (check both spellings in script directory)
     gifPath := A_ScriptDir . "\bingotarentino.gif"
     if (!FileExist(gifPath)) {
         gifPath := A_ScriptDir . "\bingotarantino.gif"
     }
-    
+
     if (FileExist(gifPath)) {
         ; Use ActiveX control to display animated GIF
         Gui, Celebration:Add, ActiveX, w280 h280 vWB, Shell.Explorer
@@ -1538,13 +1588,13 @@ ShowLevel20Celebration() {
         Gui, Celebration:Font, s16 cWhite Bold
         Gui, Celebration:Add, Text, w280 h100 Center, LEVEL 20!`n🎉🎉🎉
     }
-    
+
     ; Calculate position to center over main GUI
     celebrationX := mainX + (mainW - 280) / 2
     celebrationY := mainY + (mainH - 280) / 2
-    
+
     Gui, Celebration:Show, x%celebrationX% y%celebrationY% w280 h280, Level 20!
-    
+
     ; Set timer to close the celebration window after 3 seconds
     SetTimer, CloseCelebration, -5000
 }
@@ -1556,7 +1606,7 @@ return
 UpdateStatisticsGUI() {
     global statsStartTime, eRepairUsed, eProtectUsed, r7DefenseCubeUsed, r7StrikeCubeUsed
     global r7FortuneDefenseCubeUsed, r7FortuneStrikeCubeUsed, level20Found
-    
+
     ; Calculate running time
     if (statsStartTime > 0) {
         elapsedMs := A_TickCount - statsStartTime
@@ -1567,7 +1617,7 @@ UpdateStatisticsGUI() {
     } else {
         timeStr := "00:00:00"
     }
-    
+
     ; Update all statistics on GUI
     GuiControl, Main:, TimeRunningText, %timeStr%
     GuiControl, Main:, ERepairText, %eRepairUsed%
