@@ -166,7 +166,7 @@ Loop, 8 {
 }
 
 if (selectedCount = 0) {
-    MsgBox, Please select at least one account
+    MsgBox, 0, , Please select at least one account, 2
     Return
 }
 
@@ -508,7 +508,7 @@ Loop {
     Sleep, 250
 }
 
-MsgBox, Done! Launched %selectedCount% clients
+MsgBox, 0, , Done! Launched %selectedCount% clients, 1
 
 Loop, %selectedCount% {
     accountNum := selectedAccounts[A_Index]
@@ -755,7 +755,7 @@ ThumbnailClick:
                 WinActivate, ahk_id %targetWindow%
                 WinRestore, ahk_id %targetWindow%
             } else {
-                MsgBox, Client %clientNum% window no longer exists!
+                MsgBox, 16, Error, Client %clientNum% window no longer exists!
             }
             break
         }
@@ -795,7 +795,7 @@ Loop, 8 {
         }
     }
 }
-MsgBox, Started Nexus for selected windows
+MsgBox, 0, , Started Nexus for selected windows, 2
 Return
 
 
@@ -807,7 +807,7 @@ Loop {
     if (!ErrorLevel)
         break
 }
-MsgBox, All Rappelz clients closed
+MsgBox, 0, , All Rappelz clients closed, 2
 Return
 
 updatecheck:
@@ -833,7 +833,7 @@ CheckForUpdates() {
         IfMsgBox Yes
             DownloadUpdate(RemoteVersion)
     } else {
-        MsgBox, 64, Up to Date, You have the latest version (%LocalVersion%)
+        MsgBox, 64, Up to Date, You have the latest version (%LocalVersion%), 2
     }
 }
 
@@ -875,8 +875,8 @@ DownloadUpdate(NewVersion) {
     FileDelete, version.txt
     FileAppend, %NewVersion%, version.txt
     Progress, Off
-    MsgBox, 64, Update Complete, Update installed successfully!`n`nRestarting the launcher.
-    reload
+    MsgBox, 64, Update Complete, Update installed successfully!`n`nRestarting the launcher., 1
+    Reload
 }
 
 HttpGet(URL) {
