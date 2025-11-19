@@ -1,0 +1,1 @@
+RappelzCmdLauncher.exe SFrame.exe /auth_ip:51.89.219.148 /auth_port:9881 /use_nprotect:0 /locale:Windows-1252 /country:CN /use_nprotect:0 /cash /commercial_shop /layout_dir:6 /layout_auto:0 /cash_url_w:790 /cash_url_h:631 /help_url_w:900 /help_url_h:670
