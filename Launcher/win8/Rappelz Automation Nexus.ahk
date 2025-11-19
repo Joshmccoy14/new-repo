@@ -9839,7 +9839,7 @@ AssignHealKeys:
                                                                                             settimer, checkweight, off
                                                                                             ; SetTimer, snapshot, off
                                                                                             sleep, 100
-                                                                                            SendMessageClick(AX, AY)
+                                                                                            ControlClick, x%AX% y%AY%, ahk_id %win1%,, Left, 1
 
                                                                                             if (!ok:=FindText(X, Y, 0, 0, 1919, 1030, 0, 0, capchaguardactivatedmessage, , 0))
                                                                                             {
@@ -9898,366 +9898,89 @@ AssignHealKeys:
                                                                                     WinGetPos, winX, winY,,, ahk_id %win1%
                                                                                     screenPylonX := winX + pylonX
                                                                                     screenPylonY := winY + pylonY
-                                                                                    SendMessageClick(screenPylonX, screenPylonY)
+                                                                                    ControlClick, x%pylonX% y%pylonY%, ahk_id %win1%,, Left, 1
                                                                                 }
                                                                                 sleep, 1000
                                                                             }
                                                                         Return
 
                                                                         SolveCaptcha() {
-                                                                            ;sgBox, solve
-
-                                                                            capchaguardtargetted:="|<>FFFFFF-323232$71.C00002000w00W002040024022004080084040QKQQK70E14M14mF4mF0U29E094W14217YEU3m9428w218X18YG84G842F94HAYF8Yk48WFkOKAQF6U7UwE00U00000000001000000000002000000001"
-                                                                            capchaconfirm:="|<>DFE3E9-323232$33.D00o0200400ESxpjw2IYd8UUUZ92444d8EGUZ91vo4d8U"
-                                                                            capchaquestionwindowopen:="|<>FFFFFF-323232$37.C00000cU0000M8sgACA0WN98a018Y4H07YG3tUYG910cWN4YWHUoWACA"
-                                                                            ;questions
-                                                                            threeminusone:="|<>FBFF47-323232$20.TU0zw0Tb0T1k7lw1gT031k0kAwDXD3tk0zw0By03U"
-                                                                            threeminusone.="|<>FFFF00-323232$20.TU0zw0Tb0T1k7lw1gT031k0kAwDXD3tk0zw0By03U"
-
-                                                                            oneplustwo:="|<>FFFF00-323232$25.600z700zzUMQzkAADM60CATs76DwD30kD1UMD0kA70M07yA03zU"
-                                                                            twominusone:="|<>FFFF00-323232$20.TU0zw0Tb0Tkk7kQ1g7037U0nkwBsD3Q00zw0Dz03U"
-                                                                            fourplustwo:="|<>FBFF47-0.90$26.TU03jw00vb30Skkk7UQA3s7Ttq7byNXkACNs33zQ0kzzw00Pz006U"
-                                                                            fourplustwo.="|<>FFFF00-323232$26.TU03jw00vb30Skkk7UQA3s7Ttq7byNXkACNs33zQ0kzzw00Pz006U"
-
-                                                                            twoplustwo:="|<>FFFF00-323232$26.TU0Tjw0Dzb33bkkkkkQA0Q7Ts77by7XkA3ls31sQ0kQDw0Dzz03zU"
-                                                                            fourplusthree:="|<>FFFF00-323232$26.3U0TUs0DwS33b7Uk1nsA1xqTsTNby1yMA0Dz33XzkktkM0Dw601yU"
-                                                                            fourplusthree.="|<>FBFF47-323232$26.3U0TUs0DwS33b7Uk1nsA1xqTsTNby1yMA0Dz33XzkktkM0Dw601yU"
-                                                                            presswaterpixie:="|<>FFFF00-323232$70.llk1U001zX03Db060007zA0AyQ0M000MQ00vvbvtwT1UnQTjizjjtw67AviqviMvbETwlwTTXtXyQ1zX7lxwzaDtU60AC7rnyMk60M0lwTTCtXiM1U37ksszrjtU60AvXXVzST60M0r7U"
-                                                                            pressyeti:="|<>FFFF00-323232$26.kC0My706BnU1UQtwynwzjgSCtX7XyMkkzaAAA1X33iMkkzbgA7lvU"
-                                                                            pressorc:="|<>FFFF00-323232$25.Dk00Dw00DD0073bnzVnvzUNprkAskM6MMC7AA7ba7RzX3yTVUyU"
-                                                                            pressskeleton:="|<>FFFF00-323232$65.TlU01U0k001zn00301U003ba0060300077AwyATDbszjUPnyNzTTtzjsz7QniMtnrDtwDtbwlnb63nwTnDtX3ADVbsk6M37CMTbAtrAvaCQkzyNnyNzDTtVjslnslwSTX3U"
-                                                                            pressoctopus:="|<>FBFF47-323232$63.Dk060000003z00k000000ww0600000073Xxwz7wMMysQzjjwzn3Dy1bQlnbCMNrkAk6CQtn3Da1a0lVa6MNzsQk6CQtn73zbbQlnbCRtrTszbjwznzDty3swz7wDsy000000k00000000060000000000k0004"
-                                                                            pressoctopus.="|<>FFFF00-323232$63.Dk060000003z00k000000ww0600000073Xxwz7wMMysQzjjwzn3Dy1bQlnbCMNrkAk6CQtn3Da1a0lVa6MNzsQk6CQtn73zbbQlnbCRtrTszbjwznzDty3swz7wDsy000000k00000000060000000000k0004"
-
-                                                                            presssiren:="|<>FBFF47-323232$38.TlU000DyM0003bU0000stbnszjUNxzDxz6RRnrDtb7wskSNVzADVaMM33wta7QkzyNVzABz6MDX3U"
-                                                                            presssiren.="|<>FFFF00-323232$38.TlU000DyM0003bU0000stbnszjUNxzDxz6RRnrDtb7wskSNVzADVaMM33wta7QkzyNVzABz6MDX3U"
-
-                                                                            pressA:="|<>FFFF00-323232$19.wC7yDXw7kS3MD3i7Vr3llVszswTwSQ7DC3bb1nk01y03z01w"
-                                                                            pressB:="|<>FFFF00-323232$20.xzXzTwz673lUkwMQD7z3lzswMSD61XlUswTyD7z3k00z00zk0DU"
-                                                                            pressD:="|<>FBFF47-323232$20.xzXzTwz67XlUswMCD61XlUMwMCD63XlVswTwD7y3k00z00zk0DU"
-                                                                            pressD.="|<>FFFF00-323232$21.xzXrjySlVsqA76lUsqA36lUMqA76lUsqAD6lzkqDw6k00rU0Sw03o"
-                                                                            pressC:="|<>FFFF00-323232$20.wTnzDyz7bXlkswQ0D603lU0wQ0D73XltswDyD1z3k00z00zk0DU"
-                                                                            ;answers
-                                                                            A:="|<>FFFFFF-323232$11.3UDUT0q3i7QQMztzr1y3w7U"
-                                                                            A.="|<>FFFFFF-323232$11.3UDUT0q3i7QQMztzr1y3w7U"
-                                                                            B:="|<>FFFFFF-323232$10.znzgCkP3jyzz1w3kTzzyU"
-                                                                            B.="|<>FFFFFF-323232$10.znzgCkP3jyzz1w3kTzzyU"
-                                                                            C:="|<>FFFFFF-323232$10.DtzzDsTUA0k3UC7wxznyU"
-                                                                            C.="|<>FFFFFF-323232$10.DtzzDsTUA0k3UC7wxznyU"
-                                                                            Dee:="|<>FFFFFF-323232$10.znzgDkT1w3kD1w7kzzjwU"
-                                                                            Dee.="|<>FFFFFF-323232$10.znzgDkT1w3kD1w7kzzjwU"
-                                                                            Dee.="|<>FFFFFF-0.90$10.znzgDkT1w3kD1w7kzzjwU"
-                                                                            one:="|<>FFFFFF-323232$5.6TzxX6AMlXU"
-                                                                            one.="|<>FFFFFF-323232$4.4zwF4F6"
-                                                                            two:="|<>FFFFFF-323232$8.TjzbkkQ77XlsQDzzU"
-                                                                            two.="|<>FFFFFF-323232$8.TjzbkkQ77XlsQDzzU"
-                                                                            three:="|<>FFFFFF-323232$8.TjzbFlwT1kDXtzxyU"
-                                                                            three.="|<>FFFFFF-323232$8.TjzbFlwT1kDXtzxyU"
-                                                                            four:="|<>FFFFFF-323232$8.3UsS7XtqNiPzzkM6U"
-                                                                            four.="|<>FFFFFF-323232$8.3UsS7XtqNiPzzkM6U"
-                                                                            six:="|<>FFFFFF-323232$8.DbzrsDvztwD3xrwyU"
-                                                                            seven:="|<>FFFFFF-323232$8.zzw73VkQ73UsC30kU"
-                                                                            seven.="|<>FFFFFF-323232$8.zzw73VkQ73UsC30kU"
-                                                                            waterpixie:="|<>FFFFFF-323232$88.sQC0A0001zX01U3Xss0k0007zA060CDXU30000MQ0000QyQzT7ly1UnQRXtrxrxwzbs67AvaTrRrRn3iQUTwlwNrBrQTADtk1zX7lbwyDbwkza060AC6TnsyTn30M0M0lwNUDXtrACtU1U37lbQQ77ywza060AvaTlkQDvlwM0M0r7MyU"
-                                                                            waterpixie.="|<>FFFFFF-323232$88.sQC0A0001zX01U3Xss0k0007zA060CDXU30000MQ0000QyQzT7ly1UnQRXtrxrxwzbs67AvaTrRrRn3iQUTwlwNrBrQTADtk1zX7lbwyDbwkza060AC6TnsyTn30M0M0lwNUDXtrACtU1U37lbQQ77ywza060AvaTlkQDvlwM0M0r7MyU"
-                                                                            octopus:="|<>FFFFFF-323232$65.Ds030000000zs060000003ls0A00000071lwyDlz66Di1bxwznzAAzs3CtVnbCMNrk6M33bCQkntkAk666MNVbzUtUACQtn73zXniMQtnbSRrz7wwznzDwzbw7lsz7wDsy000000A0000000000M0000000000k0004"
-                                                                            octopus.="|<>FFFFFF-323232$65.Ds030000000zs060000003ls0A00000071lwyDlz66Di1bxwznzAAzs3CtVnbCMNrk6M33bCQkntkAk666MNVbzUtUACQtn73zXniMQtnbSRrz7wwznzDwzbw7lsz7wDsy000000A0000000000M0000000000k0004"
-                                                                            orc:="|<>FFFFFF-323232$27.Ds003zU00wS0071nwys6Tjy0nZrk6QA70n1UsCMA7Xn1rTwMDtz30yU"
-                                                                            orc.="|<>FFFFFF-323232$27.Ds003zU00wS0071nwys6Tjy0nZrk6QA70n1UsCMA7Xn1rTwMDtz30yU"
-                                                                            siren:="|<>FFFFFF-323232$39.TlU0007zA0000xs000077AzDXyy1bvyTvyAtRnrDtb3yQMDAkTn3sNa30MTbAkRn3zta3yMPyAkDX3U"
-                                                                            siren.="|<>FFFFFF-323232$39.TlU0007zA0000xs000077AzDXyy1bvyTvyAtRnrDtb3yQMDAkTn3sNa30MTbAkRn3zta3yMPyAkDX3U"
-                                                                            siren.="|<>FBFF47-323232$38.TlU000DyM0003bU0000stbnszjUNxzDxz6RRnrDtb7wskSNVzADVaMM33wta7QkzyNVzABz6MDX3U"
-                                                                            skeleton:="|<>FFFFFF-323232$66.TlU01U0k000ztU01U0k000xtU01U0k000stbblXtwTXyy1jDtbxwznzTlyCtbQktnrDtyDtbwktnX1tyDtbwkkn3sNyA1a0ktn3wtbCtbQktn3ztbDtbwwzn3TlXblXswTX3U"
-                                                                            skeleton.="|<>FFFFFF-323232$66.TlU01U0k000ztU01U0k000xtU01U0k000stbblXtwTXyy1jDtbxwznzTlyCtbQktnrDtyDtbwktnX1tyDtbwkkn3sNyA1a0ktn3wtbCtbQktn3ztbDtbwwzn3TlXblXswTX3U"
-                                                                            yeti:="|<>FFFFFF-323232$27.kC0MT3U33Qs0M3bDbnDnyyMwRn37XyMMMTn3330MMMRn333ySMMDXnU"
-                                                                            yeti.="|<>FFFFFF-323232$27.kC0MT3U33Qs0M3bDbnDnyyMwRn37XyMMMTn3330MMMRn333ySMMDXnU"
-                                                                            ;MsgBox, solve
-                                                                            ; First check if a CAPTCHA is present
-                                                                            loop, 4
-                                                                            {
-                                                                                ;MsgBox, in loop
-                                                                                ; Now check which question is displayed
-                                                                                if (FindText(QX, QY, 0, 0, 1919, 1030, 0, 0, threeminusone)) {
-                                                                                    ; Answer is 2
-                                                                                    if (FindText(AX, AY, 0, 0, 1919, 1030, 0, 0, two)) {
-                                                                                        sleep 100
-                                                                                        ;Critical, Off
-                                                                                        SendMessageClick(AX, AY)
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, essences, on
-                                                                                        ;SetTimer, buffdaddystone, on
-                                                                                        ;SetTimer, buffpetscroll, on
-                                                                                        settimer, checkweight, on
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, snapshot, on
-                                                                                        ;settimer, DPSLoop, on
-                                                                                        return
+                                                                            ; Define all patterns
+                                                                            capchaguardtargetted := "|<>FFFFFF-323232$71.C00002000w00W002040024022004080084040QKQQK70E14M14mF4mF0U29E094W14217YEU3m9428w218X18YG84G842F94HAYF8Yk48WFkOKAQF6U7UwE00U00000000001000000000002000000001"
+                                                                            
+                                                                            ; Question patterns
+                                                                            threeminusone := "|<>FBFF47-323232$20.TU0zw0Tb0T1k7lw1gT031k0kAwDXD3tk0zw0By03U|<>FFFF00-323232$20.TU0zw0Tb0T1k7lw1gT031k0kAwDXD3tk0zw0By03U"
+                                                                            oneplustwo := "|<>FFFF00-323232$25.600z700zzUMQzkAADM60CATs76DwD30kD1UMD0kA70M07yA03zU"
+                                                                            twominusone := "|<>FFFF00-323232$20.TU0zw0Tb0Tkk7kQ1g7037U0nkwBsD3Q00zw0Dz03U"
+                                                                            twoplustwo := "|<>FFFF00-323232$26.TU0Tjw0Dzb33bkkkkkQA0Q7Ts77by7XkA3ls31sQ0kQDw0Dzz03zU"
+                                                                            fourplustwo := "|<>FBFF47-0.90$26.TU03jw00vb30Skkk7UQA3s7Ttq7byNXkACNs33zQ0kzzw00Pz006U|<>FFFF00-323232$26.TU03jw00vb30Skkk7UQA3s7Ttq7byNXkACNs33zQ0kzzw00Pz006U"
+                                                                            fourplusthree := "|<>FFFF00-323232$26.3U0TUs0DwS33b7Uk1nsA1xqTsTNby1yMA0Dz33XzkktkM0Dw601yU|<>FBFF47-323232$26.3U0TUs0DwS33b7Uk1nsA1xqTsTNby1yMA0Dz33XzkktkM0Dw601yU"
+                                                                            
+                                                                            ; Press X patterns (monsters/letters)
+                                                                            presswaterpixie := "|<>FFFF00-323232$70.llk1U001zX03Db060007zA0AyQ0M000MQ00vvbvtwT1UnQTjizjjtw67AviqviMvbETwlwTTXtXyQ1zX7lxwzaDtU60AC7rnyMk60M0lwTTCtXiM1U37ksszrjtU60AvXXVzST60M0r7U"
+                                                                            pressyeti := "|<>FFFF00-323232$26.kC0My706BnU1UQtwynwzjgSCtX7XyMkkzaAAA1X33iMkkzbgA7lvU"
+                                                                            pressorc := "|<>FFFF00-323232$25.Dk00Dw00DD0073bnzVnvzUNprkAskM6MMC7AA7ba7RzX3yTVUyU"
+                                                                            pressskeleton := "|<>FFFF00-323232$65.TlU01U0k001zn00301U003ba0060300077AwyATDbszjUPnyNzTTtzjsz7QniMtnrDtwDtbwlnb63nwTnDtX3ADVbsk6M37CMTbAtrAvaCQkzyNnyNzDTtVjslnslwSTX3U"
+                                                                            pressoctopus := "|<>FBFF47-323232$63.Dk060000003z00k000000ww0600000073Xxwz7wMMysQzjjwzn3Dy1bQlnbCMNrkAk6CQtn3Da1a0lVa6MNzsQk6CQtn73zbbQlnbCRtrTszbjwznzDty3swz7wDsy000000k00000000060000000000k0004|<>FFFF00-323232$63.Dk060000003z00k000000ww0600000073Xxwz7wMMysQzjjwzn3Dy1bQlnbCMNrkAk6CQtn3Da1a0lVa6MNzsQk6CQtn73zbbQlnbCRtrTszbjwznzDty3swz7wDsy000000k00000000060000000000k0004"
+                                                                            presssiren := "|<>FBFF47-323232$38.TlU000DyM0003bU0000stbnszjUNxzDxz6RRnrDtb7wskSNVzADVaMM33wta7QkzyNVzABz6MDX3U|<>FFFF00-323232$38.TlU000DyM0003bU0000stbnszjUNxzDxz6RRnrDtb7wskSNVzADVaMM33wta7QkzyNVzABz6MDX3U"
+                                                                            pressA := "|<>FFFF00-323232$19.wC7yDXw7kS3MD3i7Vr3llVszswTwSQ7DC3bb1nk01y03z01w"
+                                                                            pressB := "|<>FFFF00-323232$20.xzXzTwz673lUkwMQD7z3lzswMSD61XlUswTyD7z3k00z00zk0DU"
+                                                                            pressC := "|<>FFFF00-323232$20.wTnzDyz7bXlkswQ0D603lU0wQ0D73XltswDyD1z3k00z00zk0DU"
+                                                                            pressD := "|<>FBFF47-323232$20.xzXzTwz67XlUswMCD61XlUMwMCD63XlVswTwD7y3k00z00zk0DU|<>FFFF00-323232$21.xzXrjySlVsqA76lUsqA36lUMqA76lUsqAD6lzkqDw6k00rU0Sw03o"
+                                                                            
+                                                                            ; Answer patterns
+                                                                            one := "|<>FFFFFF-323232$5.6TzxX6AMlXU|<>FFFFFF-323232$4.4zwF4F6"
+                                                                            two := "|<>FFFFFF-323232$8.TjzbkkQ77XlsQDzzU"
+                                                                            three := "|<>FFFFFF-323232$8.TjzbFlwT1kDXtzxyU"
+                                                                            four := "|<>FFFFFF-323232$8.3UsS7XtqNiPzzkM6U"
+                                                                            six := "|<>FFFFFF-323232$8.DbzrsDvztwD3xrwyU"
+                                                                            seven := "|<>FFFFFF-323232$8.zzw73VkQ73UsC30kU"
+                                                                            waterpixie := "|<>FFFFFF-323232$88.sQC0A0001zX01U3Xss0k0007zA060CDXU30000MQ0000QyQzT7ly1UnQRXtrxrxwzbs67AvaTrRrRn3iQUTwlwNrBrQTADtk1zX7lbwyDbwkza060AC6TnsyTn30M0M0lwNUDXtrACtU1U37lbQQ77ywza060AvaTlkQDvlwM0M0r7MyU"
+                                                                            yeti := "|<>FFFFFF-323232$27.kC0MT3U33Qs0M3bDbnDnyyMwRn37XyMMMTn3330MMMRn333ySMMDXnU"
+                                                                            orc := "|<>FFFFFF-323232$27.Ds003zU00wS0071nwys6Tjy0nZrk6QA70n1UsCMA7Xn1rTwMDtz30yU"
+                                                                            skeleton := "|<>FFFFFF-323232$66.TlU01U0k000ztU01U0k000xtU01U0k000stbblXtwTXyy1jDtbxwznzTlyCtbQktnrDtyDtbwktnX1tyDtbwkkn3sNyA1a0ktn3wtbCtbQktn3ztbDtbwwzn3TlXblXswTX3U"
+                                                                            octopus := "|<>FFFFFF-323232$65.Ds030000000zs060000003ls0A00000071lwyDlz66Di1bxwznzAAzs3CtVnbCMNrk6M33bCQkntkAk666MNVbzUtUACQtn73zXniMQtnbSRrz7wwznzDwzbw7lsz7wDsy000000A0000000000M0000000000k0004"
+                                                                            siren := "|<>FFFFFF-323232$39.TlU0007zA0000xs000077AzDXyy1bvyTvyAtRnrDtb3yQMDAkTn3sNa30MTbAkRn3zta3yMPyAkDX3U|<>FBFF47-323232$38.TlU000DyM0003bU0000stbnszjUNxzDxz6RRnrDtb7wskSNVzADVaMM33wta7QkzyNVzABz6MDX3U"
+                                                                            A := "|<>FFFFFF-323232$11.3UDUT0q3i7QQMztzr1y3w7U"
+                                                                            B := "|<>FFFFFF-323232$10.znzgCkP3jyzz1w3kTzzyU"
+                                                                            C := "|<>FFFFFF-323232$10.DtzzDsTUA0k3UC7wxznyU"
+                                                                            Dee := "|<>FFFFFF-323232$10.znzgDkT1w3kD1w7kzzjwU|<>FFFFFF-0.90$10.znzgDkT1w3kD1w7kzzjwU"
+                                                                            
+                                                                            ; Question-Answer pairs: [question_pattern, answer_pattern]
+                                                                            captchaMap := [ {q: threeminusone, a: two}
+                                                                                          , {q: oneplustwo, a: three}
+                                                                                          , {q: twominusone, a: one}
+                                                                                          , {q: twoplustwo, a: four}
+                                                                                          , {q: fourplustwo, a: six}
+                                                                                          , {q: fourplusthree, a: seven}
+                                                                                          , {q: presswaterpixie, a: waterpixie}
+                                                                                          , {q: pressyeti, a: yeti}
+                                                                                          , {q: pressorc, a: orc}
+                                                                                          , {q: pressskeleton, a: skeleton}
+                                                                                          , {q: pressoctopus, a: octopus}
+                                                                                          , {q: presssiren, a: siren}
+                                                                                          , {q: pressA, a: A}
+                                                                                          , {q: pressB, a: B}
+                                                                                          , {q: pressC, a: C}
+                                                                                          , {q: pressD, a: Dee} ]
+                                                                            
+                                                                            Loop, 4 {
+                                                                                for index, pair in captchaMap {
+                                                                                    if (FindText(QX, QY, 0, 0, 1919, 1030, 0, 0, pair.q)) {
+                                                                                        if (FindText(AX, AY, 0, 0, 1919, 1030, 0, 0, pair.a)) {
+                                                                                            Sleep, 100
+                                                                                            ControlClick, x%AX% y%AY%, ahk_id %win1%,, Left, 1
+                                                                                            Sleep, 200
+                                                                                            SetTimer, checkweight, On
+                                                                                            Sleep, 200
+                                                                                            return
+                                                                                        }
                                                                                     }
                                                                                 }
-                                                                                if (FindText(QX, QY, 0, 0, 1919, 1030, 0, 0, oneplustwo)) {
-                                                                                    ; Answer is 3
-                                                                                    if (FindText(AX, AY, 0, 0, 1919, 1030, 0, 0, three)) {
-                                                                                        sleep 100
-                                                                                        ;Critical, Off
-                                                                                        SendMessageClick(AX, AY)
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, essences, on
-                                                                                        ;SetTimer, buffdaddystone, on
-                                                                                        ;SetTimer, buffpetscroll, on
-                                                                                        settimer, checkweight, on
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, snapshot, on
-                                                                                        ;settimer, DPSLoop, on
-                                                                                        return
-                                                                                    }
-                                                                                }
-                                                                                if (FindText(QX, QY, 0, 0, 1919, 1030, 0, 0, twominusone)) {
-                                                                                    ; Answer is 1
-                                                                                    if (FindText(AX, AY, 0, 0, 1919, 1030, 0, 0, one)) {
-                                                                                        sleep 100
-                                                                                        ;Critical, Off
-                                                                                        SendMessageClick(AX, AY)
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, essences, on
-                                                                                        ;SetTimer, buffdaddystone, on
-                                                                                        ;SetTimer, buffpetscroll, on
-                                                                                        settimer, checkweight, on
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, snapshot, on
-                                                                                        ;settimer, DPSLoop, on
-                                                                                        return
-                                                                                    }
-                                                                                }
-                                                                                if (FindText(QX, QY, 0, 0, 1919, 1030, 0, 0, twoplustwo)) {
-                                                                                    ; Answer is 4
-                                                                                    if (FindText(AX, AY, 0, 0, 1919, 1030, 0, 0, four)) {
-                                                                                        sleep 100
-                                                                                        ;Critical, Off
-                                                                                        SendMessageClick(AX, AY)
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, essences, on
-                                                                                        ;SetTimer, buffdaddystone, on
-                                                                                        ;SetTimer, buffpetscroll, on
-                                                                                        settimer, checkweight, on
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, snapshot, on
-                                                                                        ;settimer, DPSLoop, on
-                                                                                        return
-                                                                                    }
-                                                                                }
-                                                                                if (FindText(QX, QY, 0, 0, 1919, 1030, 0, 0, fourplustwo)) {
-                                                                                    ; Answer is 4
-                                                                                    if (FindText(AX, AY, 0, 0, 1919, 1030, 0, 0, six)) {
-                                                                                        sleep 100
-                                                                                        ;Critical, Off
-                                                                                        SendMessageClick(AX, AY)
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, essences, on
-                                                                                        ;SetTimer, buffdaddystone, on
-                                                                                        ;SetTimer, buffpetscroll, on
-                                                                                        settimer, checkweight, on
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, snapshot, on
-                                                                                        ;settimer, DPSLoop, on
-                                                                                        return
-                                                                                    }
-                                                                                }
-                                                                                if (FindText(QX, QY, 0, 0, 1919, 1030, 0, 0, fourplusthree)) {
-                                                                                    ; Answer is 4
-                                                                                    if (FindText(AX, AY, 0, 0, 1919, 1030, 0, 0, seven)) {
-                                                                                        sleep 100
-                                                                                        ;Critical, Off
-                                                                                        SendMessageClick(AX, AY)
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, essences, on
-                                                                                        ;SetTimer, buffdaddystone, on
-                                                                                        ;SetTimer, buffpetscroll, on
-                                                                                        settimer, checkweight, on
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, snapshot, on
-                                                                                        ;settimer, DPSLoop, on
-                                                                                        return
-                                                                                    }
-                                                                                }
-                                                                                if (FindText(QX, QY, 0, 0, 1919, 1030, 0, 0, presswaterpixie)) {
-                                                                                    ; Find and click waterpixie
-                                                                                    if (FindText(AX, AY, 0, 0, 1919, 1030, 0, 0, waterpixie)) {
-                                                                                        sleep 100
-                                                                                        ;Critical, Off
-                                                                                        SendMessageClick(AX, AY)
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, essences, on
-                                                                                        ;SetTimer, buffdaddystone, on
-                                                                                        ;SetTimer, buffpetscroll, on
-                                                                                        settimer, checkweight, on
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, snapshot, on
-                                                                                        ;settimer, DPSLoop, on
-                                                                                        return
-                                                                                    }
-                                                                                }
-                                                                                if (FindText(QX, QY, 0, 0, 1919, 1030, 0, 0, presssiren)) {
-                                                                                    ; Find and click waterpixie
-                                                                                    if (FindText(AX, AY, 0, 0, 1919, 1030, 0, 0, siren)) {
-                                                                                        sleep 100
-                                                                                        ;Critical, Off
-                                                                                        SendMessageClick(AX, AY)
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, essences, on
-                                                                                        ;SetTimer, buffdaddystone, on
-                                                                                        ;SetTimer, buffpetscroll, on
-                                                                                        settimer, checkweight, on
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, snapshot, on
-                                                                                        ;settimer, DPSLoop, on
-                                                                                        return
-                                                                                    }
-                                                                                }
-                                                                                if (FindText(QX, QY, 0, 0, 1919, 1030, 0, 0, pressyeti)) {
-                                                                                    ; Find and click yeti
-                                                                                    if (FindText(AX, AY, 0, 0, 1919, 1030, 0, 0, yeti)) {
-                                                                                        sleep 100
-                                                                                        ;Critical, Off
-                                                                                        SendMessageClick(AX, AY)
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, essences, on
-                                                                                        ;SetTimer, buffdaddystone, on
-                                                                                        ;SetTimer, buffpetscroll, on
-                                                                                        settimer, checkweight, on
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, snapshot, on
-                                                                                        ;settimer, DPSLoop, on
-                                                                                        return
-                                                                                    }
-                                                                                }
-                                                                                if (FindText(QX, QY, 0, 0, 1919, 1030, 0, 0, pressorc)) {
-                                                                                    ; Find and click orc
-                                                                                    if (FindText(AX, AY, 0, 0, 1919, 1030, 0, 0, orc)) {
-                                                                                        sleep 100
-                                                                                        ;Critical, Off
-                                                                                        SendMessageClick(AX, AY)
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, essences, on
-                                                                                        ;SetTimer, buffdaddystone, on
-                                                                                        ;SetTimer, buffpetscroll, on
-                                                                                        settimer, checkweight, on
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, snapshot, on
-                                                                                        ;settimer, DPSLoop, on
-                                                                                        return
-                                                                                    }
-                                                                                }
-                                                                                if (FindText(QX, QY, 0, 0, 1919, 1030, 0, 0, pressskeleton)) {
-                                                                                    ; Find and click skeleton
-                                                                                    if (FindText(AX, AY, 0, 0, 1919, 1030, 0, 0, skeleton)) {
-                                                                                        sleep 100
-                                                                                        ;Critical, Off
-                                                                                        SendMessageClick(AX, AY)
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, essences, on
-                                                                                        ;SetTimer, buffdaddystone, on
-                                                                                        ;SetTimer, buffpetscroll, on
-                                                                                        settimer, checkweight, on
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, snapshot, on
-                                                                                        ;settimer, DPSLoop, on
-                                                                                        return
-                                                                                    }
-                                                                                }
-                                                                                if (FindText(QX, QY, 0, 0, 1919, 1030, 0, 0, pressoctopus)) {
-                                                                                    ; Find and click skeleton
-                                                                                    if (FindText(AX, AY, 0, 0, 1919, 1030, 0, 0, octopus)) {
-                                                                                        sleep 100
-                                                                                        ;Critical, Off
-                                                                                        SendMessageClick(AX, AY)
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, essences, on
-                                                                                        ;SetTimer, buffdaddystone, on
-                                                                                        ;SetTimer, buffpetscroll, on
-                                                                                        settimer, checkweight, on
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, snapshot, on
-                                                                                        ;settimer, DPSLoop, on
-                                                                                        return
-                                                                                    }
-                                                                                }
-                                                                                if (FindText(QX, QY, 0, 0, 1919, 1030, 0, 0, pressA)) {
-                                                                                    ; Find and click A
-                                                                                    if (FindText(AX, AY, 0, 0, 1919, 1030, 0, 0, A)) {
-                                                                                        sleep 100
-                                                                                        ;Critical, Off
-                                                                                        SendMessageClick(AX, AY)
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, essences, on
-                                                                                        ;SetTimer, buffdaddystone, on
-                                                                                        ;SetTimer, buffpetscroll, on
-                                                                                        settimer, checkweight, on
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, snapshot, on
-                                                                                        ;settimer, DPSLoop, on
-                                                                                        return
-                                                                                    }
-                                                                                }
-                                                                                if (FindText(QX, QY, 0, 0, 1919, 1030, 0, 0, pressB)) {
-                                                                                    ; Find and click B
-                                                                                    if (FindText(AX, AY, 0, 0, 1919, 1030, 0, 0, B)) {
-                                                                                        sleep 100
-                                                                                        ;Critical, Off
-                                                                                        SendMessageClick(AX, AY)
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, essences, on
-                                                                                        ;SetTimer, buffdaddystone, on
-                                                                                        ;SetTimer, buffpetscroll, on
-                                                                                        settimer, checkweight, on
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, snapshot, on
-                                                                                        ;settimer, DPSLoop, on
-                                                                                        return
-                                                                                    }
-                                                                                }
-                                                                                if (FindText(QX, QY, 0, 0, 1919, 1030, 0, 0, pressC)) {
-                                                                                    ; Find and click C
-                                                                                    if (FindText(AX, AY, 0, 0, 1919, 1030, 0, 0, C)) {
-                                                                                        sleep 100
-                                                                                        ;Critical, Off
-                                                                                        SendMessageClick(AX, AY)
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, essences, on
-                                                                                        ;SetTimer, buffdaddystone, on
-                                                                                        ;SetTimer, buffpetscroll, on
-                                                                                        settimer, checkweight, on
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, snapshot, on
-                                                                                        ;settimer, DPSLoop, on
-                                                                                        return
-                                                                                    }
-                                                                                }
-                                                                                if (FindText(QX, QY, 0, 0, 1919, 1030, 0, 0, pressD)) {
-                                                                                    ; Find and click D
-
-                                                                                    if (FindText(AX, AY, 0, 0, 1919, 1030, 0, 0, Dee)) {
-                                                                                        sleep 100
-                                                                                        ;Critical, Off
-                                                                                        SendMessageClick(AX, AY)
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, essences, on
-                                                                                        ;SetTimer, buffdaddystone, on
-                                                                                        ;SetTimer, buffpetscroll, on
-                                                                                        settimer, checkweight, on
-                                                                                        sleep, 200
-                                                                                        ;SetTimer, snapshot, on
-                                                                                        ;settimer, DPSLoop, on
-                                                                                        return
-                                                                                    }
-                                                                                }
-                                                                                ;msgbox, searching for tower
                                                                                 Gosub, PylonClicker
                                                                             }
-
-                                                                            ;msgbox, escaped
-                                                                        return
-                                                                    }
-                                                                    return
+                                                                            return
+                                                                        }
                                                                     essences:
                                                                         sleep 250
                                                                         ControlSend ,, {6}, ahk_id %win1%
@@ -10280,20 +10003,20 @@ AssignHealKeys:
 
                                                                         if (buffdaddyok:=FindText(buffdaddyX, buffdaddyY, 0, 0, 1919, 1030, 0, 0, buffdaddy))
                                                                         {
-                                                                            SendMessageClick(buffdaddyX, buffdaddyY)
+                                                                            ControlClick, x%buffdaddyX% y%buffdaddyY%, ahk_id %win1%,, Left, 1
                                                                         }
                                                                         sleep, 150
                                                                         refreshscroll:="|<>*140$23.zzVhzsM3z707s00CA00U001M0S51so8ATt8kDVns806DM0A0k0M3U2"
 
                                                                         if (brefreshscrollok:=FindText(refreshscrollX, refreshscrollY, 0, 0, 1919, 1030, 0, 0, refreshscroll))
                                                                         {
-                                                                            SendMessageClick(refreshscrollX, refreshscrollY)
+                                                                            ControlClick, x%refreshscrollX% y%refreshscrollY%, ahk_id %win1%,, Left, 1
                                                                         }
                                                                         sleep, 150
                                                                         windpotionlvl5:="|<>*149$20.yzvpk3zvzzzTzyU1zw0Ty03z00zk07w00s"
                                                                         if (windpotionlvl5ok:=FindText(windpotionlvl5X, windpotionlvl5Y, 0, 0, 1919, 1030, 0, 0, windpotionlvl5))
                                                                         {
-                                                                            SendMessageClick(windpotionlvl5X, windpotionlvl5Y)
+                                                                            ControlClick, x%windpotionlvl5X% y%windpotionlvl5Y%, ahk_id %win1%,, Left, 1
                                                                         }
                                                                     return
                                                                     buffpetscroll:
@@ -10301,7 +10024,7 @@ AssignHealKeys:
                                                                         refreshscroll:="|<>*140$23.zzVhzsM3z707s00CA00U001M0S51so8ATt8kDVns806DM0A0k0M3U2"
                                                                         if (brefreshscroll2ok:=FindText(refreshscroll2X, refreshscroll2Y, 0, 0, 1919, 1030, 0, 0, refreshscroll))
                                                                         {
-                                                                            SendMessageClick(refreshscroll2X, refreshscroll2Y)
+                                                                            ControlClick, x%refreshscroll2X% y%refreshscroll2Y%, ahk_id %win1%,, Left, 1
                                                                         }
                                                                         sleep, 150
                                                                     return
