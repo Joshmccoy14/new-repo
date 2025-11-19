@@ -10341,12 +10341,14 @@ AssignHealKeys:
 
                                                                         sellscroll:="|<>#47@0.83$7.2DcYG8YD1FUE8h7E"
                                                                         sellscroll.="|<>*133$27.zzzzzzzzzzzzs7zzsDzzkzzzkq0zkE07ss01w800oM01z0M0AQDk00290I0F018280E0D0010w0003M000N00M34062N008/M070Q070107L007uw"
+                                                                        sellscroll.="|<>*141$29.zzzzzzzzU3zzwDjzwTzjz3M0Tkk00yC00RkU070Q01z06037kz083W90Ic4E0G08U3UQD009sD0000BU0GUNU0T0l03U9Y0My"
 
                                                                         if (sellscrollok:=FindText(sellscrollX, sellscrollY, 0, 0, 1919, 1030, 0, 0, sellscroll))
                                                                         {
+                                                                            ;ToolTip, found scroll
                                                                             ;WinActivate, ahk_id %win1%  
                                                                             sleep, 1000
-                                                                            SendMessageClick(sellscrollX, sellscrollY)
+                                                                            ControlClick, x%sellscrollX% y%sellscrollY%, ahk_id %win1%,, Left, 1
                                                                             sleep, 1000
                                                                             Loop,
                                                                             {
@@ -10354,7 +10356,7 @@ AssignHealKeys:
                                                                                 sellbutton.="|<>#74@0.83$16.l01A06bjAnUnv1A74k4Fzc"
                                                                                 if (sellbuttonok:=FindText(sellbuttonX, sellbuttonY, 0, 0, 1919, 1030, 0, 0, sellbutton))
                                                                                 {
-                                                                                    SendMessageClick(sellbuttonX, sellbuttonY)
+                                                                                    ControlClick, x%sellbuttonX% y%sellbuttonY%, ahk_id %win1%,, Left, 1
                                                                                     Sleep, 1000
                                                                                     break
                                                                                 }
