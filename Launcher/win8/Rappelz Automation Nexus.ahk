@@ -12044,15 +12044,16 @@ AssignHealKeys:
                                                                             clickX += clickOffsetX
                                                                             clickY -= clickOffsetY
 
-                                                                            sendmessage, 0x201, 1, % (clickY << 16) | (clickX & 0xFFFF), , ahk_id %TargetGameWindow% ; WM_LBUTTONDOWN
-                                                                            Sleep, 50
-                                                                            sendmessage, 0x202, 0, % (clickY << 16) | (clickX & 0xFFFF), , ahk_id %TargetGameWindow% ; WM_LBUTTONUP
-                                                                            sleep, 50
+                                                                            ControlClick, x%clickX% y%clickY%, ahk_id %NavTargetGameWindow%,, Left, 1
+
                                                                             decopet:="|<>7D7D7D-0.90$62.w0000Y00w18U0008009UG5vrhzMj2/zVGV+2Z+EaZ8TkUbdLyDTG748/+JM264WEX+mYm0UVD7jSbh8w8DS"
 
                                                                             if (ok:=FindText(X, Y, 1466-150000, 248-150000, 1466+150000, 248+150000, 0, 0, decopet))
                                                                             {
-                                                                                sendmessage, 0x1
+                                                                                ControlSend,, {Tab down}, ahk_id %NavTargetGameWindow%
+                                                                                Sleep, 50
+                                                                                ControlSend,, {Tab up}, ahk_id %NavTargetGameWindow%
+                                                                                Sleep, 100
                                                                             }
                                                                         }
                                                                     }
