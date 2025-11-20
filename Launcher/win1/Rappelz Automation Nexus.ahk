@@ -1053,7 +1053,9 @@ CreateCombinedGUI:
     ; Network Tab - Client Section
     Gui, Add, Text, x20 y470 w200 h20, === CLIENT CONTROLS ===
     Gui, Add, Text, x20 y495 w100 h20, Server Address:
-    Gui, Add, Edit, x125 y495 w200 h20 vsrvAddress, localhost
+    Gui, Add, Edit, x125 y495 w150 h20 vsrvAddress, localhost
+    Gui, Add, Text, x285 y495 w30 h20, Port:
+    Gui, Add, Edit, x315 y495 w60 h20 vsrvPort, 27015
     Gui, Add, Button, x20 y525 w200 h25 gbtnConnect vbtnConnect, Connect to Server
     Gui, Add, Checkbox, x230 y525 w200 h25 vchkAutoReconnect Checked, Auto-reconnect every 15s
     Gui, Add, Text, x20 y555 w200 h20 vlblStatus, Not Connected
@@ -3398,7 +3400,7 @@ Farming:
         SetTimer, essences, 30000
         SetTimer, buffdaddystone, 2000000
         SetTimer, buffpetscroll, 2017000
-        settimer, checkweight, 1000
+        settimer, checkweight, 250
         SetTimer, snapshot, 5000
         ;SetTimer, farmzone, 100
     }
@@ -6199,6 +6201,79 @@ AssignHealKeys:
                                         ToolTip,,,,4
                                     return
 
+                                    ; Function to start all buff timers (called via network command)
+                                    ; This mimics StartAllTimers but without the MsgBox prompt
+                                    StartAllBuffTimers() {
+                                        global win1, KeyCombination1, KeyDelay1, TimerInterval1
+                                        global KeyCombination2, KeyDelay2, TimerInterval2
+                                        global KeyCombination3, KeyDelay3, TimerInterval3
+                                        global IsRunning1, IsRunning2, IsRunning3
+                                        global KeySequence1, KeySequence2, KeySequence3
+                                        global NextExecutionTime1, NextExecutionTime2, NextExecutionTime3
+                                        global SkipInitial1, dtbuff, gnollbuff, gnollBuffInterval
+                                        
+                                        ; Validate that window is selected
+                                        if (win1 = "") {
+                                            return
+                                        }
+                                        
+                                        ; Auto-activate DT buff (no prompt)
+                                        if (!dtbuff) {
+                                            dtbuff := true
+                                            GuiControl,, dtbuff, 1
+                                            deathtyrant()
+                                            SetTimer, deathtyrant, 3000000
+                                        }
+                                        
+                                        ; Start Sequence 1 if configured and not already running
+                                        if (KeyCombination1 && !IsRunning1) {
+                                            KeySequence1 := StrSplit(KeyCombination1, "|")
+                                            SetTimer, CheckExecutions, 50
+                                            IsRunning1 := true
+                                            GuiControl,, StartStop1, Stop1
+                                            UpdateStatus1("Running: " . KeyCombination1)
+                                            if (!SkipInitial1)
+                                                Gosub, SendKeys1
+                                            NextExecutionTime1 := A_TickCount + (TimerInterval1 * 60 * 1000)
+                                        }
+                                        
+                                        ; Start Sequence 2 if configured and not already running
+                                        if (KeyCombination2 && !IsRunning2) {
+                                            KeySequence2 := StrSplit(KeyCombination2, "|")
+                                            SetTimer, CheckExecutions, 50
+                                            IsRunning2 := true
+                                            GuiControl,, StartStop2, Stop2
+                                            UpdateStatus2("Running: " . KeyCombination2)
+                                            if (!SkipInitial1)
+                                                Gosub, SendKeys2
+                                            NextExecutionTime2 := A_TickCount + (TimerInterval2 * 60 * 1000)
+                                        }
+                                        
+                                        ; Start Sequence 3 if configured and not already running
+                                        if (KeyCombination3 && !IsRunning3) {
+                                            KeySequence3 := StrSplit(KeyCombination3, "|")
+                                            SetTimer, CheckExecutions, 50
+                                            IsRunning3 := true
+                                            GuiControl,, StartStop3, Stop3
+                                            UpdateStatus3("Running: " . KeyCombination3)
+                                            if (!SkipInitial1)
+                                                Gosub, SendKeys3
+                                            NextExecutionTime3 := A_TickCount + (TimerInterval3 * 60 * 1000)
+                                        }
+                                        
+                                        ; Auto-activate Gnoll buff after 35 seconds (no prompt)
+                                        SetTimer, ActivateGnollBuffDelayed, -35000
+                                    }
+                                    
+                                    ActivateGnollBuffDelayed:
+                                        if (!gnollbuff) {
+                                            gnollbuff := true
+                                            GuiControl,, gnollbuff, 1
+                                            gnoll()
+                                            SetTimer, gnoll, %gnollBuffInterval%
+                                        }
+                                    return
+
                                     SendKeys1:
                                         ; Check if Critical mode is enabled - pause until disabled
                                         while (CriticalModeEnabled) {
@@ -7683,20 +7758,7 @@ AssignHealKeys:
                                                                                                 }
                                                                                                 if (arrived)
                                                                                                 {
-                                                                                                    ; SendMessageClick3(pylonPos1X, pylonPos1Y, win1)
-                                                                                                    ; Sleep, 100
-                                                                                                    ; SendMessageClick3(pylonPos2X, pylonPos2Y, win1)
-                                                                                                    ; Sleep, 100
-                                                                                                    ; SendMessageClick3(pylonPos2X, pylonPos2Y, win1)
-                                                                                                    ; Sleep, 100
-                                                                                                    ; SendMessageClick3(pylonPos2X, pylonPos2Y, win1)
-                                                                                                    ; Sleep, 100
-                                                                                                    ; decopetorplayertargetted:="|<>7D7D7D-0.90$71.000000000000000000000000000000000000000000000000S0000G00S0U0W0000U00a1012xvqzgLV5zU25+4c+Id2OI04DsEHofz7jc08QEUgdJU8ME0F8FZNGN0EEU0wSxuSoXkUxk00000000000000000000000000000000000000000000000000000000000E"
-
-                                                                                                    ; decopetorplayertargetted.="|<>*86$56.zzzzzzzzzzzzzzzzzzzzzzzzzzzzzyTzzzrjvzz3zzzzlwTzUTxyRyCDzk3m8WTl7zs0QFF7y3zw03081zlzy00zkTzsDz00TyDzwFzU0DzrzyCDk07zzzz7lw03zzzzvyzU1y000zzzw0zzzzzzzzcTzzzzzzzxDzzzzzzzzbzzzzzzzzzzzzzzzzy"
-
-                                                                                                    ; if (ok:=FindText(X, Y, 0, 0, A_ScreenWidth, A_ScreenHeight, 0, 0, decopetorplayertargetted))
-                                                                                                    ; {
+                                                                                  
                                                                                                     sendmessage, 0x100, ox1b, 0, , ahk_id %win1% ; esc_KEYDOWN
                                                                                                     Sleep, 50
                                                                                                     sendmessage, 0x101, ox1b, 0, , ahk_id %win1% ; esc_KEYUP
@@ -8953,6 +9015,57 @@ AssignHealKeys:
                                                                                     return
                                                                                 }
 
+                                                                                ; ========= COMBAT FUNCTION =========
+                                                                                ; Performs a combat sequence for a specified duration
+                                                                                ; Loops: DynamicHealthCheck -> TryCastCC -> TryCastDPSSkills
+                                                                                ; Then navigates back to group if DPS navigation is enabled
+                                                                                PerformCombat(durationSeconds := 10) {
+                                                                                    global dpsNavEnabled, dpsNavTargetX, dpsNavTargetY, dpsNavRadius
+                                                                                    global win1, arrived
+                                                                                    
+                                                                                    startTime := A_TickCount
+                                                                                    endTime := startTime + (durationSeconds * 1000)
+                                                                                    
+                                                                                    ; Combat loop
+                                                                                    Loop {
+                                                                                        ; Check if duration has elapsed
+                                                                                        if (A_TickCount >= endTime)
+                                                                                            break
+                                                                                        
+                                                                                        ; Perform combat actions
+                                                                                        gosub, DynamicHealthCheck
+                                                                                        Sleep, 50
+                                                                                        TryCastCC()
+                                                                                        Sleep, 50
+                                                                                        TryCastDPSSkills()
+                                                                                        Sleep, 50
+                                                                                    }
+                                                                                    
+                                                                                    ; After combat, navigate back to group if DPS nav is enabled
+                                                                                    if (dpsNavEnabled && dpsNavTargetX != "" && dpsNavTargetY != "") {
+                                                                                        Loop {
+                                                                                            CheckDPSNavigation()
+                                                                                            GetNavCurrentCoordinates(currentX, currentY)
+                                                                                            if (Abs(currentX - dpsNavTargetX) <= dpsNavRadius && Abs(currentY - dpsNavTargetY) <= dpsNavRadius) {
+                                                                                                ;ControlSend,, {tab}, ahk_id %win1%
+                                                                                                break
+                                                                                            }
+                                                                                            Sleep, 100
+                                                                                        }
+                                                                                        
+                                                                                        ; Press Escape twice when arrived
+                                                                                        if (arrived) {
+                                                                                            sendmessage, 0x100, 0x1b, 0, , ahk_id %win1% ; ESC_KEYDOWN
+                                                                                            Sleep, 50
+                                                                                            sendmessage, 0x101, 0x1b, 0, , ahk_id %win1% ; ESC_KEYUP
+                                                                                            sendmessage, 0x100, 0x1b, 0, , ahk_id %win1% ; ESC_KEYDOWN
+                                                                                            Sleep, 50
+                                                                                            sendmessage, 0x101, 0x1b, 0, , ahk_id %win1% ; ESC_KEYUP
+                                                                                            arrived := false
+                                                                                        }
+                                                                                    }
+                                                                                }
+
                                                                                 ; ========= DPS SKILL CASTING FUNCTION =========
                                                                                 TryCastDPSSkills() {
                                                                                     global dpsPatterns, dpsPatternKeys, dpsPriorities
@@ -10070,9 +10183,9 @@ AssignHealKeys:
                                                                         {
                                                                             ;ToolTip, found scroll
                                                                             ;WinActivate, ahk_id %win1%  
-                                                                            sleep, 1000
+                                                                            ;sleep, 1000
                                                                             ControlClick, x%sellscrollX% y%sellscrollY%, ahk_id %win1%,, Left, 1
-                                                                            sleep, 1000
+                                                                            sleep, 2000
                                                                             Loop,
                                                                             {
                                                                                 sellbutton:="|<>#75@0.83$16.V01800biAG0Hu1824E4Fvc"
@@ -10080,7 +10193,7 @@ AssignHealKeys:
                                                                                 if (sellbuttonok:=FindText(sellbuttonX, sellbuttonY, 0, 0, 1919, 1030, 0, 0, sellbutton))
                                                                                 {
                                                                                     ControlClick, x%sellbuttonX% y%sellbuttonY%, ahk_id %win1%,, Left, 1
-                                                                                    Sleep, 1000
+                                                                                    Sleep, 75
                                                                                     break
                                                                                 }
                                                                             } until sellbuttonok!
@@ -13323,11 +13436,21 @@ AssignHealKeys:
                                                                 exampleText .= " checkmobhealth - Check if mob health bar exists`n"
                                                                 exampleText .= " farmuntilpattern,patternName - Tab+kill mobs until pattern shows`n`n"
 
+                                                                exampleText .= "NETWORK COMMANDS (AHKsock):`n"
+                                                                exampleText .= " netskill,key,target - Send key to specific windows via network`n"
+                                                                exampleText .= "   Examples: netskill,1,win1 | netskill,3,win1 win2 | netskill,F5,all`n"
+                                                                exampleText .= " netcombat,duration,target - Start combat on specific windows`n"
+                                                                exampleText .= "   Examples: netcombat,10,win1 | netcombat,15,win2 win3 | netcombat,20,all`n"
+                                                                exampleText .= " netnav,target,destination - Navigate to waypoint or node`n"
+                                                                exampleText .= "   Examples: netnav,all,WP 13 | netnav,win1 win2,NODE 3 | netnav,win1,WP 5`n`n"
+
                                                                 exampleText .= "NAVIGATION:`n"
                                                                 exampleText .= " gotowaypoint,waypointNum - Jump to specific waypoint`n"
                                                                 exampleText .= " goto,waypointNum - Same as gotowaypoint`n"
                                                                 exampleText .= " nextwaypoint - Skip to next waypoint`n"
-                                                                exampleText .= " previouswaypoint - Go back one waypoint`n`n"
+                                                                exampleText .= " previouswaypoint - Go back one waypoint`n"
+                                                                exampleText .= " netnav,target,destination - Network navigation (WP/NODE)`n"
+                                                                exampleText .= "   Examples: netnav,all,WP 13 | netnav,win1,NODE 5`n`n"
 
                                                                 exampleText .= "SPECIAL:`n"
                                                                 exampleText .= " sendhotkey,key - Trigger hotkey in other scripts`n"
@@ -13340,7 +13463,16 @@ AssignHealKeys:
                                                                 exampleText .= "Use in waypoint commands field`n"
                                                                 exampleText .= "or in route .ini files"
 
-                                                                MsgBox, 0, Available Commands, %exampleText%
+                                                                ; Create scrollable GUI instead of MsgBox
+                                                                Gui, Examples:New
+                                                                Gui, Examples:Add, Edit, x10 y10 w600 h500 vExamplesDisplay ReadOnly +VScroll, %exampleText%
+                                                                Gui, Examples:Add, Button, x260 y520 w100 gExamplesClose Default, Close
+                                                                Gui, Examples:Show, w620 h560, Available Commands
+                                                            return
+                                                            
+                                                            ExamplesClose:
+                                                            ExamplesGuiClose:
+                                                                Gui, Examples:Destroy
                                                             return
 
                                                             CloseCommandGUI:
@@ -15791,6 +15923,185 @@ AssignHealKeys:
                                                                 } else if (commandTypeLower = "CheckAndExecuteTimerFlags()"){
                                                                     CheckAndExecuteTimerFlags()
 
+                                                                } else if (commandTypeLower = "netskill") {
+                                                                    ; Send a key press to specific windows via AHKsock network
+                                                                    ; Usage: netskill,key,target
+                                                                    ; Examples: 
+                                                                    ;   netskill,1,win1        - Send key "1" to win1 only
+                                                                    ;   netskill,3,win1 win2   - Send key "3" to win1 and win2
+                                                                    ;   netskill,F5,all        - Send F5 to all connected clients
+                                                                    if (commandParts.MaxIndex() >= 3) {
+                                                                        keyToSend := Trim(commandParts[2])
+                                                                        targetSpec := Trim(commandParts[3])
+                                                                        
+                                                                        ; Check if target is "all"
+                                                                        if (targetSpec = "all") {
+                                                                            ; Send to all connected clients
+                                                                            SendCommandToAll("PRESS:" . keyToSend)
+                                                                        } else {
+                                                                            ; Parse space-separated window list (e.g., "win1 win2 win4")
+                                                                            targets := StrSplit(targetSpec, " ")
+                                                                            for idx, winTarget in targets {
+                                                                                winTarget := Trim(winTarget)
+                                                                                if (winTarget != "") {
+                                                                                    ; Send CTRLSEND command to specific window
+                                                                                    SendCommandToAll("CTRLSEND:" . winTarget . ":|:" . keyToSend)
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    } else {
+                                                                        MsgBox, 0, Error, netskill requires 2 parameters: key`,target`n`nExamples:`nnetskill`,1`,win1`nnetskill`,3`,win1 win2`nnetskill`,F5`,all, 3
+                                                                    }
+                                                                } else if (commandTypeLower = "netcombat") {
+                                                                    ; Send combat command to specific windows via AHKsock network
+                                                                    ; Usage: netcombat,duration,target
+                                                                    ; Examples: 
+                                                                    ;   netcombat,10,win1         - Combat for 10 seconds on win1 only
+                                                                    ;   netcombat,15,win1 win2    - Combat for 15 seconds on win1 and win2
+                                                                    ;   netcombat,20,all          - Combat for 20 seconds on all connected clients
+                                                                    if (commandParts.MaxIndex() >= 3) {
+                                                                        durationSecs := Trim(commandParts[2])
+                                                                        targetSpec := Trim(commandParts[3])
+                                                                        
+                                                                        ; Check if target is "all"
+                                                                        if (targetSpec = "all") {
+                                                                            ; Send combat command to all connected clients
+                                                                            SendCommandToAll("CALL:PerformCombat(" . durationSecs . ")")
+                                                                        } else {
+                                                                            ; Parse space-separated window list (e.g., "win1 win2 win4")
+                                                                            targets := StrSplit(targetSpec, " ")
+                                                                            for idx, winTarget in targets {
+                                                                                winTarget := Trim(winTarget)
+                                                                                if (winTarget != "") {
+                                                                                    ; Send combat command to specific window
+                                                                                    ; Note: For targeted commands, we use CALL which all clients receive,
+                                                                                    ; but you may want to implement window-specific filtering
+                                                                                    SendCommandToAll("CALL:PerformCombat(" . durationSecs . ")")
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    } else {
+                                                                        MsgBox, 0, Error, netcombat requires 2 parameters: duration`,target`n`nExamples:`nnetcombat`,10`,win1`nnetcombat`,15`,win1 win2`nnetcombat`,20`,all, 3
+                                                                    }
+                                                                } else if (commandTypeLower = "netnav") {
+                                                                    ; Send navigation command to specific windows via AHKsock network
+                                                                    ; Usage: netnav,target,destination
+                                                                    ; Examples: 
+                                                                    ;   netnav,all,WP 13          - All clients go to waypoint 13
+                                                                    ;   netnav,win1 win2,NODE 3   - win1 and win2 click at node 3
+                                                                    ;   netnav,win1,WP 5          - win1 goes to waypoint 5
+                                                                    if (commandParts.MaxIndex() >= 3) {
+                                                                        targetSpec := Trim(commandParts[2])
+                                                                        destination := Trim(commandParts[3])
+                                                                        
+                                                                        ; Parse destination type (WP or NODE)
+                                                                        navCommand := ""
+                                                                        if (RegExMatch(destination, "i)^WP\s+(\d+)$", match)) {
+                                                                            ; Waypoint navigation
+                                                                            waypointNum := match1
+                                                                            navCommand := "CALL:GoToWaypoint(" . waypointNum . ")"
+                                                                        } else if (RegExMatch(destination, "i)^NODE\s+(\d+)$", match)) {
+                                                                            ; Node click navigation
+                                                                            nodeNum := match1
+                                                                            navCommand := "CALL:clickatnode(" . nodeNum . ")"
+                                                                        } else {
+                                                                            MsgBox, 0, Error, Invalid destination format. Use 'WP #' or 'NODE #'`n`nExamples:`nnetnav`,all`,WP 13`nnetnav`,win1 win2`,NODE 3, 3
+                                                                            return
+                                                                        }
+                                                                        
+                                                                        ; Check if target is "all"
+                                                                        if (targetSpec = "all") {
+                                                                            ; Send navigation command to all connected clients
+                                                                            SendCommandToAll(navCommand)
+                                                                        } else {
+                                                                            ; Parse space-separated window list (e.g., "win1 win2 win4")
+                                                                            targets := StrSplit(targetSpec, " ")
+                                                                            for idx, winTarget in targets {
+                                                                                winTarget := Trim(winTarget)
+                                                                                if (winTarget != "") {
+                                                                                    ; Send navigation command
+                                                                                    SendCommandToAll(navCommand)
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    } else {
+                                                                        MsgBox, 0, Error, netnav requires 2 parameters: target`,destination`n`nExamples:`nnetnav`,all`,WP 13`nnetnav`,win1 win2`,NODE 3`nnetnav`,win1`,WP 5, 3
+                                                                    }
+                                                                } else if (commandTypeLower = "nethealing") {
+                                                                    ; Control healing on specific windows via AHKsock network
+                                                                    ; Usage: nethealing,target,action
+                                                                    ; Examples: 
+                                                                    ;   nethealing,all,start         - Start healing on all clients
+                                                                    ;   nethealing,win1 win2,stop    - Stop healing on win1 and win2
+                                                                    ;   nethealing,win1,start        - Start healing on win1 only
+                                                                    if (commandParts.MaxIndex() >= 3) {
+                                                                        targetSpec := Trim(commandParts[2])
+                                                                        action := Trim(commandParts[3])
+                                                                        
+                                                                        ; Validate action
+                                                                        actionLower := ""
+                                                                        StringLower, actionLower, action
+                                                                        
+                                                                        if (actionLower != "start" && actionLower != "stop") {
+                                                                            MsgBox, 0, Error, Invalid action. Use 'start' or 'stop'`n`nExamples:`nnethealing`,all`,start`nnethealing`,win1 win2`,stop, 3
+                                                                            return
+                                                                        }
+                                                                        
+                                                                        ; Create the healing command
+                                                                        if (actionLower = "start") {
+                                                                            healCommand := "CALL:StartHealer"
+                                                                        } else {
+                                                                            healCommand := "CALL:StopHealer"
+                                                                        }
+                                                                        
+                                                                        ; Check if target is "all"
+                                                                        if (targetSpec = "all") {
+                                                                            ; Send healing command to all connected clients
+                                                                            SendCommandToAll(healCommand)
+                                                                        } else {
+                                                                            ; Parse space-separated window list (e.g., "win1 win2 win4")
+                                                                            targets := StrSplit(targetSpec, " ")
+                                                                            for idx, winTarget in targets {
+                                                                                winTarget := Trim(winTarget)
+                                                                                if (winTarget != "") {
+                                                                                    ; Send healing command
+                                                                                    SendCommandToAll(healCommand)
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    } else {
+                                                                        MsgBox, 0, Error, nethealing requires 2 parameters: target`,action`n`nExamples:`nnethealing`,all`,start`nnethealing`,win1 win2`,stop`nnethealing`,win1`,start, 3
+                                                                    }
+                                                                } else if (commandTypeLower = "netbuffs") {
+                                                                    ; Activate all buff timers including DT and Gnoll via AHKsock network
+                                                                    ; Usage: netbuffs,target
+                                                                    ; Examples:
+                                                                    ;   netbuffs,all          - Activate all buffs on all clients
+                                                                    ;   netbuffs,win1 win2    - Activate all buffs on win1 and win2 only
+                                                                    if (commandParts.MaxIndex() >= 2) {
+                                                                        targetSpec := Trim(commandParts[2])
+                                                                        
+                                                                        ; Create the buff activation command (calls StartAllTimers with auto-yes to DT/Gnoll)
+                                                                        buffCommand := "CALL:StartAllBuffTimers"
+                                                                        
+                                                                        ; Check if target is "all"
+                                                                        if (targetSpec = "all") {
+                                                                            ; Send buff command to all connected clients
+                                                                            SendCommandToAll(buffCommand)
+                                                                        } else {
+                                                                            ; Parse space-separated window list (e.g., "win1 win2 win4")
+                                                                            targets := StrSplit(targetSpec, " ")
+                                                                            for idx, winTarget in targets {
+                                                                                winTarget := Trim(winTarget)
+                                                                                if (winTarget != "") {
+                                                                                    ; Send buff command
+                                                                                    SendCommandToAll(buffCommand)
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    } else {
+                                                                        MsgBox, 0, Error, netbuffs requires 1 parameter: target`n`nExamples:`nnetbuffs`,all`nnetbuffs`,win1 win2`nnetbuffs`,win1, 3
+                                                                    }
                                                                 } else {
                                                                     ; Unknown command - show debug info
                                                                     MsgBox, 0, Debug, Unknown command: %commandType%`nFull command: %command%, 3
@@ -23381,12 +23692,15 @@ btnCustom:
     helpText .= "CALL:TryCastDPSSkills`n"
     helpText .= "CALL:TryCastHealingSkill`n"
     helpText .= "CALL:TryCastCC`n"
-    helpText .= "CALL:LoopCastUntilMobDead`n`n"
+    helpText .= "CALL:LoopCastUntilMobDead`n"
+    helpText .= "nethealing,target,action - Control healing`n"
+    helpText .= "netbuffs,target - Activate all buff timers`n`n"
     
     helpText .= "═══ NAVIGATION ═══`n"
     helpText .= "CALL:GoToWaypoint(25)`n"
     helpText .= "CALL:StartTravel (full route)`n"
-    helpText .= "CALL:StopTravel`n`n"
+    helpText .= "CALL:StopTravel`n"
+    helpText .= "netnav,target,WP/NODE - Network navigation`n`n"
     
     helpText .= "═══ BUFFS & UTILITIES ═══`n"
     helpText .= "CALL:gnoll`n"
@@ -23398,22 +23712,53 @@ btnCustom:
     helpText .= "CALL:StartDeathDetection`n"
     helpText .= "CALL:StopDeathDetection`n`n"
     
+    helpText .= "═══ WAYPOINT COMMANDS ═══`n"
+    helpText .= "netskill,key,target - Send key to windows`n"
+    helpText .= "netcombat,duration,target - Combat sequence`n"
+    helpText .= "netnav,target,destination - Navigate to WP/NODE`n"
+    helpText .= "nethealing,target,start/stop - Control healing`n"
+    helpText .= "netbuffs,target - Activate all buff timers`n`n"
+    
     helpText .= "═══ EXAMPLES ═══`n"
     helpText .= "PRESS:1 (hotkey 1 all clients)`n"
     helpText .= "CTRLSEND:Rappelz:|:F5 (F5 to window)`n"
-    helpText .= "LOCAL:CALL:GoToWaypoint(10) (this only)"
+    helpText .= "LOCAL:CALL:GoToWaypoint(10) (this only)`n"
+    helpText .= "netskill,3,win1 win2 (key 3 to win1&2)`n"
+    helpText .= "netcombat,15,all (15s combat all clients)`n"
+    helpText .= "netnav,all,WP 13 (all go to waypoint 13)`n"
+    helpText .= "nethealing,win1 win2,start (start healing)`n"
+    helpText .= "netbuffs,all (activate all buffs including DT & Gnoll)"
     
-    InputBox, cmd, Custom Command, %helpText%,,500,600
-    If (!ErrorLevel && cmd) {
+    ; Create custom GUI with scrollable help text
+    Gui, CustomCmd:New
+    Gui, CustomCmd:Add, Text, x10 y10, Command Help (scroll to view all):
+    Gui, CustomCmd:Add, Edit, x10 y30 w480 h350 vHelpDisplay ReadOnly +VScroll, %helpText%
+    Gui, CustomCmd:Add, Text, x10 y390, Enter command:
+    Gui, CustomCmd:Add, Edit, x10 y410 w480 vCustomCommand
+    Gui, CustomCmd:Add, Button, x10 y440 w100 gCustomCmdOK Default, OK
+    Gui, CustomCmd:Add, Button, x120 y440 w100 gCustomCmdCancel, Cancel
+    Gui, CustomCmd:Show, w500 h480, Custom Command
+    Return
+    
+CustomCmdOK:
+    Gui, CustomCmd:Submit
+    Gui, CustomCmd:Destroy
+    If (CustomCommand != "") {
         ; Check if command should be executed locally
-        If (SubStr(cmd, 1, 6) = "LOCAL:") {
-            localCmd := SubStr(cmd, 7)
+        If (SubStr(CustomCommand, 1, 6) = "LOCAL:") {
+            localCmd := SubStr(CustomCommand, 7)
             AddLog("Executing locally: " localCmd)
             ProcessCommand(localCmd)
         } Else {
-            SendCommandToAll(cmd)
+            SendCommandToAll(CustomCommand)
         }
     }
+    Return
+
+CustomCmdCancel:
+CustomCmdGuiClose:
+    Gui, CustomCmd:Destroy
+    Return
 Return
 
 SendCommandToAll(command) {
@@ -24877,19 +25222,27 @@ across multiple RECEIVED events. This would also demonstrate your application's 
 
         If (btnText = "Connect to Server") {
             GuiControlGet, srvAddress,, srvAddress
+            GuiControlGet, srvPort,, srvPort
             GuiControlGet, AutoReconnect,, chkAutoReconnect
 
-            ; Save server address for auto-reconnect
-            LastServerAddress := srvAddress
-
-            ; Connect to server
-            If (i := AHKsock_Connect(srvAddress, 27016, "ClientEvents")) {
-                AddLog("ERROR: AHKsock_Connect() failed with return value = " i " and ErrorLevel = " ErrorLevel)
-                MsgBox, 0x10, Connection Error, Could not connect to server at: %srvAddress%
+            ; Validate port
+            If (srvPort = "" || srvPort < 1 || srvPort > 65535) {
+                MsgBox, 0x10, Invalid Port, Please enter a valid port number (1-65535)
                 Return
             }
 
-            AddLog("Connecting to " srvAddress ":27016...")
+            ; Save server address and port for auto-reconnect
+            LastServerAddress := srvAddress
+            LastServerPort := srvPort
+
+            ; Connect to server
+            If (i := AHKsock_Connect(srvAddress, srvPort, "ClientEvents")) {
+                AddLog("ERROR: AHKsock_Connect() failed with return value = " i " and ErrorLevel = " ErrorLevel)
+                MsgBox, 0x10, Connection Error, Could not connect to server at: %srvAddress%:%srvPort%
+                Return
+            }
+
+            AddLog("Connecting to " srvAddress ":" srvPort "...")
             GuiControl, Disable, btnConnect
 
         } Else {
@@ -25131,10 +25484,10 @@ across multiple RECEIVED events. This would also demonstrate your application's 
                 Return
             }
 
-            AddLog("Attempting to reconnect to " LastServerAddress "...")
+            AddLog("Attempting to reconnect to " LastServerAddress ":" LastServerPort "...")
 
             ; Try to connect
-            If (i := AHKsock_Connect(LastServerAddress, 27016, "ClientEvents")) {
+            If (i := AHKsock_Connect(LastServerAddress, LastServerPort, "ClientEvents")) {
                 AddLog("Reconnect failed - will retry in 15 seconds")
                 ; Restart timer for next attempt
                 SetTimer, AttemptReconnect, 15000

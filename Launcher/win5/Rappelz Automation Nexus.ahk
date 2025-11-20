@@ -3398,7 +3398,7 @@ Farming:
         SetTimer, essences, 30000
         SetTimer, buffdaddystone, 2000000
         SetTimer, buffpetscroll, 2017000
-        settimer, checkweight, 1000
+        settimer, checkweight, 250
         SetTimer, snapshot, 5000
         ;SetTimer, farmzone, 100
     }
@@ -6199,6 +6199,79 @@ AssignHealKeys:
                                         ToolTip,,,,4
                                     return
 
+                                    ; Function to start all buff timers (called via network command)
+                                    ; This mimics StartAllTimers but without the MsgBox prompt
+                                    StartAllBuffTimers() {
+                                        global win1, KeyCombination1, KeyDelay1, TimerInterval1
+                                        global KeyCombination2, KeyDelay2, TimerInterval2
+                                        global KeyCombination3, KeyDelay3, TimerInterval3
+                                        global IsRunning1, IsRunning2, IsRunning3
+                                        global KeySequence1, KeySequence2, KeySequence3
+                                        global NextExecutionTime1, NextExecutionTime2, NextExecutionTime3
+                                        global SkipInitial1, dtbuff, gnollbuff, gnollBuffInterval
+                                        
+                                        ; Validate that window is selected
+                                        if (win1 = "") {
+                                            return
+                                        }
+                                        
+                                        ; Auto-activate DT buff (no prompt)
+                                        if (!dtbuff) {
+                                            dtbuff := true
+                                            GuiControl,, dtbuff, 1
+                                            deathtyrant()
+                                            SetTimer, deathtyrant, 3000000
+                                        }
+                                        
+                                        ; Start Sequence 1 if configured and not already running
+                                        if (KeyCombination1 && !IsRunning1) {
+                                            KeySequence1 := StrSplit(KeyCombination1, "|")
+                                            SetTimer, CheckExecutions, 50
+                                            IsRunning1 := true
+                                            GuiControl,, StartStop1, Stop1
+                                            UpdateStatus1("Running: " . KeyCombination1)
+                                            if (!SkipInitial1)
+                                                Gosub, SendKeys1
+                                            NextExecutionTime1 := A_TickCount + (TimerInterval1 * 60 * 1000)
+                                        }
+                                        
+                                        ; Start Sequence 2 if configured and not already running
+                                        if (KeyCombination2 && !IsRunning2) {
+                                            KeySequence2 := StrSplit(KeyCombination2, "|")
+                                            SetTimer, CheckExecutions, 50
+                                            IsRunning2 := true
+                                            GuiControl,, StartStop2, Stop2
+                                            UpdateStatus2("Running: " . KeyCombination2)
+                                            if (!SkipInitial1)
+                                                Gosub, SendKeys2
+                                            NextExecutionTime2 := A_TickCount + (TimerInterval2 * 60 * 1000)
+                                        }
+                                        
+                                        ; Start Sequence 3 if configured and not already running
+                                        if (KeyCombination3 && !IsRunning3) {
+                                            KeySequence3 := StrSplit(KeyCombination3, "|")
+                                            SetTimer, CheckExecutions, 50
+                                            IsRunning3 := true
+                                            GuiControl,, StartStop3, Stop3
+                                            UpdateStatus3("Running: " . KeyCombination3)
+                                            if (!SkipInitial1)
+                                                Gosub, SendKeys3
+                                            NextExecutionTime3 := A_TickCount + (TimerInterval3 * 60 * 1000)
+                                        }
+                                        
+                                        ; Auto-activate Gnoll buff after 35 seconds (no prompt)
+                                        SetTimer, ActivateGnollBuffDelayed, -35000
+                                    }
+                                    
+                                    ActivateGnollBuffDelayed:
+                                        if (!gnollbuff) {
+                                            gnollbuff := true
+                                            GuiControl,, gnollbuff, 1
+                                            gnoll()
+                                            SetTimer, gnoll, %gnollBuffInterval%
+                                        }
+                                    return
+
                                     SendKeys1:
                                         ; Check if Critical mode is enabled - pause until disabled
                                         while (CriticalModeEnabled) {
@@ -7683,20 +7756,7 @@ AssignHealKeys:
                                                                                                 }
                                                                                                 if (arrived)
                                                                                                 {
-                                                                                                    ; SendMessageClick3(pylonPos1X, pylonPos1Y, win1)
-                                                                                                    ; Sleep, 100
-                                                                                                    ; SendMessageClick3(pylonPos2X, pylonPos2Y, win1)
-                                                                                                    ; Sleep, 100
-                                                                                                    ; SendMessageClick3(pylonPos2X, pylonPos2Y, win1)
-                                                                                                    ; Sleep, 100
-                                                                                                    ; SendMessageClick3(pylonPos2X, pylonPos2Y, win1)
-                                                                                                    ; Sleep, 100
-                                                                                                    ; decopetorplayertargetted:="|<>7D7D7D-0.90$71.000000000000000000000000000000000000000000000000S0000G00S0U0W0000U00a1012xvqzgLV5zU25+4c+Id2OI04DsEHofz7jc08QEUgdJU8ME0F8FZNGN0EEU0wSxuSoXkUxk00000000000000000000000000000000000000000000000000000000000E"
-
-                                                                                                    ; decopetorplayertargetted.="|<>*86$56.zzzzzzzzzzzzzzzzzzzzzzzzzzzzzyTzzzrjvzz3zzzzlwTzUTxyRyCDzk3m8WTl7zs0QFF7y3zw03081zlzy00zkTzsDz00TyDzwFzU0DzrzyCDk07zzzz7lw03zzzzvyzU1y000zzzw0zzzzzzzzcTzzzzzzzxDzzzzzzzzbzzzzzzzzzzzzzzzzy"
-
-                                                                                                    ; if (ok:=FindText(X, Y, 0, 0, A_ScreenWidth, A_ScreenHeight, 0, 0, decopetorplayertargetted))
-                                                                                                    ; {
+                                                                                  
                                                                                                     sendmessage, 0x100, ox1b, 0, , ahk_id %win1% ; esc_KEYDOWN
                                                                                                     Sleep, 50
                                                                                                     sendmessage, 0x101, ox1b, 0, , ahk_id %win1% ; esc_KEYUP
@@ -8953,6 +9013,57 @@ AssignHealKeys:
                                                                                     return
                                                                                 }
 
+                                                                                ; ========= COMBAT FUNCTION =========
+                                                                                ; Performs a combat sequence for a specified duration
+                                                                                ; Loops: DynamicHealthCheck -> TryCastCC -> TryCastDPSSkills
+                                                                                ; Then navigates back to group if DPS navigation is enabled
+                                                                                PerformCombat(durationSeconds := 10) {
+                                                                                    global dpsNavEnabled, dpsNavTargetX, dpsNavTargetY, dpsNavRadius
+                                                                                    global win1, arrived
+                                                                                    
+                                                                                    startTime := A_TickCount
+                                                                                    endTime := startTime + (durationSeconds * 1000)
+                                                                                    
+                                                                                    ; Combat loop
+                                                                                    Loop {
+                                                                                        ; Check if duration has elapsed
+                                                                                        if (A_TickCount >= endTime)
+                                                                                            break
+                                                                                        
+                                                                                        ; Perform combat actions
+                                                                                        gosub, DynamicHealthCheck
+                                                                                        Sleep, 50
+                                                                                        TryCastCC()
+                                                                                        Sleep, 50
+                                                                                        TryCastDPSSkills()
+                                                                                        Sleep, 50
+                                                                                    }
+                                                                                    
+                                                                                    ; After combat, navigate back to group if DPS nav is enabled
+                                                                                    if (dpsNavEnabled && dpsNavTargetX != "" && dpsNavTargetY != "") {
+                                                                                        Loop {
+                                                                                            CheckDPSNavigation()
+                                                                                            GetNavCurrentCoordinates(currentX, currentY)
+                                                                                            if (Abs(currentX - dpsNavTargetX) <= dpsNavRadius && Abs(currentY - dpsNavTargetY) <= dpsNavRadius) {
+                                                                                                ;ControlSend,, {tab}, ahk_id %win1%
+                                                                                                break
+                                                                                            }
+                                                                                            Sleep, 100
+                                                                                        }
+                                                                                        
+                                                                                        ; Press Escape twice when arrived
+                                                                                        if (arrived) {
+                                                                                            sendmessage, 0x100, 0x1b, 0, , ahk_id %win1% ; ESC_KEYDOWN
+                                                                                            Sleep, 50
+                                                                                            sendmessage, 0x101, 0x1b, 0, , ahk_id %win1% ; ESC_KEYUP
+                                                                                            sendmessage, 0x100, 0x1b, 0, , ahk_id %win1% ; ESC_KEYDOWN
+                                                                                            Sleep, 50
+                                                                                            sendmessage, 0x101, 0x1b, 0, , ahk_id %win1% ; ESC_KEYUP
+                                                                                            arrived := false
+                                                                                        }
+                                                                                    }
+                                                                                }
+
                                                                                 ; ========= DPS SKILL CASTING FUNCTION =========
                                                                                 TryCastDPSSkills() {
                                                                                     global dpsPatterns, dpsPatternKeys, dpsPriorities
@@ -10070,9 +10181,9 @@ AssignHealKeys:
                                                                         {
                                                                             ;ToolTip, found scroll
                                                                             ;WinActivate, ahk_id %win1%  
-                                                                            sleep, 1000
+                                                                            ;sleep, 1000
                                                                             ControlClick, x%sellscrollX% y%sellscrollY%, ahk_id %win1%,, Left, 1
-                                                                            sleep, 1000
+                                                                            sleep, 2000
                                                                             Loop,
                                                                             {
                                                                                 sellbutton:="|<>#75@0.83$16.V01800biAG0Hu1824E4Fvc"
@@ -10080,7 +10191,7 @@ AssignHealKeys:
                                                                                 if (sellbuttonok:=FindText(sellbuttonX, sellbuttonY, 0, 0, 1919, 1030, 0, 0, sellbutton))
                                                                                 {
                                                                                     ControlClick, x%sellbuttonX% y%sellbuttonY%, ahk_id %win1%,, Left, 1
-                                                                                    Sleep, 1000
+                                                                                    Sleep, 75
                                                                                     break
                                                                                 }
                                                                             } until sellbuttonok!
@@ -13323,11 +13434,21 @@ AssignHealKeys:
                                                                 exampleText .= " checkmobhealth - Check if mob health bar exists`n"
                                                                 exampleText .= " farmuntilpattern,patternName - Tab+kill mobs until pattern shows`n`n"
 
+                                                                exampleText .= "NETWORK COMMANDS (AHKsock):`n"
+                                                                exampleText .= " netskill,key,target - Send key to specific windows via network`n"
+                                                                exampleText .= "   Examples: netskill,1,win1 | netskill,3,win1 win2 | netskill,F5,all`n"
+                                                                exampleText .= " netcombat,duration,target - Start combat on specific windows`n"
+                                                                exampleText .= "   Examples: netcombat,10,win1 | netcombat,15,win2 win3 | netcombat,20,all`n"
+                                                                exampleText .= " netnav,target,destination - Navigate to waypoint or node`n"
+                                                                exampleText .= "   Examples: netnav,all,WP 13 | netnav,win1 win2,NODE 3 | netnav,win1,WP 5`n`n"
+
                                                                 exampleText .= "NAVIGATION:`n"
                                                                 exampleText .= " gotowaypoint,waypointNum - Jump to specific waypoint`n"
                                                                 exampleText .= " goto,waypointNum - Same as gotowaypoint`n"
                                                                 exampleText .= " nextwaypoint - Skip to next waypoint`n"
-                                                                exampleText .= " previouswaypoint - Go back one waypoint`n`n"
+                                                                exampleText .= " previouswaypoint - Go back one waypoint`n"
+                                                                exampleText .= " netnav,target,destination - Network navigation (WP/NODE)`n"
+                                                                exampleText .= "   Examples: netnav,all,WP 13 | netnav,win1,NODE 5`n`n"
 
                                                                 exampleText .= "SPECIAL:`n"
                                                                 exampleText .= " sendhotkey,key - Trigger hotkey in other scripts`n"
@@ -13340,7 +13461,16 @@ AssignHealKeys:
                                                                 exampleText .= "Use in waypoint commands field`n"
                                                                 exampleText .= "or in route .ini files"
 
-                                                                MsgBox, 0, Available Commands, %exampleText%
+                                                                ; Create scrollable GUI instead of MsgBox
+                                                                Gui, Examples:New
+                                                                Gui, Examples:Add, Edit, x10 y10 w600 h500 vExamplesDisplay ReadOnly +VScroll, %exampleText%
+                                                                Gui, Examples:Add, Button, x260 y520 w100 gExamplesClose Default, Close
+                                                                Gui, Examples:Show, w620 h560, Available Commands
+                                                            return
+                                                            
+                                                            ExamplesClose:
+                                                            ExamplesGuiClose:
+                                                                Gui, Examples:Destroy
                                                             return
 
                                                             CloseCommandGUI:
@@ -15791,6 +15921,185 @@ AssignHealKeys:
                                                                 } else if (commandTypeLower = "CheckAndExecuteTimerFlags()"){
                                                                     CheckAndExecuteTimerFlags()
 
+                                                                } else if (commandTypeLower = "netskill") {
+                                                                    ; Send a key press to specific windows via AHKsock network
+                                                                    ; Usage: netskill,key,target
+                                                                    ; Examples: 
+                                                                    ;   netskill,1,win1        - Send key "1" to win1 only
+                                                                    ;   netskill,3,win1 win2   - Send key "3" to win1 and win2
+                                                                    ;   netskill,F5,all        - Send F5 to all connected clients
+                                                                    if (commandParts.MaxIndex() >= 3) {
+                                                                        keyToSend := Trim(commandParts[2])
+                                                                        targetSpec := Trim(commandParts[3])
+                                                                        
+                                                                        ; Check if target is "all"
+                                                                        if (targetSpec = "all") {
+                                                                            ; Send to all connected clients
+                                                                            SendCommandToAll("PRESS:" . keyToSend)
+                                                                        } else {
+                                                                            ; Parse space-separated window list (e.g., "win1 win2 win4")
+                                                                            targets := StrSplit(targetSpec, " ")
+                                                                            for idx, winTarget in targets {
+                                                                                winTarget := Trim(winTarget)
+                                                                                if (winTarget != "") {
+                                                                                    ; Send CTRLSEND command to specific window
+                                                                                    SendCommandToAll("CTRLSEND:" . winTarget . ":|:" . keyToSend)
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    } else {
+                                                                        MsgBox, 0, Error, netskill requires 2 parameters: key`,target`n`nExamples:`nnetskill`,1`,win1`nnetskill`,3`,win1 win2`nnetskill`,F5`,all, 3
+                                                                    }
+                                                                } else if (commandTypeLower = "netcombat") {
+                                                                    ; Send combat command to specific windows via AHKsock network
+                                                                    ; Usage: netcombat,duration,target
+                                                                    ; Examples: 
+                                                                    ;   netcombat,10,win1         - Combat for 10 seconds on win1 only
+                                                                    ;   netcombat,15,win1 win2    - Combat for 15 seconds on win1 and win2
+                                                                    ;   netcombat,20,all          - Combat for 20 seconds on all connected clients
+                                                                    if (commandParts.MaxIndex() >= 3) {
+                                                                        durationSecs := Trim(commandParts[2])
+                                                                        targetSpec := Trim(commandParts[3])
+                                                                        
+                                                                        ; Check if target is "all"
+                                                                        if (targetSpec = "all") {
+                                                                            ; Send combat command to all connected clients
+                                                                            SendCommandToAll("CALL:PerformCombat(" . durationSecs . ")")
+                                                                        } else {
+                                                                            ; Parse space-separated window list (e.g., "win1 win2 win4")
+                                                                            targets := StrSplit(targetSpec, " ")
+                                                                            for idx, winTarget in targets {
+                                                                                winTarget := Trim(winTarget)
+                                                                                if (winTarget != "") {
+                                                                                    ; Send combat command to specific window
+                                                                                    ; Note: For targeted commands, we use CALL which all clients receive,
+                                                                                    ; but you may want to implement window-specific filtering
+                                                                                    SendCommandToAll("CALL:PerformCombat(" . durationSecs . ")")
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    } else {
+                                                                        MsgBox, 0, Error, netcombat requires 2 parameters: duration`,target`n`nExamples:`nnetcombat`,10`,win1`nnetcombat`,15`,win1 win2`nnetcombat`,20`,all, 3
+                                                                    }
+                                                                } else if (commandTypeLower = "netnav") {
+                                                                    ; Send navigation command to specific windows via AHKsock network
+                                                                    ; Usage: netnav,target,destination
+                                                                    ; Examples: 
+                                                                    ;   netnav,all,WP 13          - All clients go to waypoint 13
+                                                                    ;   netnav,win1 win2,NODE 3   - win1 and win2 click at node 3
+                                                                    ;   netnav,win1,WP 5          - win1 goes to waypoint 5
+                                                                    if (commandParts.MaxIndex() >= 3) {
+                                                                        targetSpec := Trim(commandParts[2])
+                                                                        destination := Trim(commandParts[3])
+                                                                        
+                                                                        ; Parse destination type (WP or NODE)
+                                                                        navCommand := ""
+                                                                        if (RegExMatch(destination, "i)^WP\s+(\d+)$", match)) {
+                                                                            ; Waypoint navigation
+                                                                            waypointNum := match1
+                                                                            navCommand := "CALL:GoToWaypoint(" . waypointNum . ")"
+                                                                        } else if (RegExMatch(destination, "i)^NODE\s+(\d+)$", match)) {
+                                                                            ; Node click navigation
+                                                                            nodeNum := match1
+                                                                            navCommand := "CALL:clickatnode(" . nodeNum . ")"
+                                                                        } else {
+                                                                            MsgBox, 0, Error, Invalid destination format. Use 'WP #' or 'NODE #'`n`nExamples:`nnetnav`,all`,WP 13`nnetnav`,win1 win2`,NODE 3, 3
+                                                                            return
+                                                                        }
+                                                                        
+                                                                        ; Check if target is "all"
+                                                                        if (targetSpec = "all") {
+                                                                            ; Send navigation command to all connected clients
+                                                                            SendCommandToAll(navCommand)
+                                                                        } else {
+                                                                            ; Parse space-separated window list (e.g., "win1 win2 win4")
+                                                                            targets := StrSplit(targetSpec, " ")
+                                                                            for idx, winTarget in targets {
+                                                                                winTarget := Trim(winTarget)
+                                                                                if (winTarget != "") {
+                                                                                    ; Send navigation command
+                                                                                    SendCommandToAll(navCommand)
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    } else {
+                                                                        MsgBox, 0, Error, netnav requires 2 parameters: target`,destination`n`nExamples:`nnetnav`,all`,WP 13`nnetnav`,win1 win2`,NODE 3`nnetnav`,win1`,WP 5, 3
+                                                                    }
+                                                                } else if (commandTypeLower = "nethealing") {
+                                                                    ; Control healing on specific windows via AHKsock network
+                                                                    ; Usage: nethealing,target,action
+                                                                    ; Examples: 
+                                                                    ;   nethealing,all,start         - Start healing on all clients
+                                                                    ;   nethealing,win1 win2,stop    - Stop healing on win1 and win2
+                                                                    ;   nethealing,win1,start        - Start healing on win1 only
+                                                                    if (commandParts.MaxIndex() >= 3) {
+                                                                        targetSpec := Trim(commandParts[2])
+                                                                        action := Trim(commandParts[3])
+                                                                        
+                                                                        ; Validate action
+                                                                        actionLower := ""
+                                                                        StringLower, actionLower, action
+                                                                        
+                                                                        if (actionLower != "start" && actionLower != "stop") {
+                                                                            MsgBox, 0, Error, Invalid action. Use 'start' or 'stop'`n`nExamples:`nnethealing`,all`,start`nnethealing`,win1 win2`,stop, 3
+                                                                            return
+                                                                        }
+                                                                        
+                                                                        ; Create the healing command
+                                                                        if (actionLower = "start") {
+                                                                            healCommand := "CALL:StartHealer"
+                                                                        } else {
+                                                                            healCommand := "CALL:StopHealer"
+                                                                        }
+                                                                        
+                                                                        ; Check if target is "all"
+                                                                        if (targetSpec = "all") {
+                                                                            ; Send healing command to all connected clients
+                                                                            SendCommandToAll(healCommand)
+                                                                        } else {
+                                                                            ; Parse space-separated window list (e.g., "win1 win2 win4")
+                                                                            targets := StrSplit(targetSpec, " ")
+                                                                            for idx, winTarget in targets {
+                                                                                winTarget := Trim(winTarget)
+                                                                                if (winTarget != "") {
+                                                                                    ; Send healing command
+                                                                                    SendCommandToAll(healCommand)
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    } else {
+                                                                        MsgBox, 0, Error, nethealing requires 2 parameters: target`,action`n`nExamples:`nnethealing`,all`,start`nnethealing`,win1 win2`,stop`nnethealing`,win1`,start, 3
+                                                                    }
+                                                                } else if (commandTypeLower = "netbuffs") {
+                                                                    ; Activate all buff timers including DT and Gnoll via AHKsock network
+                                                                    ; Usage: netbuffs,target
+                                                                    ; Examples:
+                                                                    ;   netbuffs,all          - Activate all buffs on all clients
+                                                                    ;   netbuffs,win1 win2    - Activate all buffs on win1 and win2 only
+                                                                    if (commandParts.MaxIndex() >= 2) {
+                                                                        targetSpec := Trim(commandParts[2])
+                                                                        
+                                                                        ; Create the buff activation command (calls StartAllTimers with auto-yes to DT/Gnoll)
+                                                                        buffCommand := "CALL:StartAllBuffTimers"
+                                                                        
+                                                                        ; Check if target is "all"
+                                                                        if (targetSpec = "all") {
+                                                                            ; Send buff command to all connected clients
+                                                                            SendCommandToAll(buffCommand)
+                                                                        } else {
+                                                                            ; Parse space-separated window list (e.g., "win1 win2 win4")
+                                                                            targets := StrSplit(targetSpec, " ")
+                                                                            for idx, winTarget in targets {
+                                                                                winTarget := Trim(winTarget)
+                                                                                if (winTarget != "") {
+                                                                                    ; Send buff command
+                                                                                    SendCommandToAll(buffCommand)
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    } else {
+                                                                        MsgBox, 0, Error, netbuffs requires 1 parameter: target`n`nExamples:`nnetbuffs`,all`nnetbuffs`,win1 win2`nnetbuffs`,win1, 3
+                                                                    }
                                                                 } else {
                                                                     ; Unknown command - show debug info
                                                                     MsgBox, 0, Debug, Unknown command: %commandType%`nFull command: %command%, 3
@@ -19179,533 +19488,531 @@ AssignHealKeys:
                                     }
                                 }
 
-                          
+                                FindText(ByRef x:="FindTextClass", ByRef y:="", args*)
+                                {
+                                    static init, obj
+                                    if !VarSetCapacity(init) && (init:="1")
+                                        obj:=new FindTextClass()
+                                return (x=="FindTextClass" && !args.Length()) ? obj : obj.FindText(x, y, args*)
+                            }
 
-FindText(ByRef x:="FindTextClass", ByRef y:="", args*)
-{
-  static init, obj
-  if !VarSetCapacity(init) && (init:="1")
-    obj:=new FindTextClass()
-  return (x=="FindTextClass" && !args.Length()) ? obj : obj.FindText(x, y, args*)
-}
+                            Class FindTextClass
+                            { ;// Class Begin
 
-Class FindTextClass
-{  ;// Class Begin
+                                Floor(i)
+                                {
+                                    if i is number
+                                        return i+0
+                                else return 0
+                            }
 
-Floor(i)
-{
-  if i is number
-    return i+0
-  else return 0
-}
+                            __New()
+                            {
+                                this.bits:={ Scan0: 0, hBM: 0, oldzw: 0, oldzh: 0 }
+                                this.bind:={ id: 0, mode: 0, oldStyle: 0 }
+                                this.Lib:=[]
+                                this.Cursor:=0
+                            }
 
-__New()
-{
-  this.bits:={ Scan0: 0, hBM: 0, oldzw: 0, oldzh: 0 }
-  this.bind:={ id: 0, mode: 0, oldStyle: 0 }
-  this.Lib:=[]
-  this.Cursor:=0
-}
+                            __Delete()
+                            {
+                                if (this.bits.hBM)
+                                    Try DllCall("DeleteObject", "Ptr",this.bits.hBM)
+                            }
 
-__Delete()
-{
-  if (this.bits.hBM)
-    Try DllCall("DeleteObject", "Ptr",this.bits.hBM)
-}
+                            New()
+                            {
+                                return new FindTextClass()
+                            }
 
-New()
-{
-  return new FindTextClass()
-}
+                            help()
+                            {
+                                return "
+                                (
+                                ;--------------------------------
+                                ;  FindText - Capture screen image into text and then find it
+                                ;  Version : 10.0  (2024-10-06)
+                                ;--------------------------------
+                                ;  returnArray:=FindText(
+                                ;      OutputX --> The name of the variable used to store the returned X coordinate
+                                ;    , OutputY --> The name of the variable used to store the returned Y coordinate
+                                ;    , X1 --> the search scope's upper left corner X coordinates
+                                ;    , Y1 --> the search scope's upper left corner Y coordinates
+                                ;    , X2 --> the search scope's lower right corner X coordinates
+                                ;    , Y2 --> the search scope's lower right corner Y coordinates
+                                ;    , err1 --> Fault tolerance percentage of text       (0.1=10%)
+                                ;    , err0 --> Fault tolerance percentage of background (0.1=10%)
+                                ;      Setting err1<0 or err0<0 can enable the left and right dilation algorithm
+                                ;      to ignore slight misalignment of text lines, the fault tolerance must be very small
+                                ;      In FindPic mode, err0 can set the number of rows and columns to be skipped
+                                ;    , Text --> can be a lot of text parsed into images, separated by '|'
+                                ;    , ScreenShot --> if the value is 0, the last screenshot will be used
+                                ;    , FindAll --> if the value is 0, Just find one result and return
+                                ;    , JoinText --> if you want to combine find, it can be 1, or an array of words to find
+                                ;    , offsetX --> Set the max text offset (X) for combination lookup
+                                ;    , offsetY --> Set the max text offset (Y) for combination lookup
+                                ;    , dir --> Nine directions for searching: up, down, left, right and center
+                                ;      Default dir=0, the returned result will be sorted by the smallest error,
+                                ;      Even if set a large fault tolerance, the first result still has the smallest error
+                                ;    , zoomW --> Zoom percentage of image width  (1.0=100%)
+                                ;    , zoomH --> Zoom percentage of image height (1.0=100%)
+                                ;  )
+                                ;
+                                ;  The function returns an Array containing all lookup results,
+                                ;  any result is a object with the following values:
+                                ;  {1:X, 2:Y, 3:W, 4:H, x:X+W//2, y:Y+H//2, id:Comment}
+                                ;  If no image is found, the function returns 0.
+                                ;  All coordinates are relative to Screen, colors are in RGB format
+                                ;  All 'RRGGBB' can use 'Black', 'White', 'Red', 'Green', 'Blue', 'Yellow'
+                                ;  All 'DRDGDB' can use similarity '1.0'(100%), it's floating-point number
+                                ;
+                                ;  If the return variable is set to 'ok', ok[1] is the first result found.
+                                ;  ok[1].1, ok[1].2 is the X, Y coordinate of the upper left corner of the found image,
+                                ;  ok[1].3, ok[1].4 is the width, height of the found image,
+                                ;  ok[1].x <==> ok[1].1+ok[1].3//2 ( is the Center X coordinate of the found image ),
+                                ;  ok[1].y <==> ok[1].2+ok[1].4//2 ( is the Center Y coordinate of the found image ),
+                                ;  ok[1].id is the comment text, which is included in the <> of its parameter.
+                                ;
+                                ;  If OutputX is equal to 'wait' or 'wait1'(appear), or 'wait0'(disappear)
+                                ;  it means using a loop to wait for the image to appear or disappear.
+                                ;  the OutputY is the wait time in seconds, time less than 0 means infinite waiting
+                                ;  Timeout means failure, return 0, and return other values means success
+                                ;  If you want to appear and the image is found, return the found array object
+                                ;  If you want to disappear and the image cannot be found, return 1
+                                ;  Example 1: FindText(X:='wait', Y:=3, 0,0,0,0,0,0,Text)   ; Wait 3 seconds for appear
+                                ;  Example 2: FindText(X:='wait0', Y:=-1, 0,0,0,0,0,0,Text) ; Wait indefinitely for disappear
+                                ;
+                                ;  <FindMultiColor> or <FindColor> : FindColor is FindMultiColor with only one point
+                                ;  Text:='|<>##DRDGDB $ 0/0/RRGGBB1-DRDGDB1/RRGGBB2, xn/yn/-RRGGBB3/RRGGBB4, ...'
+                                ;  Color behind '##' (0xDRDGDB) is the default allowed variation for all colors
+                                ;  Initial point (0,0) match 0xRRGGBB1(+/-0xDRDGDB1) or 0xRRGGBB2(+/-0xDRDGDB),
+                                ;  point (xn,yn) match not 0xRRGGBB3(+/-0xDRDGDB) and not 0xRRGGBB4(+/-0xDRDGDB)
+                                ;  Starting with '-' after a point coordinate means excluding all subsequent colors
+                                ;  Each point can take up to 10 sets of colors (xn/yn/RRGGBB1/.../RRGGBB10)
+                                ;
+                                ;  <FindShape> : Similar to FindMultiColor, just replacing the color with
+                                ;  whether the point is similar in color to the first point
+                                ;  Text:='|<>##DRDGDB $ 0/0/1, x1/y1/0, x2/y2/1, xn/yn/0, ...'
+                                ;
+                                ;  <FindPic> : Text parameter require manual input
+                                ;  Text:='|<>##DRDGDB/RRGGBB1-DRDGDB1/RRGGBB2... $ d:\a.bmp'
+                                ;  Color behind '##' (0xDRDGDB) is the default allowed variation for all colors
+                                ;  the 0xRRGGBB1(+/-0xDRDGDB1) and 0xRRGGBB2(+/-0xDRDGDB) both transparent colors
+                                ;
+                                ;--------------------------------
+                                )"
+                            }
 
-help()
-{
-return "
-(
-;--------------------------------
-;  FindText - Capture screen image into text and then find it
-;  Version : 10.0  (2024-10-06)
-;--------------------------------
-;  returnArray:=FindText(
-;      OutputX --> The name of the variable used to store the returned X coordinate
-;    , OutputY --> The name of the variable used to store the returned Y coordinate
-;    , X1 --> the search scope's upper left corner X coordinates
-;    , Y1 --> the search scope's upper left corner Y coordinates
-;    , X2 --> the search scope's lower right corner X coordinates
-;    , Y2 --> the search scope's lower right corner Y coordinates
-;    , err1 --> Fault tolerance percentage of text       (0.1=10%)
-;    , err0 --> Fault tolerance percentage of background (0.1=10%)
-;      Setting err1<0 or err0<0 can enable the left and right dilation algorithm
-;      to ignore slight misalignment of text lines, the fault tolerance must be very small
-;      In FindPic mode, err0 can set the number of rows and columns to be skipped
-;    , Text --> can be a lot of text parsed into images, separated by '|'
-;    , ScreenShot --> if the value is 0, the last screenshot will be used
-;    , FindAll --> if the value is 0, Just find one result and return
-;    , JoinText --> if you want to combine find, it can be 1, or an array of words to find
-;    , offsetX --> Set the max text offset (X) for combination lookup
-;    , offsetY --> Set the max text offset (Y) for combination lookup
-;    , dir --> Nine directions for searching: up, down, left, right and center
-;      Default dir=0, the returned result will be sorted by the smallest error,
-;      Even if set a large fault tolerance, the first result still has the smallest error
-;    , zoomW --> Zoom percentage of image width  (1.0=100%)
-;    , zoomH --> Zoom percentage of image height (1.0=100%)
-;  )
-;
-;  The function returns an Array containing all lookup results,
-;  any result is a object with the following values:
-;  {1:X, 2:Y, 3:W, 4:H, x:X+W//2, y:Y+H//2, id:Comment}
-;  If no image is found, the function returns 0.
-;  All coordinates are relative to Screen, colors are in RGB format
-;  All 'RRGGBB' can use 'Black', 'White', 'Red', 'Green', 'Blue', 'Yellow'
-;  All 'DRDGDB' can use similarity '1.0'(100%), it's floating-point number
-;
-;  If the return variable is set to 'ok', ok[1] is the first result found.
-;  ok[1].1, ok[1].2 is the X, Y coordinate of the upper left corner of the found image,
-;  ok[1].3, ok[1].4 is the width, height of the found image,
-;  ok[1].x <==> ok[1].1+ok[1].3//2 ( is the Center X coordinate of the found image ),
-;  ok[1].y <==> ok[1].2+ok[1].4//2 ( is the Center Y coordinate of the found image ),
-;  ok[1].id is the comment text, which is included in the <> of its parameter.
-;
-;  If OutputX is equal to 'wait' or 'wait1'(appear), or 'wait0'(disappear)
-;  it means using a loop to wait for the image to appear or disappear.
-;  the OutputY is the wait time in seconds, time less than 0 means infinite waiting
-;  Timeout means failure, return 0, and return other values means success
-;  If you want to appear and the image is found, return the found array object
-;  If you want to disappear and the image cannot be found, return 1
-;  Example 1: FindText(X:='wait', Y:=3, 0,0,0,0,0,0,Text)   ; Wait 3 seconds for appear
-;  Example 2: FindText(X:='wait0', Y:=-1, 0,0,0,0,0,0,Text) ; Wait indefinitely for disappear
-;
-;  <FindMultiColor> or <FindColor> : FindColor is FindMultiColor with only one point
-;  Text:='|<>##DRDGDB $ 0/0/RRGGBB1-DRDGDB1/RRGGBB2, xn/yn/-RRGGBB3/RRGGBB4, ...'
-;  Color behind '##' (0xDRDGDB) is the default allowed variation for all colors
-;  Initial point (0,0) match 0xRRGGBB1(+/-0xDRDGDB1) or 0xRRGGBB2(+/-0xDRDGDB),
-;  point (xn,yn) match not 0xRRGGBB3(+/-0xDRDGDB) and not 0xRRGGBB4(+/-0xDRDGDB)
-;  Starting with '-' after a point coordinate means excluding all subsequent colors
-;  Each point can take up to 10 sets of colors (xn/yn/RRGGBB1/.../RRGGBB10)
-;
-;  <FindShape> : Similar to FindMultiColor, just replacing the color with
-;  whether the point is similar in color to the first point
-;  Text:='|<>##DRDGDB $ 0/0/1, x1/y1/0, x2/y2/1, xn/yn/0, ...'
-;
-;  <FindPic> : Text parameter require manual input
-;  Text:='|<>##DRDGDB/RRGGBB1-DRDGDB1/RRGGBB2... $ d:\a.bmp'
-;  Color behind '##' (0xDRDGDB) is the default allowed variation for all colors
-;  the 0xRRGGBB1(+/-0xDRDGDB1) and 0xRRGGBB2(+/-0xDRDGDB) both transparent colors
-;
-;--------------------------------
-)"
-}
+                            FindText(ByRef OutputX:="", ByRef OutputY:=""
+                            , x1:=0, y1:=0, x2:=0, y2:=0, err1:=0, err0:=0, text:=""
+                            , ScreenShot:=1, FindAll:=1, JoinText:=0, offsetX:=20, offsetY:=10
+                            , dir:=0, zoomW:=1, zoomH:=1)
+                            {
+                                local
+                                if (OutputX ~= "i)^\s*wait[10]?\s*$")
+                                {
+                                    found:=!InStr(OutputX,"0"), time:=this.Floor(OutputY)
+                                    , timeout:=A_TickCount+Round(time*1000), OutputX:=""
+                                    Loop
+                                    {
+                                        ok:=this.FindText(,, x1, y1, x2, y2, err1, err0, text, ScreenShot
+                                        , FindAll, JoinText, offsetX, offsetY, dir, zoomW, zoomH)
+                                        if (found && ok)
+                                        {
+                                            OutputX:=ok[1].x, OutputY:=ok[1].y
+                                            return ok
+                                        }
+                                        if (!found && !ok)
+                                            return 1
+                                        if (time>=0 && A_TickCount>=timeout)
+                                            Break
+                                        Sleep 50
+                                    }
+                                return 0
+                            }
+                            SetBatchLines % (bch:=A_BatchLines)?"-1":"-1"
+                                x1:=this.Floor(x1), y1:=this.Floor(y1), x2:=this.Floor(x2), y2:=this.Floor(y2)
+                                if (x1=0 && y1=0 && x2=0 && y2=0)
+                                    n:=150000, x:=y:=-n, w:=h:=2*n
+                                else
+                                    x:=Min(x1,x2), y:=Min(y1,y2), w:=Abs(x2-x1)+1, h:=Abs(y2-y1)+1
+                                bits:=this.GetBitsFromScreen(x,y,w,h,ScreenShot,zx,zy), x-=zx, y-=zy
+                                , this.ok:=0, info:=[]
+                                Loop Parse, text, |
+                                    if IsObject(j:=this.PicInfo(A_LoopField))
+                                    info.Push(j)
+                                if (w<1 || h<1 || !(num:=info.Length()) || !bits.Scan0)
+                                {
+                                    SetBatchLines % bch
+                                    return 0
+                                }
+                                arr:=[], info2:=[], k:=0, s:=""
+                                , mode:=(IsObject(JoinText) ? 2 : JoinText ? 1 : 0)
+                                For i,j in info
+                                {
+                                    k:=Max(k, (j[7]=5 && j[8]!=2 ? j[9] : j[2]*j[3]))
+                                    if (mode)
+                                        v:=(mode=1 ? i : j[10]) . "", s.="|" v
+                                    , (v!="") && ((!info2.HasKey(v) && info2[v]:=[]), info2[v].Push(j))
+                                }
+                                sx:=x, sy:=y, sw:=w, sh:=h, (mode=1 && JoinText:=[s])
+                                , allpos_max:=(FindAll || JoinText ? 10000:1)
+                                , VarSetCapacity(s1,k*4), VarSetCapacity(s0,k*4)
+                                , VarSetCapacity(ss,sw*(sh+3)), VarSetCapacity(allpos,allpos_max*8)
+                                , ini:={ sx:sx, sy:sy, sw:sw, sh:sh, zx:zx, zy:zy
+                                    , mode:mode, bits:bits, ss:&ss, s1:&s1, s0:&s0
+                                    , allpos:&allpos, allpos_max:allpos_max
+                                , err1:err1, err0:err0, zoomW:zoomW, zoomH:zoomH }
+                                Loop 2
+                                {
+                                    if (err1=0 && err0=0) && (num>1 || A_Index>1)
+                                        ini.err1:=err1:=0.05, ini.err0:=err0:=0.05
+                                    if (!JoinText)
+                                    {
+                                        For i,j in info
+                                            Loop % this.PicFind(ini, j, dir, sx, sy, sw, sh)
+                                        {
+                                            v:=NumGet(allpos,4*A_Index-4,"uint"), x:=(v&0xFFFF)+zx, y:=(v>>16)+zy
+                                            , w:=Floor(j[2]*zoomW), h:=Floor(j[3]*zoomH)
+                                            , arr.Push({1:x, 2:y, 3:w, 4:h, x:x+w//2, y:y+h//2, id:j[10]})
+                                            if (!FindAll)
+                                                Break 3
+                                        }
+                                    }
+                                    else
+                                        For k,v in JoinText
+                                    {
+                                        v:=StrSplit(Trim(RegExReplace(v, "\s*\|[|\s]*", "|"), "|")
+                                        , (InStr(v,"|")?"|":""), " `t")
+                                        , this.JoinText(arr, ini, info2, v, 1, offsetX, offsetY
+                                        , FindAll, dir, 0, 0, 0, sx, sy, sw, sh)
+                                        if (!FindAll && arr.Length())
+                                            Break 2
+                                    }
+                                    if (err1!=0 || err0!=0 || arr.Length() || info[1][4] || info[1][7]=5)
+                                        Break
+                                }
+                                SetBatchLines % bch
+                                if (arr.Length())
+                                {
+                                    OutputX:=arr[1].x, OutputY:=arr[1].y, this.ok:=arr
+                                    return arr
+                                }
+                            return 0
+                        }
 
-FindText(ByRef OutputX:="", ByRef OutputY:=""
-  , x1:=0, y1:=0, x2:=0, y2:=0, err1:=0, err0:=0, text:=""
-  , ScreenShot:=1, FindAll:=1, JoinText:=0, offsetX:=20, offsetY:=10
-  , dir:=0, zoomW:=1, zoomH:=1)
-{
-  local
-  if (OutputX ~= "i)^\s*wait[10]?\s*$")
-  {
-    found:=!InStr(OutputX,"0"), time:=this.Floor(OutputY)
-    , timeout:=A_TickCount+Round(time*1000), OutputX:=""
-    Loop
-    {
-      ok:=this.FindText(,, x1, y1, x2, y2, err1, err0, text, ScreenShot
-        , FindAll, JoinText, offsetX, offsetY, dir, zoomW, zoomH)
-      if (found && ok)
-      {
-        OutputX:=ok[1].x, OutputY:=ok[1].y
-        return ok
-      }
-      if (!found && !ok)
-        return 1
-      if (time>=0 && A_TickCount>=timeout)
-        Break
-      Sleep 50
-    }
-    return 0
-  }
-  SetBatchLines % (bch:=A_BatchLines)?"-1":"-1"
-  x1:=this.Floor(x1), y1:=this.Floor(y1), x2:=this.Floor(x2), y2:=this.Floor(y2)
-  if (x1=0 && y1=0 && x2=0 && y2=0)
-    n:=150000, x:=y:=-n, w:=h:=2*n
-  else
-    x:=Min(x1,x2), y:=Min(y1,y2), w:=Abs(x2-x1)+1, h:=Abs(y2-y1)+1
-  bits:=this.GetBitsFromScreen(x,y,w,h,ScreenShot,zx,zy), x-=zx, y-=zy
-  , this.ok:=0, info:=[]
-  Loop Parse, text, |
-    if IsObject(j:=this.PicInfo(A_LoopField))
-      info.Push(j)
-  if (w<1 || h<1 || !(num:=info.Length()) || !bits.Scan0)
-  {
-    SetBatchLines % bch
-    return 0
-  }
-  arr:=[], info2:=[], k:=0, s:=""
-  , mode:=(IsObject(JoinText) ? 2 : JoinText ? 1 : 0)
-  For i,j in info
-  {
-    k:=Max(k, (j[7]=5 && j[8]!=2 ? j[9] : j[2]*j[3]))
-    if (mode)
-      v:=(mode=1 ? i : j[10]) . "", s.="|" v
-      , (v!="") && ((!info2.HasKey(v) && info2[v]:=[]), info2[v].Push(j))
-  }
-  sx:=x, sy:=y, sw:=w, sh:=h, (mode=1 && JoinText:=[s])
-  , allpos_max:=(FindAll || JoinText ? 10000:1)
-  , VarSetCapacity(s1,k*4), VarSetCapacity(s0,k*4)
-  , VarSetCapacity(ss,sw*(sh+3)), VarSetCapacity(allpos,allpos_max*8)
-  , ini:={ sx:sx, sy:sy, sw:sw, sh:sh, zx:zx, zy:zy
-  , mode:mode, bits:bits, ss:&ss, s1:&s1, s0:&s0
-  , allpos:&allpos, allpos_max:allpos_max
-  , err1:err1, err0:err0, zoomW:zoomW, zoomH:zoomH }
-  Loop 2
-  {
-    if (err1=0 && err0=0) && (num>1 || A_Index>1)
-      ini.err1:=err1:=0.05, ini.err0:=err0:=0.05
-    if (!JoinText)
-    {
-      For i,j in info
-      Loop % this.PicFind(ini, j, dir, sx, sy, sw, sh)
-      {
-        v:=NumGet(allpos,4*A_Index-4,"uint"), x:=(v&0xFFFF)+zx, y:=(v>>16)+zy
-        , w:=Floor(j[2]*zoomW), h:=Floor(j[3]*zoomH)
-        , arr.Push({1:x, 2:y, 3:w, 4:h, x:x+w//2, y:y+h//2, id:j[10]})
-        if (!FindAll)
-          Break 3
-      }
-    }
-    else
-    For k,v in JoinText
-    {
-      v:=StrSplit(Trim(RegExReplace(v, "\s*\|[|\s]*", "|"), "|")
-      , (InStr(v,"|")?"|":""), " `t")
-      , this.JoinText(arr, ini, info2, v, 1, offsetX, offsetY
-      , FindAll, dir, 0, 0, 0, sx, sy, sw, sh)
-      if (!FindAll && arr.Length())
-        Break 2
-    }
-    if (err1!=0 || err0!=0 || arr.Length() || info[1][4] || info[1][7]=5)
-      Break
-  }
-  SetBatchLines % bch
-  if (arr.Length())
-  {
-    OutputX:=arr[1].x, OutputY:=arr[1].y, this.ok:=arr
-    return arr
-  }
-  return 0
-}
+                        ; the join text object use [ "abc", "xyz", "a1|a2|a3" ]
 
-; the join text object use [ "abc", "xyz", "a1|a2|a3" ]
+                        JoinText(arr, ini, info2, text, index, offsetX, offsetY
+                        , FindAll, dir, minX, minY, maxY, sx, sy, sw, sh)
+                        {
+                            local
+                            if !(Len:=text.Length()) || !info2.HasKey(key:=text[index])
+                            return 0
+                        zoomW:=ini.zoomW, zoomH:=ini.zoomH, mode:=ini.mode
+                        For i,j in info2[key]
+                            if (mode!=2 || key==j[10])
+                            Loop % ok:=this.PicFind(ini, j, dir, sx, sy, (index=1 ? sw
+                            : Min(sx+offsetX+Floor(j[2]*zoomW),ini.sx+ini.sw)-sx), sh)
+                        {
+                            if (A_Index=1)
+                            {
+                                pos:=[], p:=ini.allpos-4
+                                Loop % ok
+                                    pos.Push(NumGet(0|p+=4,"uint"))
+                            }
+                            v:=pos[A_Index], x:=v&0xFFFF, y:=v>>16
+                            , w:=Floor(j[2]*zoomW), h:=Floor(j[3]*zoomH)
+                            , (index=1 && (minX:=x, minY:=y, maxY:=y+h))
+                            , minY1:=Min(y, minY), maxY1:=Max(y+h, maxY), sx1:=x+w
+                            if (index<Len)
+                            {
+                                sy1:=Max(minY1-offsetY, ini.sy)
+                                , sh1:=Min(maxY1+offsetY, ini.sy+ini.sh)-sy1
+                                if this.JoinText(arr, ini, info2, text, index+1, offsetX, offsetY
+                                    , FindAll, 5, minX, minY1, maxY1, sx1, sy1, 0, sh1)
+                                && (index>1 || !FindAll)
+                            return 1
+                        }
+                        else
+                        {
+                            comment:=""
+                            For k,v in text
+                                comment.=(mode=2 ? v : info2[v][1][10])
+                            x:=minX+ini.zx, y:=minY1+ini.zy, w:=sx1-minX, h:=maxY1-minY1
+                            , arr.Push({1:x, 2:y, 3:w, 4:h, x:x+w//2, y:y+h//2, id:comment})
+                            if (index>1 || !FindAll)
+                            return 1
+                    }
+                }
+                return 0
+            }
 
-JoinText(arr, ini, info2, text, index, offsetX, offsetY
-  , FindAll, dir, minX, minY, maxY, sx, sy, sw, sh)
-{
-  local
-  if !(Len:=text.Length()) || !info2.HasKey(key:=text[index])
-    return 0
-  zoomW:=ini.zoomW, zoomH:=ini.zoomH, mode:=ini.mode
-  For i,j in info2[key]
-  if (mode!=2 || key==j[10])
-  Loop % ok:=this.PicFind(ini, j, dir, sx, sy, (index=1 ? sw
-  : Min(sx+offsetX+Floor(j[2]*zoomW),ini.sx+ini.sw)-sx), sh)
-  {
-    if (A_Index=1)
-    {
-      pos:=[], p:=ini.allpos-4
-      Loop % ok
-        pos.Push(NumGet(0|p+=4,"uint"))
-    }
-    v:=pos[A_Index], x:=v&0xFFFF, y:=v>>16
-    , w:=Floor(j[2]*zoomW), h:=Floor(j[3]*zoomH)
-    , (index=1 && (minX:=x, minY:=y, maxY:=y+h))
-    , minY1:=Min(y, minY), maxY1:=Max(y+h, maxY), sx1:=x+w
-    if (index<Len)
-    {
-      sy1:=Max(minY1-offsetY, ini.sy)
-      , sh1:=Min(maxY1+offsetY, ini.sy+ini.sh)-sy1
-      if this.JoinText(arr, ini, info2, text, index+1, offsetX, offsetY
-      , FindAll, 5, minX, minY1, maxY1, sx1, sy1, 0, sh1)
-      && (index>1 || !FindAll)
-        return 1
-    }
-    else
-    {
-      comment:=""
-      For k,v in text
-        comment.=(mode=2 ? v : info2[v][1][10])
-      x:=minX+ini.zx, y:=minY1+ini.zy, w:=sx1-minX, h:=maxY1-minY1
-      , arr.Push({1:x, 2:y, 3:w, 4:h, x:x+w//2, y:y+h//2, id:comment})
-      if (index>1 || !FindAll)
-        return 1
-    }
-  }
-  return 0
-}
+            PicFind(ini, j, dir, sx, sy, sw, sh)
+            {
+                local
+                static init, MyFunc
+                if !VarSetCapacity(init) && (init:="1")
+                {
+                    x32:="VVdWU4HsmAAAAIuEJNQAAAADhCTMAAAAi5wk@AAAAIO8JKwAAAAFiUQkIIuEJPgA"
+                    . "AACNBJiJRCQ0D4RKBgAAi4Qk6AAAAIXAD45ADwAAiXwkEIu8JOQAAAAx7ccEJAAA"
+                    . "AADHRCQIAAAAAMdEJBQAAAAAx0QkDAAAAACNtgAAAACLhCTgAAAAi0wkDDH2MdsB"
+                    . "yIX@iUQkBH896ZAAAABmkA+vhCTMAAAAicGJ8Jn3@wHBi0QkBIA8GDF0TIuEJNwA"
+                    . "AACDwwEDtCQAAQAAiQyog8UBOd90VIsEJJn3vCToAAAAg7wkrAAAAAR1tQ+vhCTA"
+                    . "AAAAicGJ8Jn3@40MgYtEJASAPBgxdbSLRCQUi5Qk2AAAAIPDAQO0JAABAACJDIKD"
+                    . "wAE534lEJBR1rAF8JAyDRCQIAYu0JAQBAACLRCQIATQkOYQk6AAAAA+FMv@@@4tE"
+                    . "JBSLfCQQD6+EJOwAAACJbCQwwfgKiUQkKIuEJPAAAAAPr8XB+AqJRCRAg7wkrAAA"
+                    . "AAQPhCIGAACLhCTAAAAAi5wkxAAAAA+vhCTIAAAAjSyYi4QkzAAAAIucJMAAAAD3"
+                    . "2IO8JKwAAAABjQSDiUQkLA+ELwYAAIO8JKwAAAACD4Q4CAAAg7wkrAAAAAMPhLkL"
+                    . "AACLjCTQAAAAhckPjicBAACLhCTMAAAAi6wkzAAAAMdEJAwAAAAAx0QkEAAAAACJ"
+                    . "fCQYg+gBiUQkCI22AAAAAIt8JBCLtCTUAAAAMcCLXCQgAfsB94Xtif6J738X6bwA"
+                    . "AADGBAYEg8ABg8MBOccPhKQAAACDvCSsAAAAA3@khcAPtgsPhLoPAAAPtlP@iVQk"
+                    . "BDlEJAgPhMIPAAAPtlMBiRQki5Qk9AAAAIXSD4SfAQAAD7bpugYAAACD7QGD@QF2"
+                    . "G4N8JAQBD5TCgzwkAYnVD5TCCeoPttIB0oPKBIHh@QAAAL0BAAAAdByLTCQEiywk"
+                    . "hckPlEQkBIXtD5TBic0PtkwkBAnNCeqDwwGIFAaDwAE5xw+FXP@@@wF8JBCJ@YNE"
+                    . "JAwBi0QkDDmEJNAAAAAPjwz@@@+LfCQYg7wkrAAAAAN@FouEJPQAAACFwA+VwDwB"
+                    . "g5wkxAAAAP+LXCQUi3QkKDHAOfOLdCRAD07YiVwkFItcJDA58w9Pw4lEJDCLhCTM"
+                    . "AAAAK4QkAAEAAIlEJASLhCTQAAAAK4QkBAEAAIO8JLgAAAAJiUQkCA+ExgAAAIuE"
+                    . "JLgAAACD6AGD+AcPh7wCAACD+AOJRCQkD463AgAAi0QkBMdEJEQAAAAAx0QkDAAA"
+                    . "AACJBCSLRCQIiUQkHItcJEQ5HCTHRCRMAAAAAA+MCwEAAItcJEw5XCQcD4zCDQAA"
+                    . "i3QkRItcJCSLBCQp8PbDAg9Exot0JEyJwotEJBwp8PbDAQ9ExoP7A4nWD0@wD0@C"
+                    . "iXQkGIlEJBDp3gsAAI12AA+20YPqAYP6AhnSg+ICg8IEgeH9AAAAD5TBCcqIFAbp"
+                    . "8v3@@4tcJASLdCQIx0QkZAAAAADHRCRgAQAAAMdEJFQAAAAAx0QkWAAAAACJ2I1W"
+                    . "AYk0JMHoH4lcJBzHRCQMAAAAAAHY0fiJRCQQifDB6B8B8NH4iUQkGInYg8ABicEP"
+                    . "r8o50A9MwoPACIlMJHyJwQ+vyImMJIAAAACLXCR8OVwkZH0Zi5wkgAAAADlcJFjH"
+                    . "RCRcAAAAAA+M9QQAAIuMJLgAAACFyQ+FnQIAAIuUJPgAAACF0g+EjgIAAIuEJAQB"
+                    . "AAAPr4QkAAEAAIP4AQ+EdgIAAIN8JAwBD46lCgAAi0QkNIucJPgAAAAx7cdEJAQA"
+                    . "AAAAiSwkjXgEi0QkDIPoAYlEJBCLRCQEiwwkizeLRAMEhcmJRCQIich4NotP@DnO"
+                    . "D4N1BQAAifqNa@zrDY12AIPqBItK@DnOcxeJCotMhQSJTIMEg+gBg@j@deS4@@@@"
+                    . "@4tMJDSDwAGDBCQBg8cEg0QkBASJNIGLdCQIiTSDiwQkO0QkEHWNi4QkBAEAAIus"
+                    . "JAABAAAPr8APr+2JRCQEi7Qk+AAAAMdEJAgAAAAAMduLRCQIiwSGiUQkEA+3+MHo"
+                    . "EIXbiQQkdC0xyY22AAAAAIsUjg+3win4D6@AOeh9D8HqECsUJA+v0jtUJAR8EYPB"
+                    . "ATnZdduLRCQQiQSeg8MBg0QkCAGLRCQIOUQkDHWiidiBxJgAAABbXl9dwlwAx0Qk"
+                    . "JAAAAACLRCQIx0QkRAAAAADHRCQMAAAAAIkEJItEJASJRCQc6UT9@@8xwIO8JLAA"
+                    . "AAACD5TAiYQkhAAAAA+EUAQAADHAg7wksAAAAAGLrCS0AAAAD5TAhe2JRCR4D4SG"
+                    . "CwAAi7Qk2AAAAIuUJLQAAAAx7YucJOAAAACLjCTcAAAAiXwkCI0ElolEJASNdCYA"
+                    . "izuDxgSDw1iDwQSJ+MHoEA+vhCQEAQAAmfe8JOgAAAAPr4QkwAAAAIkEJA+3xw+v"
+                    . "hCQAAQAAmfe8JOQAAACLFCSNBIKJRvyLQ6yNREUAg8UWiUH8O3QkBHWmi4QktAAA"
+                    . "AIm8JLAAAACLfCQIiUQkFIuEJOwAAAAPr4QktAAAAMH4ColEJCiLhCTgAAAAx0Qk"
+                    . "QAAAAADHRCQwAAAAAIPACIlEJFDpSfr@@4tEJAyBxJgAAABbXl9dwlwAi4QksAAA"
+                    . "AMHoEA+vhCQEAQAAmfe8JOgAAAAPr4QkwAAAAInBD7eEJLAAAAAPr4QkAAEAAJn3"
+                    . "vCTkAAAAjQSBiYQksAAAAOnt+f@@i4Qk6AAAAIu0JNAAAAAPr4Qk5AAAANGkJLQA"
+                    . "AAADhCTgAAAAhfaJRCRQD47z+v@@i4QkzAAAAInqi2wkUMdEJCQAAAAAx0QkOAAA"
+                    . "AADB4AKJRCRIMcCLnCTMAAAAhdsPjisBAACLnCS8AAAAAdMDVCRIiVwkEItcJCAD"
+                    . "XCQ4iVQkPAOUJLwAAACJXCQYiVQkHI12AI28JwAAAACLdCQQMds5nCS0AAAAD7ZO"
+                    . "AolMJAQPtk4BD7Y2iUwkCIl0JAx2W412AI28JwAAAACLRJ0Ag8MCi3yd@InCD7bM"
+                    . "D7bAK0QkDMHqECtMJAgPttIrVCQEgf@@@@8AiQQkdyUPr9IPr8mNFFIPr8CNFIqN"
+                    . "BEI5x3NGMcA5nCS0AAAAd6+JwutBif7B7hCJ8A+28A+v0g+v9jnyd92J+A+21A+v"
+                    . "yQ+v0jnRd86LNCSJ+A+20A+v0onwD6@GOdB3uroBAAAAuAEAAACLXCQYg0QkEASL"
+                    . "TCQQiBODwwE7TCQciVwkGA+FGv@@@4u0JMwAAAABdCQ4i1QkPINEJCQBA1QkLItc"
+                    . "JCQ5nCTQAAAAD4Ws@v@@6U34@@+LRCQQhcB4G4tcJBw52H8Ti0QkGIXAeAuLHCQ5"
+                    . "2A+ONwYAAItsJFSF7Q+F4AUAAINsJBgBg0QkXAGDRCRYAYt0JGA5dCRcfLiLXCRU"
+                    . "idiD4AEBxonYg8ABiXQkYIPgA4lEJFTpvvr@@4uEJLAAAACLjCTQAAAAxwQkAAAA"
+                    . "AMdEJAQAAAAAg8ABweAHiYQksAAAAIuEJMwAAADB4AKFyYlEJAwPjsz4@@+J6Ius"
+                    . "JLAAAACJfCQQi5QkzAAAAIXSfmaLjCS8AAAAi1wkIIu8JLwAAAADXCQEAcEDRCQM"
+                    . "iUQkCAHHjXYAjbwnAAAAAA+2UQIPtkEBD7Yxa8BLa9ImAcKJ8MHgBCnwAdA5xQ+X"
+                    . "A4PBBIPDATn5ddWLnCTMAAAAAVwkBItEJAiDBCQBA0QkLIs8JDm8JNAAAAAPhXf@"
+                    . "@@+LfCQQ6Qb3@@+LBCTprvr@@4uEJOgAAACLvCTgAAAAD6+EJOQAAADRpCS0AAAA"
+                    . "jQSHiUQkUIuEJPAAAADB+AqDwAGJRCQki4Qk6AAAAIXAD45ECgAAi3wkJIuEJAQB"
+                    . "AACLdCRQx0QkMAAAAADHRCQUAAAAAA+vx4lEJECLhCTkAAAAD6@HweACiUQkSIuE"
+                    . "JOAAAACDwAKJRCQ4ifiNPL0AAAAAiXwkLInHD6+EJAABAACJfCQ8iUQkKIuEJOQA"
+                    . "AACFwA+OaQEAAItEJDjHRCQcAAAAAIlEJBCLRCQkiUQkGItEJBC7AgAAAA+2OIk8"
+                    . "JA+2eP8PtkD+iXwkBIlEJAg5nCS0AAAAD4bCAAAAiwSeg8MCi3ye@InCD7bMD7bA"
+                    . "K0QkCMHqECtMJAQPttIrFCSB@@@@@wCJRCQMd0YPr9IPr8mNFFIPr8CNFIqNBEI5"
+                    . "x3Kui3wkGItEJCSLTCQsAUwkEItMJCgBTCQcAfg5vCTkAAAAD465AAAAiUQkGOlf"
+                    . "@@@@if3B7RCJ6A+26A+v0g+v7TnqD4dm@@@@ifgPttQPr8kPr9I50Q+HU@@@@4tM"
+                    . "JAyJ+A+2+A+v@4nID6@BOfh2kDmcJLQAAAAPhz7@@@+LRCQwi3wkFJmNHL0AAAAA"
+                    . "97wk6AAAAA+vhCTAAAAAicGLRCQcmfe8JOQAAACLFCTB4hCNBIGLjCTYAAAAiQS5"
+                    . "i0QkBIPHAYl8JBSLvCTcAAAAweAICdALRCQIiQQf6SD@@@+LfCQ8i0QkJItMJEAB"
+                    . "TCQwi0wkSAFMJDgB+Dm8JOgAAAB+CYlEJDzpXP7@@4tEJBQPr4Qk7AAAAMH4ColE"
+                    . "JCiLRCRQx0QkQAAAAADHRCQwAAAAAIt4BIn4ifvB6BAPtteJ+w+2wA+2y4nDD6@Y"
+                    . "idAPr8KJXCRwiUQkdInID6@BiUQkbOlH9P@@i4Qk0AAAAIXAD45u9f@@i5wkzAAA"
+                    . "AItEJCDHBCQAAAAAx0QkBAAAAACJfCQMjQRYiUQkGInYweACiUQkCIu0JMwAAACF"
+                    . "9n5Xi4wkvAAAAItcJBiLvCS8AAAAA1wkBAHpA2wkCAHvD7ZRAoPBBIPDAWvyJg+2"
+                    . "Uf1rwkuNFAYPtnH8ifDB4AQp8AHQwfgHiEP@Ofl10ou8JMwAAAABfCQEgwQkAQNs"
+                    . "JCyLBCQ5hCTQAAAAdYqLhCTMAAAAi3wkDDHti5QktAAAADH2g+gBiXwkJIlEJAyL"
+                    . "hCTQAAAAg+gBiUQkEIucJMwAAACF2w+O4gAAAIu8JMwAAACLRCQYAfeNDDCJ+4l8"
+                    . "JByJxwHfifMrnCTMAAAAiXwkBIt8JCABwwH3McCJfCQIiRwkhcAPhGQDAAA5RCQM"
+                    . "D4RaAwAAhe0PhFIDAAA5bCQQD4RIAwAAD7YRD7Z5@74BAAAAA5QksAAAADn6ckYP"
+                    . "tnkBOfpyPos8JA+2Pzn6cjSLXCQED7Y7OfpyKYs8JA+2f@85+nIeizwkD7Z@ATn6"
+                    . "chMPtnv@OfpyCw+2cwE58g+Sw4nei3wkCInziBwHg8ABg8EBg0QkBAGDBCQBOYQk"
+                    . "zAAAAA+FWv@@@4t0JByDxQE5rCTQAAAAD4X@@v@@i3wkJImUJLQAAADpY@L@@8dE"
+                    . "JEAAAAAAx0QkKAAAAADHRCQwAAAAAMdEJBQAAAAA6cfx@@+DfCRUAQ+E6gEAAIN8"
+                    . "JFQCD4SVAgAAg2wkEAHpBfr@@4uEJAQBAACLrCQAAQAAD6@AD6@tiUQkBItEJAyF"
+                    . "wA+P6PX@@zHA6VL2@@+DRCRkAcdEJCQJAAAAi0QkGIucJNQAAAAPr4QkzAAAAANE"
+                    . "JBCAPAMDD4ZnAQAAi3QkFItcJDA53g9N3oO8JKwAAAADiVwkIA+OdQEAAItEJBgD"
+                    . "hCTIAAAAD6+EJMAAAACLVCQQA5QkxAAAAIO8JKwAAAAFD4RsAgAAjTSQi4QksAAA"
+                    . "AIucJLwAAAAB8A+2XAMCiVwkOIucJLwAAAAPtlwDAYlcJDyLnCS8AAAAD7YEA4lE"
+                    . "JEiLRCQghcAPhKoBAACLRCRAiXwkLDHbi2wkKIu8JLwAAACJRCRo62KNtCYAAAAA"
+                    . "OVwkMH5Ii4Qk3AAAAIsUmAHyD7ZEFwIPtkwXAStEJDgrTCQ8D7YUFytUJEgPr8AP"
+                    . "r8mNBEAPr9KNBIiNBFA5hCS0AAAAcgeDbCRoAXhhg8MBOVwkIA+EogEAADlcJBR+"
+                    . "n4uEJNgAAACLFJgB8g+2RBcCD7ZMFwErRCQ4K0wkPA+2FBcrVCRID6@AD6@JjQRA"
+                    . "D6@SjQSIjQRQOYQktAAAAA+DWv@@@4PtAQ+JUf@@@4t8JCyDfCQkCQ+EKfj@@4NE"
+                    . "JEwB6Try@@+DRCQQAekm+P@@g0QkRAHpEfL@@410JgCF2w+EoAAAAAOEJNQAAACL"
+                    . "XCRAMdKLbCQoicHrJTlUJDB+Fou0JNwAAACLBJYByPYAAXUFg+sBeJqDwgE5VCQg"
+                    . "dGo5VCQUftWLtCTYAAAAiwSWAcj2AAJ1xIPtAXm@6XD@@@@HRCQEAwAAAOlB8P@@"
+                    . "i3wkCMYEBwLpEf3@@8cEJAMAAADpOfD@@8dEJCgAAAAAx0QkFAAAAADpGPX@@4NE"
+                    . "JBgB6XD3@@+LbCQoi4Qk+AAAAINEJAwBhcAPhMoDAACLVCQYA5QkyAAAAItcJAyL"
+                    . "RCQQA4QkxAAAAIu0JPgAAADB4hCNi@@@@z8J0IkEjou0JLgAAACF9g+F0gIAAItE"
+                    . "JCiLdCQ0Keg5nCT8AAAAiQSOD44z8v@@6bb+@@+LfCQs64mLtCSEAAAAjQSQiUQk"
+                    . "PIX2D4WuAQAAi1wkIItEJFAx9otsJCiF24lEJGgPhFn@@@+LhCTYAAAAi1wkaItU"
+                    . "JDwDFLCJXCRIa8YWgTv@@@8AiUQkOA+XwA+2wIlEJCyLhCTcAAAAiwSwiYQktAAA"
+                    . "AIuEJLwAAAAPtkQQAomEJIwAAADB4BCJwYuEJLwAAAAPtkQQAYmEJJAAAADB4AgJ"
+                    . "yIuMJLwAAAAPtgwRCciJjCSUAAAAiYQkiAAAAOsfD6@SD6@JjRRSD6@AjRSKjQRC"
+                    . "OccPg70AAACDRCRICItEJDg7hCS0AAAAD4PPAAAAi1QkeIt8JEiDRCQ4AoXSiweL"
+                    . "fwR0JoX2i5wkiAAAAA9FnCSwAAAAhcAPlMAPtsCJRCQsiZwksAAAAInYicIPtswP"
+                    . "tsDB6hArjCSQAAAAK4QklAAAAA+20iuUJIwAAACB@@@@@wAPhmX@@@+J+8HrEA+2"
+                    . "2w+v0g+v2znaD4dp@@@@ifsPttcPr8kPr9I50Q+HVv@@@4n7D7bTD6@AD6@SOdAP"
+                    . "h0P@@@+LRCQshcB0CYPtAQ+IDf3@@4PGAYNEJGhYOXQkIA+Fe@7@@+nP@f@@i0Qk"
+                    . "LIXAdeHr1otMJCCLbCQohckPhLX9@@8x9usuOUQkcHwSD6@JOUwkdHwJD6@SOVQk"
+                    . "bH0Jg+0BD4i3@P@@g8YBOXQkIA+Eg@3@@4uEJNgAAACLVCQ8i5wkvAAAAAMUsIuE"
+                    . "JNwAAACLBLCJhCSwAAAAi4QkvAAAAIuMJLAAAAAPtkQQAsHpEA+2ySnID7ZMEwGL"
+                    . "nCSwAAAAD6@AD7bfKdmLnCS8AAAAD7YUEw+2nCSwAAAAKdqB@@@@@wAPh1z@@@8P"
+                    . "r8mNBEAPr9KNBIiNBFA5xw+CXf@@@+lh@@@@x0QkKAAAAADHRCQUAAAAAOnC9@@@"
+                    . "i1wkDDmcJPwAAACJ2A+OrfD@@4tcJBgxyYnOidgrhCQEAQAAg8ABD0jBicKJ2Iuc"
+                    . "JAQBAACNRBj@i1wkCDnDD07Di1wkEInFidgrhCQAAQAAg8ABD0nwidiLnCQAAQAA"
+                    . "jUQY@4tcJAQ5ww9OwznVicMPjIz7@@+LhCTMAAAAg8UBD6@CA4Qk1AAAAInBjUMB"
+                    . "iUQkIDnefw+J8IAkAQODwAE7RCQgdfODwgEDjCTMAAAAOep13+lJ+@@@i6wkuAAA"
+                    . "AIXtD4VK@@@@6TX7@@+QkA=="
+                    x64:="QVdBVkFVQVRVV1ZTSIHsyAAAAEhjhCRQAQAASIu8JKgBAACJjCQQAQAAiVQkMESJ"
+                    . "jCQoAQAAi7QkgAEAAIusJIgBAABJicRIiUQkWEgDhCRgAQAAg@kFSIlEJChIY4Qk"
+                    . "sAEAAEiNBIdIiUQkYA+E3AUAAIXtD44BDAAARTH2iVwkEIu8JLgBAABEiXQkCIuc"
+                    . "JBABAABFMe1Mi7QkcAEAAEUx20Ux@0SJbCQYRImEJCABAABMY1QkCEUxyUUxwEwD"
+                    . "lCR4AQAAhfZ@Mut3Dx9AAEEPr8SJwUSJyJn3@gHBQ4A8AjF0PEmDwAFJY8dBAflB"
+                    . "g8cBRDnGQYkMhn5DRInYmff9g@sEdckPr4QkOAEAAInBRInImff+Q4A8AjGNDIF1"
+                    . "xEiLlCRoAQAASYPAAUljxUEB+UGDxQFEOcaJDIJ@vQF0JAiDRCQYAUQDnCTAAQAA"
+                    . "i0QkGDnFD4VX@@@@RInoi1wkEESLhCQgAQAAD6+EJJABAABEiWwkGMH4ColEJByL"
+                    . "hCSYAQAAQQ+vx8H4ColEJECDvCQQAQAABA+EtwUAAIuEJDgBAACLvCRAAQAAD6+E"
+                    . "JEgBAACNBLiLvCQ4AQAAiUQkCESJ4PfYg7wkEAEAAAGNBIeJRCQgD4SxBQAAg7wk"
+                    . "EAEAAAIPhIQHAACDvCQQAQAAAw+EowoAAIuEJFgBAACFwA+OHwEAAESJfCQQRIuc"
+                    . "JBABAABBjWwk@0yLfCQoi7wkoAEAAEUx9kUx7YlcJAhEiYQkIAEAAA8fhAAAAAAA"
+                    . "RYXkD467AAAASWPFMclJicFNjUQHAUwDjCRgAQAA6xhBxgEEg8EBSYPBAUmDwAFB"
+                    . "OcwPhIkAAABBg@sDf+KFyUEPtlD@D4S1DgAAQQ+2WP45zQ+Euw4AAEUPthCF@w+E"
+                    . "fAEAAA+28rgGAAAAg+4Bg@4BdhiD+wFAD5TGQYP6AQ+UwAnwD7bAAcCDyASB4v0A"
+                    . "AAC+AQAAAHQOhdtAD5TGRYXSD5TCCdYJ8IPBAUmDwQFBiEH@SYPAAUE5zA+Fd@@@"
+                    . "@0UB5UGDxgFEObQkWAEAAA+PKv@@@4tcJAhEi3wkEESLhCQgAQAAg7wkEAEAAAN@"
+                    . "FouEJKABAACFwA+VwDwBg5wkQAEAAP+LfCQYi3QkHDHARInlRIucJFgBAAA59w9O"
+                    . "+EQ7fCRAiXwkGEQPTvgrrCS4AQAARCucJMABAACDvCQoAQAACQ+EuQAAAIuEJCgB"
+                    . "AACD6AGD+AcPh5ACAACD+AOJRCRID46LAgAAiWwkCESJXCQQRTH2x0QkTAAAAACL"
+                    . "fCRMOXwkCMdEJGgAAAAAD4wNAQAAi3wkaDl8JBAPjNIMAACLfCRIi3QkTItEJAgp"
+                    . "8ED2xwIPRMaLdCRoicKLRCQQKfBA9scBD0TGg@8DidcPT@gPT8JBicXptgoAAGaQ"
+                    . "D7bCg+gBg@gCGcCD4AKDwASB4v0AAAAPlMIJ0EGIAekg@v@@iehBjVMBRIlcJAjB"
+                    . "6B+JbCQQx4QkiAAAAAAAAAAB6MeEJIQAAAABAAAAx0QkbAAAAADR+MdEJHwAAAAA"
+                    . "QYnFRInYwegfRAHY0fiJx41FAYnGD6@yOdAPTMJFMfaDwAiJtCSkAAAAicYPr@CJ"
+                    . "tCSoAAAAi7QkpAAAADm0JIgAAAB9HIu0JKgAAAA5dCR8x4QkgAAAAAAAAAAPjEYE"
+                    . "AACLhCQoAQAAhcAPhV0CAABIg7wkqAEAAAAPhE4CAACLhCTAAQAAD6+EJLgBAACD"
+                    . "+AEPhDYCAABBg@4BD45dCQAAQY1G@kyLRCRgTIucJKgBAABFMclFMdJIjRyFBAAA"
+                    . "AEOLdAgEQ4sUCESJ0UOLfAsETInQOdZyE+kJBAAAZpBIg+gBQYsUgDnWcx1BiVSA"
+                    . "BEGLFIOD6QGD+f9BiVSDBHXeSMfA@@@@@0mDwQRIg8ABSYPCAUk52UGJNIBBiTyD"
+                    . "dZ9Ei5QkuAEAAIucJMABAABFD6@SD6@bTIuMJKgBAAAx9jHAQYsssYnvRA+33cHv"
+                    . "EIXAdDJFMcAPH4QAAAAAAEOLDIEPt9FEKdoPr9JEOdJ9DMHpECn5D6@JOdl8E0mD"
+                    . "wAFEOcB@2Uhj0IPAAUGJLJFIg8YBQTn2f6pIgcTIAAAAW15fXUFcQV1BXkFfw8dE"
+                    . "JEgAAAAARIlcJAiJbCQQRTH2x0QkTAAAAADpcP3@@4tEJDAx@4P4AkAPlMeJvCSs"
+                    . "AAAAD4SpAwAAMcCDfCQwAQ+UwEWFwImEJKAAAAAPhNsKAABEiaQkUAEAAEyLlCR4"
+                    . "AQAARTHJi7wkOAEAAEyLpCRoAQAARTHbTIusJHABAABEi7QkuAEAAESLvCTAAQAA"
+                    . "iVwkGEGLGkmDwliJ2MHoEEEPr8eZ9@0Pr8eJwQ+3w0EPr8aZ9@6NBIFDiQSMQYtC"
+                    . "rEGNBENBg8MWQ4lEjQBJg8EBRTnId72LhCSQAQAARIukJFABAACJXCQwi1wkGESJ"
+                    . "RCQYQQ+vwMH4ColEJBxIi4QkeAEAAMdEJEAAAAAARTH@SIPACEiJBCTpq@r@@0SJ"
+                    . "8OnE@v@@i3wkMIn4wegQD6+EJMABAACZ9@0Pr4QkOAEAAInBD7fHD6+EJLgBAACZ"
+                    . "9@6NBIGJRCQw6Wv6@@+J6ESLjCRYAQAARQHAD6@GSJhIA4QkeAEAAEWFyUiJBCQP"
+                    . "jnL7@@9CjTylAAAAAMdEJBAAAAAAMcDHRCRIAAAAAESJfCR4iXwkUEWF5A+O6QAA"
+                    . "AEhjVCQISIu8JDABAABFMe1MY3QkSEwDdCQoSI1sFwJMiwwkRTHSD7Z9AA+2df9E"
+                    . "D7Zd@usmZi4PH4QAAAAAAA+vyQ+v0o0MSQ+vwI0UkY0EQjnDc2hJg8EIMcBFOcIP"
+                    . "gxsBAABBiwFBi1kEQYPCAonBD7bUD7bAwekQKfJEKdgPtskp+YH7@@@@AHazQYnf"
+                    . "QcHvEEUPtv8Pr8lFD6@@RDn5d7IPts8Pr9IPr8k5ynelD7bTD6@AD6@SOdB3mLoB"
+                    . "AAAAuAEAAABDiBQuSYPFAUiDxQRFOewPj0P@@@+LdCRQRAFkJEgBdCQIg0QkEAGL"
+                    . "VCQgi3wkEAFUJAg5vCRYAQAAD4Xw@v@@RIt8JHjpFvn@@0WF7XgVRDtsJBB@DoX@"
+                    . "eAo7fCQID464BQAAi0QkbIXAD4WNBQAAg+8Bg4QkgAAAAAGDRCR8AYuUJIQAAAA5"
+                    . "lCSAAAAAfLqLdCRsifCD4AEBwonwg8ABiZQkhAAAAIPgA4lEJGzpW@v@@w8fRAAA"
+                    . "icLpQf@@@0yJ0Oka@P@@i0QkMIuMJFgBAAAx9jH@Qo0spQAAAACDwAHB4AeFyYlE"
+                    . "JDAPjo@5@@9Ei3QkCESLbCQwRYXkflVIi5QkMAEAAExj30wDXCQoSWPGRTHJSI1M"
+                    . "AgIPthEPtkH@RA+2Uf5rwEtr0iYBwkSJ0MHgBEQp0AHQQTnFQw+XBAtJg8EBSIPB"
+                    . "BEU5zH@MQQHuRAHng8YBRAN0JCA5tCRYAQAAdZXp9vf@@4noRQHAD6@GweACSJhI"
+                    . "A4QkeAEAAEiJBCSLhCSYAQAAwfgKg8ABhe2JRCQID46VCgAAi3wkCIuEJMABAADH"
+                    . "RCRIAAAAAMdEJBgAAAAARImkJFABAACJrCSIAQAAD6@HiXwkUIlEJHiJ+A+vxsHg"
+                    . "AkiYSIlEJHBIi4QkeAEAAEiJRCRAifjB4AJImEiJRCQQi4QkuAEAAA+vx4lEJBxI"
+                    . "iwQkSIPACEiJRCQghfYPjiYBAABIi3wkQESLZCQIMe0Ptl8CTItMJCBBvgIAAABE"
+                    . "D7ZXAUQPth9Bid3rHQ8fAA+v2w+v0o0cWw+vwI0Uk40EQjnBc2pJg8EIRTnwD4Z9"
+                    . "AAAAQYsBQYtJBEGDxgKJww+21A+2wMHrEEQp0kQp2A+220Qp64H5@@@@AHazQYnP"
+                    . "QcHvEEUPtv8Pr9tFD6@@RDn7d7IPtt0Pr9IPr9s52nelD7bJD6@AD6@JOch3mGaQ"
+                    . "i0QkCEgDfCQQA2wkHEQB4EQ55n5lQYnE6UP@@@8PHwCLRCRIRIt0JBhEievB4xBB"
+                    . "weIIQQnamU1jzkUJ2ve8JIgBAAAPr4QkOAEAAInBieiZ9@5Ii5QkaAEAAI0EgUKJ"
+                    . "BIpEifCDwAGJRCQYSIuEJHABAABGiRSI64aLfCRQi0QkCItUJHgBVCRISItUJHBI"
+                    . "AVQkQAH4ObwkiAEAAH4JiUQkUOmk@v@@i0QkGESLpCRQAQAAD6+EJJABAADB+AqJ"
+                    . "RCQcSIsEJMdEJEAAAAAARTH@i1gEidgPts8PttPB6BAPtsCJxw+v+InID6@Bibwk"
+                    . "mAAAAImEJJwAAACJ0A+vwomEJJQAAADpffX@@8dEJEAAAAAAx0QkHAAAAABFMf@H"
+                    . "RCQYAAAAAOn19P@@i5QkWAEAAIXSD4589v@@Q40EZESLdCQIQo0spQAAAAAx9jH@"
+                    . "SJhIA4QkYAEAAEmJxUWF5H5aSIuUJDABAABJY8ZMY99FMclNAetIjUwCAg8fRAAA"
+                    . "D7YRSIPBBERr0iYPtlH7a8JLQY0UAkQPtlH6RInQweAERCnQAdDB+AdDiAQLSYPB"
+                    . "AUU5zH@KQQHuRAHng8YBRAN0JCA5tCRYAQAAdZBIi3wkWDHSQY1sJP9EiXwkSEUx"
+                    . "0olcJCBBiddIifhIg8ABSIlEJAi4AQAAAEiJxouEJFgBAABIKf6LfCQwSIl0JBBE"
+                    . "jXD@RYXkD47TAAAASItEJAhNY99Ii3QkKEuNVB0BTo0MGEiLRCQQTAHeTQHpSo0M"
+                    . "GDHATAHpZi4PH4QAAAAAAEiFwA+EgQMAADnFD4R5AwAARYXSD4RwAwAARTnWD4Rn"
+                    . "AwAARA+2Qv9ED7Za@rsBAAAAQQH4RTnYckZED7YaRTnYcj1ED7ZZ@0U52HIzRQ+2"
+                    . "Wf9FOdhyKUQPtln+RTnYch9ED7YZRTnYchZFD7ZZ@kU52HIMRQ+2GUU52A+Sw2aQ"
+                    . "iBwGSIPAAUiDwgFJg8EBSIPBAUE5xA+PZP@@@0UB50GDwgFEOZQkWAEAAA+FEv@@"
+                    . "@4tcJCBEi3wkSOmJ8@@@RIuUJLgBAACLnCTAAQAAMcBFD6@SD6@bRYX2D4569@@@"
+                    . "6RP3@@+DfCRsAQ+E@AEAAIN8JGwCD4S4AgAAQYPtAelX+v@@g4QkiAAAAAHHRCRI"
+                    . "CQAAAIn4SIu0JGABAABBD6@ERo0MKEljwYA8BgMPhqQBAACLRCQYRDn4QQ9Mx4O8"
+                    . "JBABAAADiUQkIA+OsAEAAIuEJEgBAACLlCRAAQAAAfhEAeoPr4QkOAEAAIO8JBAB"
+                    . "AAAFD4TAAgAARI0MkItEJDBIi7QkMAEAAESLVCQgRAHIjVACRYXSSGPSD7Y0Fo1Q"
+                    . "AUiYSGPSiXQkUEiLtCQwAQAAD7Y0Fol0JHhIi7QkMAEAAA+2BAaJRCRwD4TrAQAA"
+                    . "i0QkQESJXCQoRTHSi3QkHEyLnCQwAQAAiYQkjAAAAOtyRDu8JJAAAAB+WUiLhCRw"
+                    . "AQAAQosUkEQByo1CAo1KAUhj0kEPthQTSJhIY8krVCRwQQ+2BANBD7YMCytEJFAr"
+                    . "TCR4D6@SD6@AD6@JjQRAjQSIjQRQQTnAcgqDrCSMAAAAAXh+SYPCAUQ5VCQgD47P"
+                    . "AQAARDlUJBhEiZQkkAAAAA+Oe@@@@0iLhCRoAQAAQosUkEQByo1CAo1KAUhj0kEP"
+                    . "thQTSJhIY8krVCRwQQ+2BANBD7YMCytEJFArTCR4D6@SD6@AD6@JjQRAjQSIjQRQ"
+                    . "QTnAD4Mo@@@@g+4BD4kf@@@@RItcJCiDfCRICQ+Eavj@@4NEJGgB6Snz@@9Bg8UB"
+                    . "6Wb4@@+DRCRMAekA8@@@kIXAD4SzAAAARItUJECLdCQcMcnrM0Q7fCQofiJIi5Qk"
+                    . "cAEAAESJyAMEikiLlCRgAQAA9gQCAXUGQYPqAXiZSIPBATlMJCB+dzlMJBiJTCQo"
+                    . "fsNIi4QkaAEAAESJygMUiEiLhCRgAQAA9gQQAnWng+4BeaLpX@@@@w8fhAAAAAAA"
+                    . "uwMAAADpRvH@@8YEBgLp8Pz@@0G6AwAAAOk+8f@@x0QkHAAAAADHRCQYAAAAAOm7"
+                    . "9f@@g8cB6aD3@@+LdCQcQYPGAUiDvCSoAQAAAA+EHQQAAEljxouUJEgBAABIjQyF"
+                    . "AAAAAIuEJEABAAAB+sHiEEQB6AnQSIuUJKgBAACJRAr8i5QkKAEAAIXSD4UeAwAA"
+                    . "i0QkHCnwRDm0JLABAABIi3QkYIlEDvwPjhPz@@@ppf7@@0SLXCQo64aNBJCJRCQo"
+                    . "i4QkrAAAAIXAD4XjAQAAi0QkIIXAD4Rg@@@@SIsEJIt0JBxFMcnHRCR4AAAAAESJ"
+                    . "dCRwRIm8JIwAAABEiZwkkAAAAEiJRCRQSIuEJGgBAACLTCQoTIu8JDABAABMi1Qk"
+                    . "UEyLhCRwAQAARItcJHhCAwyIQYE6@@@@AEeLBIiNUQKNQQFIY8lBD5fGSGPSSJhF"
+                    . "D7b2QQ+2FBdBD7YEB4mUJLQAAACJhCS4AAAAweIQweAICdBBD7YUDwnQiZQkvAAA"
+                    . "AImEJLAAAADrHg+v0g+vyY0UUg+vwI0Uio0EQjnDD4OvAAAASYPCCEU5ww+D4AAA"
+                    . "AESLvCSgAAAAQYPDAkGLAkGLWgRFhf90Hk2FyYtUJDAPRJQksAAAAEUx9oXAQQ+U"
+                    . "xolUJDCJ0InCD7bMD7bAweoQK4wkuAAAACuEJLwAAAAPttIrlCS0AAAAgfv@@@8A"
+                    . "D4Z0@@@@QYnfQcHvEEUPtv8Pr9JFD6@@RDn6D4dz@@@@D7bXD6@JD6@SOdEPh2L@"
+                    . "@@8PttMPr8APr9I50A+HUf@@@0WF9nQFg+4BeDtJg8EBSINEJFBYg0QkeBZEOUwk"
+                    . "IA+Pkf7@@0SLdCRwRIu8JIwAAABEi5wkkAAAAOmu@f@@RYX2dcfrwESLdCRwRIu8"
+                    . "JIwAAABEi5wkkAAAAOml@P@@i0QkIIt0JByFwA+Eff3@@0Ux0us5OYQkmAAAAHwY"
+                    . "D6@JOYwknAAAAHwMD6@SOZQklAAAAH0Jg+4BD4hm@P@@SYPCAUQ5VCQgD44@@f@@"
+                    . "SIuEJGgBAACLVCQoTIuMJDABAABCAxSQSIuEJHABAABCiwSQicGNQgKJTCQwwekQ"
+                    . "SJgPtslBD7YEASnIjUoBSGPSD6@ASGPJRQ+2DAlIi0wkMA+2zUEpyUSJyUyLjCQw"
+                    . "AQAAQQ+2FBFED7ZMJDBEKcqB+@@@@wAPh0r@@@8Pr8mNBEAPr9KNBIiNBFA5ww+C"
+                    . "VP@@@+lY@@@@x0QkHAAAAADHRCQYAAAAAOlF9@@@RDm0JLABAABEifAPjhvx@@+J"
+                    . "+CuEJMABAABFMdKDwAFBD0jCicGLhCTAAQAAjUQH@0E5w0EPTsOJxkSJ6CuEJLgB"
+                    . "AACDwAFED0nQi4QkuAEAAEGNRAX@OcUPTsU5zolEJCAPjEH7@@9EieJJY8IPr9FI"
+                    . "Y9JIAdBIA4QkYAEAAEmJwY1GAYlEJCiLRCQgRCnQSI1wAUQ7VCQgfxNKjRQOTInI"
+                    . "gCADSIPAAUg50HX0g8EBTANMJFg7TCQoddjp6Pr@@4uMJCgBAACFyQ+FQf@@@+nU"
+                    . "+v@@kJCQkJCQkJCQkJCQkA=="
+                    MyFunc:=this.MCode(StrReplace((A_PtrSize=8?x64:x32),"@","/"))
+                }
+                text:=j[1], w:=j[2], h:=j[3]
+                , err1:=this.Floor(j[4] ? j[5] : ini.err1)
+                , err0:=this.Floor(j[4] ? j[6] : ini.err0)
+                , mode:=j[7], color:=j[8], n:=j[9]
+                ok:=(!ini.bits.Scan0 || mode<1 || mode>5) ? 0
+                : DllCall(MyFunc.Ptr, "int",mode, "uint",color, "uint",n, "int",dir
+                , "Ptr",ini.bits.Scan0, "int",ini.bits.Stride
+                , "int",sx, "int",sy, "int",sw, "int",sh
+                , "Ptr",ini.ss, "Ptr",ini.s1, "Ptr",ini.s0
+                , "Ptr",text, "int",w, "int",h
+                , "int",Floor(Abs(err1)*1024), "int",Floor(Abs(err0)*1024)
+                , "int",(err1<0||err0<0), "Ptr",ini.allpos, "int",ini.allpos_max
+                , "int",Floor(w*ini.zoomW), "int",Floor(h*ini.zoomH))
+                return ok
+            }
 
-PicFind(ini, j, dir, sx, sy, sw, sh)
-{
-  local
-  static init, MyFunc
-  if !VarSetCapacity(init) && (init:="1")
-  {
-    x32:="VVdWU4HsmAAAAIuEJNQAAAADhCTMAAAAi5wk@AAAAIO8JKwAAAAFiUQkIIuEJPgA"
-    . "AACNBJiJRCQ0D4RKBgAAi4Qk6AAAAIXAD45ADwAAiXwkEIu8JOQAAAAx7ccEJAAA"
-    . "AADHRCQIAAAAAMdEJBQAAAAAx0QkDAAAAACNtgAAAACLhCTgAAAAi0wkDDH2MdsB"
-    . "yIX@iUQkBH896ZAAAABmkA+vhCTMAAAAicGJ8Jn3@wHBi0QkBIA8GDF0TIuEJNwA"
-    . "AACDwwEDtCQAAQAAiQyog8UBOd90VIsEJJn3vCToAAAAg7wkrAAAAAR1tQ+vhCTA"
-    . "AAAAicGJ8Jn3@40MgYtEJASAPBgxdbSLRCQUi5Qk2AAAAIPDAQO0JAABAACJDIKD"
-    . "wAE534lEJBR1rAF8JAyDRCQIAYu0JAQBAACLRCQIATQkOYQk6AAAAA+FMv@@@4tE"
-    . "JBSLfCQQD6+EJOwAAACJbCQwwfgKiUQkKIuEJPAAAAAPr8XB+AqJRCRAg7wkrAAA"
-    . "AAQPhCIGAACLhCTAAAAAi5wkxAAAAA+vhCTIAAAAjSyYi4QkzAAAAIucJMAAAAD3"
-    . "2IO8JKwAAAABjQSDiUQkLA+ELwYAAIO8JKwAAAACD4Q4CAAAg7wkrAAAAAMPhLkL"
-    . "AACLjCTQAAAAhckPjicBAACLhCTMAAAAi6wkzAAAAMdEJAwAAAAAx0QkEAAAAACJ"
-    . "fCQYg+gBiUQkCI22AAAAAIt8JBCLtCTUAAAAMcCLXCQgAfsB94Xtif6J738X6bwA"
-    . "AADGBAYEg8ABg8MBOccPhKQAAACDvCSsAAAAA3@khcAPtgsPhLoPAAAPtlP@iVQk"
-    . "BDlEJAgPhMIPAAAPtlMBiRQki5Qk9AAAAIXSD4SfAQAAD7bpugYAAACD7QGD@QF2"
-    . "G4N8JAQBD5TCgzwkAYnVD5TCCeoPttIB0oPKBIHh@QAAAL0BAAAAdByLTCQEiywk"
-    . "hckPlEQkBIXtD5TBic0PtkwkBAnNCeqDwwGIFAaDwAE5xw+FXP@@@wF8JBCJ@YNE"
-    . "JAwBi0QkDDmEJNAAAAAPjwz@@@+LfCQYg7wkrAAAAAN@FouEJPQAAACFwA+VwDwB"
-    . "g5wkxAAAAP+LXCQUi3QkKDHAOfOLdCRAD07YiVwkFItcJDA58w9Pw4lEJDCLhCTM"
-    . "AAAAK4QkAAEAAIlEJASLhCTQAAAAK4QkBAEAAIO8JLgAAAAJiUQkCA+ExgAAAIuE"
-    . "JLgAAACD6AGD+AcPh7wCAACD+AOJRCQkD463AgAAi0QkBMdEJEQAAAAAx0QkDAAA"
-    . "AACJBCSLRCQIiUQkHItcJEQ5HCTHRCRMAAAAAA+MCwEAAItcJEw5XCQcD4zCDQAA"
-    . "i3QkRItcJCSLBCQp8PbDAg9Exot0JEyJwotEJBwp8PbDAQ9ExoP7A4nWD0@wD0@C"
-    . "iXQkGIlEJBDp3gsAAI12AA+20YPqAYP6AhnSg+ICg8IEgeH9AAAAD5TBCcqIFAbp"
-    . "8v3@@4tcJASLdCQIx0QkZAAAAADHRCRgAQAAAMdEJFQAAAAAx0QkWAAAAACJ2I1W"
-    . "AYk0JMHoH4lcJBzHRCQMAAAAAAHY0fiJRCQQifDB6B8B8NH4iUQkGInYg8ABicEP"
-    . "r8o50A9MwoPACIlMJHyJwQ+vyImMJIAAAACLXCR8OVwkZH0Zi5wkgAAAADlcJFjH"
-    . "RCRcAAAAAA+M9QQAAIuMJLgAAACFyQ+FnQIAAIuUJPgAAACF0g+EjgIAAIuEJAQB"
-    . "AAAPr4QkAAEAAIP4AQ+EdgIAAIN8JAwBD46lCgAAi0QkNIucJPgAAAAx7cdEJAQA"
-    . "AAAAiSwkjXgEi0QkDIPoAYlEJBCLRCQEiwwkizeLRAMEhcmJRCQIich4NotP@DnO"
-    . "D4N1BQAAifqNa@zrDY12AIPqBItK@DnOcxeJCotMhQSJTIMEg+gBg@j@deS4@@@@"
-    . "@4tMJDSDwAGDBCQBg8cEg0QkBASJNIGLdCQIiTSDiwQkO0QkEHWNi4QkBAEAAIus"
-    . "JAABAAAPr8APr+2JRCQEi7Qk+AAAAMdEJAgAAAAAMduLRCQIiwSGiUQkEA+3+MHo"
-    . "EIXbiQQkdC0xyY22AAAAAIsUjg+3win4D6@AOeh9D8HqECsUJA+v0jtUJAR8EYPB"
-    . "ATnZdduLRCQQiQSeg8MBg0QkCAGLRCQIOUQkDHWiidiBxJgAAABbXl9dwlwAx0Qk"
-    . "JAAAAACLRCQIx0QkRAAAAADHRCQMAAAAAIkEJItEJASJRCQc6UT9@@8xwIO8JLAA"
-    . "AAACD5TAiYQkhAAAAA+EUAQAADHAg7wksAAAAAGLrCS0AAAAD5TAhe2JRCR4D4SG"
-    . "CwAAi7Qk2AAAAIuUJLQAAAAx7YucJOAAAACLjCTcAAAAiXwkCI0ElolEJASNdCYA"
-    . "izuDxgSDw1iDwQSJ+MHoEA+vhCQEAQAAmfe8JOgAAAAPr4QkwAAAAIkEJA+3xw+v"
-    . "hCQAAQAAmfe8JOQAAACLFCSNBIKJRvyLQ6yNREUAg8UWiUH8O3QkBHWmi4QktAAA"
-    . "AIm8JLAAAACLfCQIiUQkFIuEJOwAAAAPr4QktAAAAMH4ColEJCiLhCTgAAAAx0Qk"
-    . "QAAAAADHRCQwAAAAAIPACIlEJFDpSfr@@4tEJAyBxJgAAABbXl9dwlwAi4QksAAA"
-    . "AMHoEA+vhCQEAQAAmfe8JOgAAAAPr4QkwAAAAInBD7eEJLAAAAAPr4QkAAEAAJn3"
-    . "vCTkAAAAjQSBiYQksAAAAOnt+f@@i4Qk6AAAAIu0JNAAAAAPr4Qk5AAAANGkJLQA"
-    . "AAADhCTgAAAAhfaJRCRQD47z+v@@i4QkzAAAAInqi2wkUMdEJCQAAAAAx0QkOAAA"
-    . "AADB4AKJRCRIMcCLnCTMAAAAhdsPjisBAACLnCS8AAAAAdMDVCRIiVwkEItcJCAD"
-    . "XCQ4iVQkPAOUJLwAAACJXCQYiVQkHI12AI28JwAAAACLdCQQMds5nCS0AAAAD7ZO"
-    . "AolMJAQPtk4BD7Y2iUwkCIl0JAx2W412AI28JwAAAACLRJ0Ag8MCi3yd@InCD7bM"
-    . "D7bAK0QkDMHqECtMJAgPttIrVCQEgf@@@@8AiQQkdyUPr9IPr8mNFFIPr8CNFIqN"
-    . "BEI5x3NGMcA5nCS0AAAAd6+JwutBif7B7hCJ8A+28A+v0g+v9jnyd92J+A+21A+v"
-    . "yQ+v0jnRd86LNCSJ+A+20A+v0onwD6@GOdB3uroBAAAAuAEAAACLXCQYg0QkEASL"
-    . "TCQQiBODwwE7TCQciVwkGA+FGv@@@4u0JMwAAAABdCQ4i1QkPINEJCQBA1QkLItc"
-    . "JCQ5nCTQAAAAD4Ws@v@@6U34@@+LRCQQhcB4G4tcJBw52H8Ti0QkGIXAeAuLHCQ5"
-    . "2A+ONwYAAItsJFSF7Q+F4AUAAINsJBgBg0QkXAGDRCRYAYt0JGA5dCRcfLiLXCRU"
-    . "idiD4AEBxonYg8ABiXQkYIPgA4lEJFTpvvr@@4uEJLAAAACLjCTQAAAAxwQkAAAA"
-    . "AMdEJAQAAAAAg8ABweAHiYQksAAAAIuEJMwAAADB4AKFyYlEJAwPjsz4@@+J6Ius"
-    . "JLAAAACJfCQQi5QkzAAAAIXSfmaLjCS8AAAAi1wkIIu8JLwAAAADXCQEAcEDRCQM"
-    . "iUQkCAHHjXYAjbwnAAAAAA+2UQIPtkEBD7Yxa8BLa9ImAcKJ8MHgBCnwAdA5xQ+X"
-    . "A4PBBIPDATn5ddWLnCTMAAAAAVwkBItEJAiDBCQBA0QkLIs8JDm8JNAAAAAPhXf@"
-    . "@@+LfCQQ6Qb3@@+LBCTprvr@@4uEJOgAAACLvCTgAAAAD6+EJOQAAADRpCS0AAAA"
-    . "jQSHiUQkUIuEJPAAAADB+AqDwAGJRCQki4Qk6AAAAIXAD45ECgAAi3wkJIuEJAQB"
-    . "AACLdCRQx0QkMAAAAADHRCQUAAAAAA+vx4lEJECLhCTkAAAAD6@HweACiUQkSIuE"
-    . "JOAAAACDwAKJRCQ4ifiNPL0AAAAAiXwkLInHD6+EJAABAACJfCQ8iUQkKIuEJOQA"
-    . "AACFwA+OaQEAAItEJDjHRCQcAAAAAIlEJBCLRCQkiUQkGItEJBC7AgAAAA+2OIk8"
-    . "JA+2eP8PtkD+iXwkBIlEJAg5nCS0AAAAD4bCAAAAiwSeg8MCi3ye@InCD7bMD7bA"
-    . "K0QkCMHqECtMJAQPttIrFCSB@@@@@wCJRCQMd0YPr9IPr8mNFFIPr8CNFIqNBEI5"
-    . "x3Kui3wkGItEJCSLTCQsAUwkEItMJCgBTCQcAfg5vCTkAAAAD465AAAAiUQkGOlf"
-    . "@@@@if3B7RCJ6A+26A+v0g+v7TnqD4dm@@@@ifgPttQPr8kPr9I50Q+HU@@@@4tM"
-    . "JAyJ+A+2+A+v@4nID6@BOfh2kDmcJLQAAAAPhz7@@@+LRCQwi3wkFJmNHL0AAAAA"
-    . "97wk6AAAAA+vhCTAAAAAicGLRCQcmfe8JOQAAACLFCTB4hCNBIGLjCTYAAAAiQS5"
-    . "i0QkBIPHAYl8JBSLvCTcAAAAweAICdALRCQIiQQf6SD@@@+LfCQ8i0QkJItMJEAB"
-    . "TCQwi0wkSAFMJDgB+Dm8JOgAAAB+CYlEJDzpXP7@@4tEJBQPr4Qk7AAAAMH4ColE"
-    . "JCiLRCRQx0QkQAAAAADHRCQwAAAAAIt4BIn4ifvB6BAPtteJ+w+2wA+2y4nDD6@Y"
-    . "idAPr8KJXCRwiUQkdInID6@BiUQkbOlH9P@@i4Qk0AAAAIXAD45u9f@@i5wkzAAA"
-    . "AItEJCDHBCQAAAAAx0QkBAAAAACJfCQMjQRYiUQkGInYweACiUQkCIu0JMwAAACF"
-    . "9n5Xi4wkvAAAAItcJBiLvCS8AAAAA1wkBAHpA2wkCAHvD7ZRAoPBBIPDAWvyJg+2"
-    . "Uf1rwkuNFAYPtnH8ifDB4AQp8AHQwfgHiEP@Ofl10ou8JMwAAAABfCQEgwQkAQNs"
-    . "JCyLBCQ5hCTQAAAAdYqLhCTMAAAAi3wkDDHti5QktAAAADH2g+gBiXwkJIlEJAyL"
-    . "hCTQAAAAg+gBiUQkEIucJMwAAACF2w+O4gAAAIu8JMwAAACLRCQYAfeNDDCJ+4l8"
-    . "JByJxwHfifMrnCTMAAAAiXwkBIt8JCABwwH3McCJfCQIiRwkhcAPhGQDAAA5RCQM"
-    . "D4RaAwAAhe0PhFIDAAA5bCQQD4RIAwAAD7YRD7Z5@74BAAAAA5QksAAAADn6ckYP"
-    . "tnkBOfpyPos8JA+2Pzn6cjSLXCQED7Y7OfpyKYs8JA+2f@85+nIeizwkD7Z@ATn6"
-    . "chMPtnv@OfpyCw+2cwE58g+Sw4nei3wkCInziBwHg8ABg8EBg0QkBAGDBCQBOYQk"
-    . "zAAAAA+FWv@@@4t0JByDxQE5rCTQAAAAD4X@@v@@i3wkJImUJLQAAADpY@L@@8dE"
-    . "JEAAAAAAx0QkKAAAAADHRCQwAAAAAMdEJBQAAAAA6cfx@@+DfCRUAQ+E6gEAAIN8"
-    . "JFQCD4SVAgAAg2wkEAHpBfr@@4uEJAQBAACLrCQAAQAAD6@AD6@tiUQkBItEJAyF"
-    . "wA+P6PX@@zHA6VL2@@+DRCRkAcdEJCQJAAAAi0QkGIucJNQAAAAPr4QkzAAAAANE"
-    . "JBCAPAMDD4ZnAQAAi3QkFItcJDA53g9N3oO8JKwAAAADiVwkIA+OdQEAAItEJBgD"
-    . "hCTIAAAAD6+EJMAAAACLVCQQA5QkxAAAAIO8JKwAAAAFD4RsAgAAjTSQi4QksAAA"
-    . "AIucJLwAAAAB8A+2XAMCiVwkOIucJLwAAAAPtlwDAYlcJDyLnCS8AAAAD7YEA4lE"
-    . "JEiLRCQghcAPhKoBAACLRCRAiXwkLDHbi2wkKIu8JLwAAACJRCRo62KNtCYAAAAA"
-    . "OVwkMH5Ii4Qk3AAAAIsUmAHyD7ZEFwIPtkwXAStEJDgrTCQ8D7YUFytUJEgPr8AP"
-    . "r8mNBEAPr9KNBIiNBFA5hCS0AAAAcgeDbCRoAXhhg8MBOVwkIA+EogEAADlcJBR+"
-    . "n4uEJNgAAACLFJgB8g+2RBcCD7ZMFwErRCQ4K0wkPA+2FBcrVCRID6@AD6@JjQRA"
-    . "D6@SjQSIjQRQOYQktAAAAA+DWv@@@4PtAQ+JUf@@@4t8JCyDfCQkCQ+EKfj@@4NE"
-    . "JEwB6Try@@+DRCQQAekm+P@@g0QkRAHpEfL@@410JgCF2w+EoAAAAAOEJNQAAACL"
-    . "XCRAMdKLbCQoicHrJTlUJDB+Fou0JNwAAACLBJYByPYAAXUFg+sBeJqDwgE5VCQg"
-    . "dGo5VCQUftWLtCTYAAAAiwSWAcj2AAJ1xIPtAXm@6XD@@@@HRCQEAwAAAOlB8P@@"
-    . "i3wkCMYEBwLpEf3@@8cEJAMAAADpOfD@@8dEJCgAAAAAx0QkFAAAAADpGPX@@4NE"
-    . "JBgB6XD3@@+LbCQoi4Qk+AAAAINEJAwBhcAPhMoDAACLVCQYA5QkyAAAAItcJAyL"
-    . "RCQQA4QkxAAAAIu0JPgAAADB4hCNi@@@@z8J0IkEjou0JLgAAACF9g+F0gIAAItE"
-    . "JCiLdCQ0Keg5nCT8AAAAiQSOD44z8v@@6bb+@@+LfCQs64mLtCSEAAAAjQSQiUQk"
-    . "PIX2D4WuAQAAi1wkIItEJFAx9otsJCiF24lEJGgPhFn@@@+LhCTYAAAAi1wkaItU"
-    . "JDwDFLCJXCRIa8YWgTv@@@8AiUQkOA+XwA+2wIlEJCyLhCTcAAAAiwSwiYQktAAA"
-    . "AIuEJLwAAAAPtkQQAomEJIwAAADB4BCJwYuEJLwAAAAPtkQQAYmEJJAAAADB4AgJ"
-    . "yIuMJLwAAAAPtgwRCciJjCSUAAAAiYQkiAAAAOsfD6@SD6@JjRRSD6@AjRSKjQRC"
-    . "OccPg70AAACDRCRICItEJDg7hCS0AAAAD4PPAAAAi1QkeIt8JEiDRCQ4AoXSiweL"
-    . "fwR0JoX2i5wkiAAAAA9FnCSwAAAAhcAPlMAPtsCJRCQsiZwksAAAAInYicIPtswP"
-    . "tsDB6hArjCSQAAAAK4QklAAAAA+20iuUJIwAAACB@@@@@wAPhmX@@@+J+8HrEA+2"
-    . "2w+v0g+v2znaD4dp@@@@ifsPttcPr8kPr9I50Q+HVv@@@4n7D7bTD6@AD6@SOdAP"
-    . "h0P@@@+LRCQshcB0CYPtAQ+IDf3@@4PGAYNEJGhYOXQkIA+Fe@7@@+nP@f@@i0Qk"
-    . "LIXAdeHr1otMJCCLbCQohckPhLX9@@8x9usuOUQkcHwSD6@JOUwkdHwJD6@SOVQk"
-    . "bH0Jg+0BD4i3@P@@g8YBOXQkIA+Eg@3@@4uEJNgAAACLVCQ8i5wkvAAAAAMUsIuE"
-    . "JNwAAACLBLCJhCSwAAAAi4QkvAAAAIuMJLAAAAAPtkQQAsHpEA+2ySnID7ZMEwGL"
-    . "nCSwAAAAD6@AD7bfKdmLnCS8AAAAD7YUEw+2nCSwAAAAKdqB@@@@@wAPh1z@@@8P"
-    . "r8mNBEAPr9KNBIiNBFA5xw+CXf@@@+lh@@@@x0QkKAAAAADHRCQUAAAAAOnC9@@@"
-    . "i1wkDDmcJPwAAACJ2A+OrfD@@4tcJBgxyYnOidgrhCQEAQAAg8ABD0jBicKJ2Iuc"
-    . "JAQBAACNRBj@i1wkCDnDD07Di1wkEInFidgrhCQAAQAAg8ABD0nwidiLnCQAAQAA"
-    . "jUQY@4tcJAQ5ww9OwznVicMPjIz7@@+LhCTMAAAAg8UBD6@CA4Qk1AAAAInBjUMB"
-    . "iUQkIDnefw+J8IAkAQODwAE7RCQgdfODwgEDjCTMAAAAOep13+lJ+@@@i6wkuAAA"
-    . "AIXtD4VK@@@@6TX7@@+QkA=="
-    x64:="QVdBVkFVQVRVV1ZTSIHsyAAAAEhjhCRQAQAASIu8JKgBAACJjCQQAQAAiVQkMESJ"
-    . "jCQoAQAAi7QkgAEAAIusJIgBAABJicRIiUQkWEgDhCRgAQAAg@kFSIlEJChIY4Qk"
-    . "sAEAAEiNBIdIiUQkYA+E3AUAAIXtD44BDAAARTH2iVwkEIu8JLgBAABEiXQkCIuc"
-    . "JBABAABFMe1Mi7QkcAEAAEUx20Ux@0SJbCQYRImEJCABAABMY1QkCEUxyUUxwEwD"
-    . "lCR4AQAAhfZ@Mut3Dx9AAEEPr8SJwUSJyJn3@gHBQ4A8AjF0PEmDwAFJY8dBAflB"
-    . "g8cBRDnGQYkMhn5DRInYmff9g@sEdckPr4QkOAEAAInBRInImff+Q4A8AjGNDIF1"
-    . "xEiLlCRoAQAASYPAAUljxUEB+UGDxQFEOcaJDIJ@vQF0JAiDRCQYAUQDnCTAAQAA"
-    . "i0QkGDnFD4VX@@@@RInoi1wkEESLhCQgAQAAD6+EJJABAABEiWwkGMH4ColEJByL"
-    . "hCSYAQAAQQ+vx8H4ColEJECDvCQQAQAABA+EtwUAAIuEJDgBAACLvCRAAQAAD6+E"
-    . "JEgBAACNBLiLvCQ4AQAAiUQkCESJ4PfYg7wkEAEAAAGNBIeJRCQgD4SxBQAAg7wk"
-    . "EAEAAAIPhIQHAACDvCQQAQAAAw+EowoAAIuEJFgBAACFwA+OHwEAAESJfCQQRIuc"
-    . "JBABAABBjWwk@0yLfCQoi7wkoAEAAEUx9kUx7YlcJAhEiYQkIAEAAA8fhAAAAAAA"
-    . "RYXkD467AAAASWPFMclJicFNjUQHAUwDjCRgAQAA6xhBxgEEg8EBSYPBAUmDwAFB"
-    . "OcwPhIkAAABBg@sDf+KFyUEPtlD@D4S1DgAAQQ+2WP45zQ+Euw4AAEUPthCF@w+E"
-    . "fAEAAA+28rgGAAAAg+4Bg@4BdhiD+wFAD5TGQYP6AQ+UwAnwD7bAAcCDyASB4v0A"
-    . "AAC+AQAAAHQOhdtAD5TGRYXSD5TCCdYJ8IPBAUmDwQFBiEH@SYPAAUE5zA+Fd@@@"
-    . "@0UB5UGDxgFEObQkWAEAAA+PKv@@@4tcJAhEi3wkEESLhCQgAQAAg7wkEAEAAAN@"
-    . "FouEJKABAACFwA+VwDwBg5wkQAEAAP+LfCQYi3QkHDHARInlRIucJFgBAAA59w9O"
-    . "+EQ7fCRAiXwkGEQPTvgrrCS4AQAARCucJMABAACDvCQoAQAACQ+EuQAAAIuEJCgB"
-    . "AACD6AGD+AcPh5ACAACD+AOJRCRID46LAgAAiWwkCESJXCQQRTH2x0QkTAAAAACL"
-    . "fCRMOXwkCMdEJGgAAAAAD4wNAQAAi3wkaDl8JBAPjNIMAACLfCRIi3QkTItEJAgp"
-    . "8ED2xwIPRMaLdCRoicKLRCQQKfBA9scBD0TGg@8DidcPT@gPT8JBicXptgoAAGaQ"
-    . "D7bCg+gBg@gCGcCD4AKDwASB4v0AAAAPlMIJ0EGIAekg@v@@iehBjVMBRIlcJAjB"
-    . "6B+JbCQQx4QkiAAAAAAAAAAB6MeEJIQAAAABAAAAx0QkbAAAAADR+MdEJHwAAAAA"
-    . "QYnFRInYwegfRAHY0fiJx41FAYnGD6@yOdAPTMJFMfaDwAiJtCSkAAAAicYPr@CJ"
-    . "tCSoAAAAi7QkpAAAADm0JIgAAAB9HIu0JKgAAAA5dCR8x4QkgAAAAAAAAAAPjEYE"
-    . "AACLhCQoAQAAhcAPhV0CAABIg7wkqAEAAAAPhE4CAACLhCTAAQAAD6+EJLgBAACD"
-    . "+AEPhDYCAABBg@4BD45dCQAAQY1G@kyLRCRgTIucJKgBAABFMclFMdJIjRyFBAAA"
-    . "AEOLdAgEQ4sUCESJ0UOLfAsETInQOdZyE+kJBAAAZpBIg+gBQYsUgDnWcx1BiVSA"
-    . "BEGLFIOD6QGD+f9BiVSDBHXeSMfA@@@@@0mDwQRIg8ABSYPCAUk52UGJNIBBiTyD"
-    . "dZ9Ei5QkuAEAAIucJMABAABFD6@SD6@bTIuMJKgBAAAx9jHAQYsssYnvRA+33cHv"
-    . "EIXAdDJFMcAPH4QAAAAAAEOLDIEPt9FEKdoPr9JEOdJ9DMHpECn5D6@JOdl8E0mD"
-    . "wAFEOcB@2Uhj0IPAAUGJLJFIg8YBQTn2f6pIgcTIAAAAW15fXUFcQV1BXkFfw8dE"
-    . "JEgAAAAARIlcJAiJbCQQRTH2x0QkTAAAAADpcP3@@4tEJDAx@4P4AkAPlMeJvCSs"
-    . "AAAAD4SpAwAAMcCDfCQwAQ+UwEWFwImEJKAAAAAPhNsKAABEiaQkUAEAAEyLlCR4"
-    . "AQAARTHJi7wkOAEAAEyLpCRoAQAARTHbTIusJHABAABEi7QkuAEAAESLvCTAAQAA"
-    . "iVwkGEGLGkmDwliJ2MHoEEEPr8eZ9@0Pr8eJwQ+3w0EPr8aZ9@6NBIFDiQSMQYtC"
-    . "rEGNBENBg8MWQ4lEjQBJg8EBRTnId72LhCSQAQAARIukJFABAACJXCQwi1wkGESJ"
-    . "RCQYQQ+vwMH4ColEJBxIi4QkeAEAAMdEJEAAAAAARTH@SIPACEiJBCTpq@r@@0SJ"
-    . "8OnE@v@@i3wkMIn4wegQD6+EJMABAACZ9@0Pr4QkOAEAAInBD7fHD6+EJLgBAACZ"
-    . "9@6NBIGJRCQw6Wv6@@+J6ESLjCRYAQAARQHAD6@GSJhIA4QkeAEAAEWFyUiJBCQP"
-    . "jnL7@@9CjTylAAAAAMdEJBAAAAAAMcDHRCRIAAAAAESJfCR4iXwkUEWF5A+O6QAA"
-    . "AEhjVCQISIu8JDABAABFMe1MY3QkSEwDdCQoSI1sFwJMiwwkRTHSD7Z9AA+2df9E"
-    . "D7Zd@usmZi4PH4QAAAAAAA+vyQ+v0o0MSQ+vwI0UkY0EQjnDc2hJg8EIMcBFOcIP"
-    . "gxsBAABBiwFBi1kEQYPCAonBD7bUD7bAwekQKfJEKdgPtskp+YH7@@@@AHazQYnf"
-    . "QcHvEEUPtv8Pr8lFD6@@RDn5d7IPts8Pr9IPr8k5ynelD7bTD6@AD6@SOdB3mLoB"
-    . "AAAAuAEAAABDiBQuSYPFAUiDxQRFOewPj0P@@@+LdCRQRAFkJEgBdCQIg0QkEAGL"
-    . "VCQgi3wkEAFUJAg5vCRYAQAAD4Xw@v@@RIt8JHjpFvn@@0WF7XgVRDtsJBB@DoX@"
-    . "eAo7fCQID464BQAAi0QkbIXAD4WNBQAAg+8Bg4QkgAAAAAGDRCR8AYuUJIQAAAA5"
-    . "lCSAAAAAfLqLdCRsifCD4AEBwonwg8ABiZQkhAAAAIPgA4lEJGzpW@v@@w8fRAAA"
-    . "icLpQf@@@0yJ0Oka@P@@i0QkMIuMJFgBAAAx9jH@Qo0spQAAAACDwAHB4AeFyYlE"
-    . "JDAPjo@5@@9Ei3QkCESLbCQwRYXkflVIi5QkMAEAAExj30wDXCQoSWPGRTHJSI1M"
-    . "AgIPthEPtkH@RA+2Uf5rwEtr0iYBwkSJ0MHgBEQp0AHQQTnFQw+XBAtJg8EBSIPB"
-    . "BEU5zH@MQQHuRAHng8YBRAN0JCA5tCRYAQAAdZXp9vf@@4noRQHAD6@GweACSJhI"
-    . "A4QkeAEAAEiJBCSLhCSYAQAAwfgKg8ABhe2JRCQID46VCgAAi3wkCIuEJMABAADH"
-    . "RCRIAAAAAMdEJBgAAAAARImkJFABAACJrCSIAQAAD6@HiXwkUIlEJHiJ+A+vxsHg"
-    . "AkiYSIlEJHBIi4QkeAEAAEiJRCRAifjB4AJImEiJRCQQi4QkuAEAAA+vx4lEJBxI"
-    . "iwQkSIPACEiJRCQghfYPjiYBAABIi3wkQESLZCQIMe0Ptl8CTItMJCBBvgIAAABE"
-    . "D7ZXAUQPth9Bid3rHQ8fAA+v2w+v0o0cWw+vwI0Uk40EQjnBc2pJg8EIRTnwD4Z9"
-    . "AAAAQYsBQYtJBEGDxgKJww+21A+2wMHrEEQp0kQp2A+220Qp64H5@@@@AHazQYnP"
-    . "QcHvEEUPtv8Pr9tFD6@@RDn7d7IPtt0Pr9IPr9s52nelD7bJD6@AD6@JOch3mGaQ"
-    . "i0QkCEgDfCQQA2wkHEQB4EQ55n5lQYnE6UP@@@8PHwCLRCRIRIt0JBhEievB4xBB"
-    . "weIIQQnamU1jzkUJ2ve8JIgBAAAPr4QkOAEAAInBieiZ9@5Ii5QkaAEAAI0EgUKJ"
-    . "BIpEifCDwAGJRCQYSIuEJHABAABGiRSI64aLfCRQi0QkCItUJHgBVCRISItUJHBI"
-    . "AVQkQAH4ObwkiAEAAH4JiUQkUOmk@v@@i0QkGESLpCRQAQAAD6+EJJABAADB+AqJ"
-    . "RCQcSIsEJMdEJEAAAAAARTH@i1gEidgPts8PttPB6BAPtsCJxw+v+InID6@Bibwk"
-    . "mAAAAImEJJwAAACJ0A+vwomEJJQAAADpffX@@8dEJEAAAAAAx0QkHAAAAABFMf@H"
-    . "RCQYAAAAAOn19P@@i5QkWAEAAIXSD4589v@@Q40EZESLdCQIQo0spQAAAAAx9jH@"
-    . "SJhIA4QkYAEAAEmJxUWF5H5aSIuUJDABAABJY8ZMY99FMclNAetIjUwCAg8fRAAA"
-    . "D7YRSIPBBERr0iYPtlH7a8JLQY0UAkQPtlH6RInQweAERCnQAdDB+AdDiAQLSYPB"
-    . "AUU5zH@KQQHuRAHng8YBRAN0JCA5tCRYAQAAdZBIi3wkWDHSQY1sJP9EiXwkSEUx"
-    . "0olcJCBBiddIifhIg8ABSIlEJAi4AQAAAEiJxouEJFgBAABIKf6LfCQwSIl0JBBE"
-    . "jXD@RYXkD47TAAAASItEJAhNY99Ii3QkKEuNVB0BTo0MGEiLRCQQTAHeTQHpSo0M"
-    . "GDHATAHpZi4PH4QAAAAAAEiFwA+EgQMAADnFD4R5AwAARYXSD4RwAwAARTnWD4Rn"
-    . "AwAARA+2Qv9ED7Za@rsBAAAAQQH4RTnYckZED7YaRTnYcj1ED7ZZ@0U52HIzRQ+2"
-    . "Wf9FOdhyKUQPtln+RTnYch9ED7YZRTnYchZFD7ZZ@kU52HIMRQ+2GUU52A+Sw2aQ"
-    . "iBwGSIPAAUiDwgFJg8EBSIPBAUE5xA+PZP@@@0UB50GDwgFEOZQkWAEAAA+FEv@@"
-    . "@4tcJCBEi3wkSOmJ8@@@RIuUJLgBAACLnCTAAQAAMcBFD6@SD6@bRYX2D4569@@@"
-    . "6RP3@@+DfCRsAQ+E@AEAAIN8JGwCD4S4AgAAQYPtAelX+v@@g4QkiAAAAAHHRCRI"
-    . "CQAAAIn4SIu0JGABAABBD6@ERo0MKEljwYA8BgMPhqQBAACLRCQYRDn4QQ9Mx4O8"
-    . "JBABAAADiUQkIA+OsAEAAIuEJEgBAACLlCRAAQAAAfhEAeoPr4QkOAEAAIO8JBAB"
-    . "AAAFD4TAAgAARI0MkItEJDBIi7QkMAEAAESLVCQgRAHIjVACRYXSSGPSD7Y0Fo1Q"
-    . "AUiYSGPSiXQkUEiLtCQwAQAAD7Y0Fol0JHhIi7QkMAEAAA+2BAaJRCRwD4TrAQAA"
-    . "i0QkQESJXCQoRTHSi3QkHEyLnCQwAQAAiYQkjAAAAOtyRDu8JJAAAAB+WUiLhCRw"
-    . "AQAAQosUkEQByo1CAo1KAUhj0kEPthQTSJhIY8krVCRwQQ+2BANBD7YMCytEJFAr"
-    . "TCR4D6@SD6@AD6@JjQRAjQSIjQRQQTnAcgqDrCSMAAAAAXh+SYPCAUQ5VCQgD47P"
-    . "AQAARDlUJBhEiZQkkAAAAA+Oe@@@@0iLhCRoAQAAQosUkEQByo1CAo1KAUhj0kEP"
-    . "thQTSJhIY8krVCRwQQ+2BANBD7YMCytEJFArTCR4D6@SD6@AD6@JjQRAjQSIjQRQ"
-    . "QTnAD4Mo@@@@g+4BD4kf@@@@RItcJCiDfCRICQ+Eavj@@4NEJGgB6Snz@@9Bg8UB"
-    . "6Wb4@@+DRCRMAekA8@@@kIXAD4SzAAAARItUJECLdCQcMcnrM0Q7fCQofiJIi5Qk"
-    . "cAEAAESJyAMEikiLlCRgAQAA9gQCAXUGQYPqAXiZSIPBATlMJCB+dzlMJBiJTCQo"
-    . "fsNIi4QkaAEAAESJygMUiEiLhCRgAQAA9gQQAnWng+4BeaLpX@@@@w8fhAAAAAAA"
-    . "uwMAAADpRvH@@8YEBgLp8Pz@@0G6AwAAAOk+8f@@x0QkHAAAAADHRCQYAAAAAOm7"
-    . "9f@@g8cB6aD3@@+LdCQcQYPGAUiDvCSoAQAAAA+EHQQAAEljxouUJEgBAABIjQyF"
-    . "AAAAAIuEJEABAAAB+sHiEEQB6AnQSIuUJKgBAACJRAr8i5QkKAEAAIXSD4UeAwAA"
-    . "i0QkHCnwRDm0JLABAABIi3QkYIlEDvwPjhPz@@@ppf7@@0SLXCQo64aNBJCJRCQo"
-    . "i4QkrAAAAIXAD4XjAQAAi0QkIIXAD4Rg@@@@SIsEJIt0JBxFMcnHRCR4AAAAAESJ"
-    . "dCRwRIm8JIwAAABEiZwkkAAAAEiJRCRQSIuEJGgBAACLTCQoTIu8JDABAABMi1Qk"
-    . "UEyLhCRwAQAARItcJHhCAwyIQYE6@@@@AEeLBIiNUQKNQQFIY8lBD5fGSGPSSJhF"
-    . "D7b2QQ+2FBdBD7YEB4mUJLQAAACJhCS4AAAAweIQweAICdBBD7YUDwnQiZQkvAAA"
-    . "AImEJLAAAADrHg+v0g+vyY0UUg+vwI0Uio0EQjnDD4OvAAAASYPCCEU5ww+D4AAA"
-    . "AESLvCSgAAAAQYPDAkGLAkGLWgRFhf90Hk2FyYtUJDAPRJQksAAAAEUx9oXAQQ+U"
-    . "xolUJDCJ0InCD7bMD7bAweoQK4wkuAAAACuEJLwAAAAPttIrlCS0AAAAgfv@@@8A"
-    . "D4Z0@@@@QYnfQcHvEEUPtv8Pr9JFD6@@RDn6D4dz@@@@D7bXD6@JD6@SOdEPh2L@"
-    . "@@8PttMPr8APr9I50A+HUf@@@0WF9nQFg+4BeDtJg8EBSINEJFBYg0QkeBZEOUwk"
-    . "IA+Pkf7@@0SLdCRwRIu8JIwAAABEi5wkkAAAAOmu@f@@RYX2dcfrwESLdCRwRIu8"
-    . "JIwAAABEi5wkkAAAAOml@P@@i0QkIIt0JByFwA+Eff3@@0Ux0us5OYQkmAAAAHwY"
-    . "D6@JOYwknAAAAHwMD6@SOZQklAAAAH0Jg+4BD4hm@P@@SYPCAUQ5VCQgD44@@f@@"
-    . "SIuEJGgBAACLVCQoTIuMJDABAABCAxSQSIuEJHABAABCiwSQicGNQgKJTCQwwekQ"
-    . "SJgPtslBD7YEASnIjUoBSGPSD6@ASGPJRQ+2DAlIi0wkMA+2zUEpyUSJyUyLjCQw"
-    . "AQAAQQ+2FBFED7ZMJDBEKcqB+@@@@wAPh0r@@@8Pr8mNBEAPr9KNBIiNBFA5ww+C"
-    . "VP@@@+lY@@@@x0QkHAAAAADHRCQYAAAAAOlF9@@@RDm0JLABAABEifAPjhvx@@+J"
-    . "+CuEJMABAABFMdKDwAFBD0jCicGLhCTAAQAAjUQH@0E5w0EPTsOJxkSJ6CuEJLgB"
-    . "AACDwAFED0nQi4QkuAEAAEGNRAX@OcUPTsU5zolEJCAPjEH7@@9EieJJY8IPr9FI"
-    . "Y9JIAdBIA4QkYAEAAEmJwY1GAYlEJCiLRCQgRCnQSI1wAUQ7VCQgfxNKjRQOTInI"
-    . "gCADSIPAAUg50HX0g8EBTANMJFg7TCQoddjp6Pr@@4uMJCgBAACFyQ+FQf@@@+nU"
-    . "+v@@kJCQkJCQkJCQkJCQkA=="
-    MyFunc:=this.MCode(StrReplace((A_PtrSize=8?x64:x32),"@","/"))
-  }
-  text:=j[1], w:=j[2], h:=j[3]
-  , err1:=this.Floor(j[4] ? j[5] : ini.err1)
-  , err0:=this.Floor(j[4] ? j[6] : ini.err0)
-  , mode:=j[7], color:=j[8], n:=j[9]
-  ok:=(!ini.bits.Scan0 || mode<1 || mode>5) ? 0
-    : DllCall(MyFunc.Ptr, "int",mode, "uint",color, "uint",n, "int",dir
-    , "Ptr",ini.bits.Scan0, "int",ini.bits.Stride
-    , "int",sx, "int",sy, "int",sw, "int",sh
-    , "Ptr",ini.ss, "Ptr",ini.s1, "Ptr",ini.s0
-    , "Ptr",text, "int",w, "int",h
-    , "int",Floor(Abs(err1)*1024), "int",Floor(Abs(err0)*1024)
-    , "int",(err1<0||err0<0), "Ptr",ini.allpos, "int",ini.allpos_max
-    , "int",Floor(w*ini.zoomW), "int",Floor(h*ini.zoomH))
-  return ok
-}
-
-code()
-{
-return "
-(
+            code()
+            {
+                return "
+                (
 
 //***** C source code of machine code *****
 // gcc.exe -m32/-m64 -O2
@@ -21517,9 +21824,7 @@ SC(RGB, hwnd)
   SendMessage,0x2001,0,(RGB&0xFF)<<16|RGB&0xFF00|(RGB>>16)&0xFF,,% "ahk_id " hwnd
 }
 
-
 ;==== Optional GUI interface ====
-
 
 Gui(cmd, arg1:="", args*)
 {
@@ -23385,12 +23690,15 @@ btnCustom:
     helpText .= "CALL:TryCastDPSSkills`n"
     helpText .= "CALL:TryCastHealingSkill`n"
     helpText .= "CALL:TryCastCC`n"
-    helpText .= "CALL:LoopCastUntilMobDead`n`n"
+    helpText .= "CALL:LoopCastUntilMobDead`n"
+    helpText .= "nethealing,target,action - Control healing`n"
+    helpText .= "netbuffs,target - Activate all buff timers`n`n"
     
     helpText .= "═══ NAVIGATION ═══`n"
     helpText .= "CALL:GoToWaypoint(25)`n"
     helpText .= "CALL:StartTravel (full route)`n"
-    helpText .= "CALL:StopTravel`n`n"
+    helpText .= "CALL:StopTravel`n"
+    helpText .= "netnav,target,WP/NODE - Network navigation`n`n"
     
     helpText .= "═══ BUFFS & UTILITIES ═══`n"
     helpText .= "CALL:gnoll`n"
@@ -23402,22 +23710,53 @@ btnCustom:
     helpText .= "CALL:StartDeathDetection`n"
     helpText .= "CALL:StopDeathDetection`n`n"
     
+    helpText .= "═══ WAYPOINT COMMANDS ═══`n"
+    helpText .= "netskill,key,target - Send key to windows`n"
+    helpText .= "netcombat,duration,target - Combat sequence`n"
+    helpText .= "netnav,target,destination - Navigate to WP/NODE`n"
+    helpText .= "nethealing,target,start/stop - Control healing`n"
+    helpText .= "netbuffs,target - Activate all buff timers`n`n"
+    
     helpText .= "═══ EXAMPLES ═══`n"
     helpText .= "PRESS:1 (hotkey 1 all clients)`n"
     helpText .= "CTRLSEND:Rappelz:|:F5 (F5 to window)`n"
-    helpText .= "LOCAL:CALL:GoToWaypoint(10) (this only)"
+    helpText .= "LOCAL:CALL:GoToWaypoint(10) (this only)`n"
+    helpText .= "netskill,3,win1 win2 (key 3 to win1&2)`n"
+    helpText .= "netcombat,15,all (15s combat all clients)`n"
+    helpText .= "netnav,all,WP 13 (all go to waypoint 13)`n"
+    helpText .= "nethealing,win1 win2,start (start healing)`n"
+    helpText .= "netbuffs,all (activate all buffs including DT & Gnoll)"
     
-    InputBox, cmd, Custom Command, %helpText%,,500,600
-    If (!ErrorLevel && cmd) {
+    ; Create custom GUI with scrollable help text
+    Gui, CustomCmd:New
+    Gui, CustomCmd:Add, Text, x10 y10, Command Help (scroll to view all):
+    Gui, CustomCmd:Add, Edit, x10 y30 w480 h350 vHelpDisplay ReadOnly +VScroll, %helpText%
+    Gui, CustomCmd:Add, Text, x10 y390, Enter command:
+    Gui, CustomCmd:Add, Edit, x10 y410 w480 vCustomCommand
+    Gui, CustomCmd:Add, Button, x10 y440 w100 gCustomCmdOK Default, OK
+    Gui, CustomCmd:Add, Button, x120 y440 w100 gCustomCmdCancel, Cancel
+    Gui, CustomCmd:Show, w500 h480, Custom Command
+    Return
+    
+CustomCmdOK:
+    Gui, CustomCmd:Submit
+    Gui, CustomCmd:Destroy
+    If (CustomCommand != "") {
         ; Check if command should be executed locally
-        If (SubStr(cmd, 1, 6) = "LOCAL:") {
-            localCmd := SubStr(cmd, 7)
+        If (SubStr(CustomCommand, 1, 6) = "LOCAL:") {
+            localCmd := SubStr(CustomCommand, 7)
             AddLog("Executing locally: " localCmd)
             ProcessCommand(localCmd)
         } Else {
-            SendCommandToAll(cmd)
+            SendCommandToAll(CustomCommand)
         }
     }
+    Return
+
+CustomCmdCancel:
+CustomCmdGuiClose:
+    Gui, CustomCmd:Destroy
+    Return
 Return
 
 SendCommandToAll(command) {
@@ -23496,7 +23835,6 @@ AddLog(message) {
     }
     GuiControl,, txtLog, %newLog%
 }
-
 
 GuiEscape:
 CloseAHKsock:
@@ -23913,433 +24251,433 @@ through the Internet. You may change the probability of failure by changing the 
 
 If your application can still work after uncommenting the block, then it is a sign that it is properly handling frames split
 across multiple RECEIVED events. This would also demonstrate your application's ability to cope with partially sent data.
-*/
+                */
 
 /****************\
  Main functions  |
-               */
+                */
 
-AHKsock_Listen(sPort, sFunction = False) {
-    
-    ;Check if there is already a socket listening on this port
-    If (sktListen := AHKsock_Sockets("GetSocketFromNamePort", A_Space, sPort)) {
-        
-        ;Check if we're stopping the listening
-        If Not sFunction {
-            AHKsock_Close(sktListen) ;Close the socket
-        
-        ;Check if we're retrieving the current function
-        } Else If (sFunction = "()") {
-            Return AHKsock_Sockets("GetFunction", sktListen)
-        
-        ;Check if it's a different function
-        } Else If (sFunction <> AHKsock_Sockets("GetFunction", sktListen))
-            AHKsock_Sockets("SetFunction", sktListen, sFunction) ;Update it
-        
-        Return ;We're done
-    }
-    
-    ;Make sure we even have a function
-    If Not IsFunc(sFunction)
-        Return 2 ;sFunction is not a valid function.
-    
-    ;Make sure Winsock has been started up
-    If (i := AHKsock_Startup())
-        Return (i = 1) ? 3 ;The WSAStartup() call failed. The error is in ErrorLevel.
-                       : 4 ;The Winsock DLL does not support version 2.2.
-    
-    ;Resolve the local address and port to be used by the server
-    VarSetCapacity(aiHints, 16 + 4 * A_PtrSize, 0)
-    NumPut(1, aiHints,  0, "Int") ;ai_flags = AI_PASSIVE
-    NumPut(2, aiHints,  4, "Int") ;ai_family = AF_INET
-    NumPut(1, aiHints,  8, "Int") ;ai_socktype = SOCK_STREAM
-    NumPut(6, aiHints, 12, "Int") ;ai_protocol = IPPROTO_TCP
-    iResult := DllCall("Ws2_32\GetAddrInfo", "Ptr", 0, "Ptr", &sPort, "Ptr", &aiHints, "Ptr*", aiResult)
-    If (iResult != 0) Or ErrorLevel { ;Check for error
-        ErrorLevel := ErrorLevel ? ErrorLevel : iResult
-        Return 5 ;The getaddrinfo() call failed. The error is in ErrorLevel.
-    }
-    
-    sktListen := -1 ;INVALID_SOCKET
-    sktListen := DllCall("Ws2_32\socket", "Int", NumGet(aiResult+0, 04, "Int")
-                                        , "Int", NumGet(aiResult+0, 08, "Int")
-                                        , "Int", NumGet(aiResult+0, 12, "Int"), "Ptr")
-    If (sktListen = -1) Or ErrorLevel { ;Check for INVALID_SOCKET
-        sErrorLevel := ErrorLevel ? ErrorLevel : AHKsock_LastError()
-        DllCall("Ws2_32\FreeAddrInfo", "Ptr", aiResult)
-        ErrorLevel := sErrorLevel
-        Return 6 ;The socket() call failed. The error is in ErrorLevel.
-    }
-    
-    ;Setup the TCP listening socket
-    iResult := DllCall("Ws2_32\bind", "Ptr", sktListen, "Ptr", NumGet(aiResult+0, 16 + 2 * A_PtrSize), "Int", NumGet(aiResult+0, 16, "Ptr"))
-    If (iResult = -1) Or ErrorLevel { ;Check for SOCKET_ERROR
-        sErrorLevel := ErrorLevel ? ErrorLevel : AHKsock_LastError()
-        DllCall("Ws2_32\closesocket",  "Ptr", sktListen)
-        DllCall("Ws2_32\FreeAddrInfo", "Ptr", aiResult)
-        ErrorLevel := sErrorLevel
-        Return 7 ;The bind() call failed. The error is in ErrorLevel.
-    }
-    
-    DllCall("Ws2_32\FreeAddrInfo", "Ptr", aiResult)
-    
-    ;Add socket to array with A_Space for Name and IP to indicate that it's a listening socket
-    AHKsock_Sockets("Add", sktListen, A_Space, A_Space, sPort, sFunction)
-    
-    ;We must now actually register the socket
-    If AHKsock_RegisterAsyncSelect(sktListen) {
-        sErrorLevel := ErrorLevel
-        DllCall("Ws2_32\closesocket", "Ptr", sktListen)
-        AHKsock_Sockets("Delete", sktListen) ;Remove from array
-        ErrorLevel := sErrorLevel
-        Return 8 ;The WSAAsyncSelect() call failed. The error is in ErrorLevel.
-    }
-    
-    ;Start listening for incoming connections
-    iResult := DllCall("Ws2_32\listen", "Ptr", sktListen, "Int", 0x7FFFFFFF) ;SOMAXCONN
-    If (iResult = -1) Or ErrorLevel { ;Check for SOCKET_ERROR
-        sErrorLevel := ErrorLevel ? ErrorLevel : AHKsock_LastError()
-        DllCall("Ws2_32\closesocket", "Ptr", sktListen)
-        AHKsock_Sockets("Delete", sktListen) ;Remove from array
-        ErrorLevel := sErrorLevel
-        Return 9 ;The listen() call failed. The error is in ErrorLevel.
-    }
-}
+                AHKsock_Listen(sPort, sFunction = False) {
 
-AHKsock_Connect(sName, sPort, sFunction) {
-    Static aiResult, iPointer, bProcessing, iMessage
-    Static sCurName, sCurPort, sCurFunction, sktConnect
-    
-    ;Check if it's just to inquire whether or not a call is possible
-    If (Not sName And Not sPort And Not sFunction)
-        Return bProcessing
-    
-    ;Check if we're busy
-    If bProcessing And (sFunction != iMessage) {
-        ErrorLevel := sCurName A_Tab sCurPort
-        Return 1 ;AHKsock_Connect is still processing a connection attempt. ErrorLevel contains the name and the port,
-                 ;delimited by a tab.
-    } Else If bProcessing { ;sFunction = iMessage. The connect operation has finished.
-        
-        ;Check if it was successful
-        If (i := sPort >> 16) {
-            
-            ;Close the socket that failed
-            DllCall("Ws2_32\closesocket", "Ptr", sktConnect)
-            
-            ;Get the next pointer. ai_next
-            iPointer := NumGet(iPointer+0, 16 + 3 * A_PtrSize)
-            
-            ;Check if we reached the end of the linked structs
-            If (iPointer = 0) {
-                
-                ;We can now free the chain of addrinfo structs
-                DllCall("Ws2_32\FreeAddrInfo", "Ptr", aiResult)
-                
-                ;This is to ensure that the user can call AHKsock_Connect() right away upon receiving the message.
-                bProcessing := False
-                
-                ;Raise an error (can't use Return 1 because we were called asynchronously)
-                ErrorLevel := i
-                AHKsock_RaiseError(1) ;The connect() call failed. The error is in ErrorLevel.
-                
-                ;Call the function to signal that connection failed
-                If IsFunc(sCurFunction)
-                    %sCurFunction%("CONNECTED", -1, sCurName, 0, sCurPort)
-                
-                Return
+                    ;Check if there is already a socket listening on this port
+                    If (sktListen := AHKsock_Sockets("GetSocketFromNamePort", A_Space, sPort)) {
+
+                        ;Check if we're stopping the listening
+                        If Not sFunction {
+                            AHKsock_Close(sktListen) ;Close the socket
+
+                            ;Check if we're retrieving the current function
+                        } Else If (sFunction = "()") {
+                            Return AHKsock_Sockets("GetFunction", sktListen)
+
+                            ;Check if it's a different function
+                        } Else If (sFunction <> AHKsock_Sockets("GetFunction", sktListen))
+                        AHKsock_Sockets("SetFunction", sktListen, sFunction) ;Update it
+
+                        Return ;We're done
+                    }
+
+                    ;Make sure we even have a function
+                    If Not IsFunc(sFunction)
+                        Return 2 ;sFunction is not a valid function.
+
+                    ;Make sure Winsock has been started up
+                    If (i := AHKsock_Startup())
+                        Return (i = 1) ? 3 ;The WSAStartup() call failed. The error is in ErrorLevel.
+                    : 4 ;The Winsock DLL does not support version 2.2.
+
+                    ;Resolve the local address and port to be used by the server
+                    VarSetCapacity(aiHints, 16 + 4 * A_PtrSize, 0)
+                    NumPut(1, aiHints, 0, "Int") ;ai_flags = AI_PASSIVE
+                    NumPut(2, aiHints, 4, "Int") ;ai_family = AF_INET
+                    NumPut(1, aiHints, 8, "Int") ;ai_socktype = SOCK_STREAM
+                    NumPut(6, aiHints, 12, "Int") ;ai_protocol = IPPROTO_TCP
+                    iResult := DllCall("Ws2_32\GetAddrInfo", "Ptr", 0, "Ptr", &sPort, "Ptr", &aiHints, "Ptr*", aiResult)
+                    If (iResult != 0) Or ErrorLevel { ;Check for error
+                        ErrorLevel := ErrorLevel ? ErrorLevel : iResult
+                        Return 5 ;The getaddrinfo() call failed. The error is in ErrorLevel.
+                    }
+
+                    sktListen := -1 ;INVALID_SOCKET
+                    sktListen := DllCall("Ws2_32\socket", "Int", NumGet(aiResult+0, 04, "Int")
+                    , "Int", NumGet(aiResult+0, 08, "Int")
+                    , "Int", NumGet(aiResult+0, 12, "Int"), "Ptr")
+                    If (sktListen = -1) Or ErrorLevel { ;Check for INVALID_SOCKET
+                        sErrorLevel := ErrorLevel ? ErrorLevel : AHKsock_LastError()
+                        DllCall("Ws2_32\FreeAddrInfo", "Ptr", aiResult)
+                        ErrorLevel := sErrorLevel
+                        Return 6 ;The socket() call failed. The error is in ErrorLevel.
+                    }
+
+                    ;Setup the TCP listening socket
+                    iResult := DllCall("Ws2_32\bind", "Ptr", sktListen, "Ptr", NumGet(aiResult+0, 16 + 2 * A_PtrSize), "Int", NumGet(aiResult+0, 16, "Ptr"))
+                    If (iResult = -1) Or ErrorLevel { ;Check for SOCKET_ERROR
+                        sErrorLevel := ErrorLevel ? ErrorLevel : AHKsock_LastError()
+                        DllCall("Ws2_32\closesocket", "Ptr", sktListen)
+                        DllCall("Ws2_32\FreeAddrInfo", "Ptr", aiResult)
+                        ErrorLevel := sErrorLevel
+                        Return 7 ;The bind() call failed. The error is in ErrorLevel.
+                    }
+
+                    DllCall("Ws2_32\FreeAddrInfo", "Ptr", aiResult)
+
+                    ;Add socket to array with A_Space for Name and IP to indicate that it's a listening socket
+                    AHKsock_Sockets("Add", sktListen, A_Space, A_Space, sPort, sFunction)
+
+                    ;We must now actually register the socket
+                    If AHKsock_RegisterAsyncSelect(sktListen) {
+                        sErrorLevel := ErrorLevel
+                        DllCall("Ws2_32\closesocket", "Ptr", sktListen)
+                        AHKsock_Sockets("Delete", sktListen) ;Remove from array
+                        ErrorLevel := sErrorLevel
+                        Return 8 ;The WSAAsyncSelect() call failed. The error is in ErrorLevel.
+                    }
+
+                    ;Start listening for incoming connections
+                    iResult := DllCall("Ws2_32\listen", "Ptr", sktListen, "Int", 0x7FFFFFFF) ;SOMAXCONN
+                    If (iResult = -1) Or ErrorLevel { ;Check for SOCKET_ERROR
+                        sErrorLevel := ErrorLevel ? ErrorLevel : AHKsock_LastError()
+                        DllCall("Ws2_32\closesocket", "Ptr", sktListen)
+                        AHKsock_Sockets("Delete", sktListen) ;Remove from array
+                        ErrorLevel := sErrorLevel
+                        Return 9 ;The listen() call failed. The error is in ErrorLevel.
+                    }
+                }
+
+                AHKsock_Connect(sName, sPort, sFunction) {
+                    Static aiResult, iPointer, bProcessing, iMessage
+                    Static sCurName, sCurPort, sCurFunction, sktConnect
+
+                    ;Check if it's just to inquire whether or not a call is possible
+                    If (Not sName And Not sPort And Not sFunction)
+                        Return bProcessing
+
+                    ;Check if we're busy
+                    If bProcessing And (sFunction != iMessage) {
+                        ErrorLevel := sCurName A_Tab sCurPort
+                        Return 1 ;AHKsock_Connect is still processing a connection attempt. ErrorLevel contains the name and the port,
+                        ;delimited by a tab.
+                    } Else If bProcessing { ;sFunction = iMessage. The connect operation has finished.
+
+                        ;Check if it was successful
+                        If (i := sPort >> 16) {
+
+                            ;Close the socket that failed
+                            DllCall("Ws2_32\closesocket", "Ptr", sktConnect)
+
+                            ;Get the next pointer. ai_next
+                            iPointer := NumGet(iPointer+0, 16 + 3 * A_PtrSize)
+
+                            ;Check if we reached the end of the linked structs
+                            If (iPointer = 0) {
+
+                                ;We can now free the chain of addrinfo structs
+                                DllCall("Ws2_32\FreeAddrInfo", "Ptr", aiResult)
+
+                                ;This is to ensure that the user can call AHKsock_Connect() right away upon receiving the message.
+                                bProcessing := False
+
+                                ;Raise an error (can't use Return 1 because we were called asynchronously)
+                                ErrorLevel := i
+                                AHKsock_RaiseError(1) ;The connect() call failed. The error is in ErrorLevel.
+
+                                ;Call the function to signal that connection failed
+                                If IsFunc(sCurFunction)
+                                    %sCurFunction%("CONNECTED", -1, sCurName, 0, sCurPort)
+
+                            Return
+                        }
+
+                    } Else { ;Successful connection!
+
+                        ;Get the IP we successfully connected to
+                        sIP := DllCall("Ws2_32\inet_ntoa", "UInt", NumGet(NumGet(iPointer+0, 16 + 2 * A_PtrSize)+4, 0, "UInt"), "AStr")
+
+                        ;We can now free the chain of ADDRINFO structs
+                        DllCall("Ws2_32\FreeAddrInfo", "Ptr", aiResult)
+
+                        ;Add socket to array
+                        AHKsock_Sockets("Add", sktConnect, sCurName, sIP, sCurPort, sCurFunction)
+
+                        ;This is to ensure that the user can call AHKsock_Connect() right away upon receiving the message.
+                        bProcessing := False
+
+                        ;Do this small bit in Critical so that AHKsock_AsyncSelect doesn't receive
+                        ;any FD messages before we call the user function
+                        Critical
+
+                        ;We must now actually register the socket
+                        If AHKsock_RegisterAsyncSelect(sktConnect) {
+                            sErrorLevel := ErrorLevel ? ErrorLevel : AHKsock_LastError()
+                            DllCall("Ws2_32\closesocket", "Ptr", sktConnect)
+                            AHKsock_Sockets("Delete", sktConnect) ;Remove from array
+                            ErrorLevel := sErrorLevel
+                            AHKsock_RaiseError(2) ;The WSAAsyncSelect() call failed. The error is in ErrorLevel.
+
+                            If IsFunc(sCurFunction) ;Call the function to signal that connection failed
+                                %sCurFunction%("CONNECTED", -1, sCurName, 0, sCurPort)
+
+                        } Else If IsFunc(sCurFunction) ;Call the function to signal that connection was successful
+                        %sCurFunction%("CONNECTED", sktConnect, sCurName, sIP, sCurPort)
+
+                        Return
+                    }
+
+                } Else { ;We were called
+
+                    ;Make sure we even have a function
+                    If Not IsFunc(sFunction)
+                        Return 2 ;sFunction is not a valid function.
+
+                    bProcessing := True ;Block future calls to AHKsock_Connect() until we're done
+
+                    ;Keep the values
+                    sCurName := sName
+                    sCurPort := sPort
+                    sCurFunction := sFunction
+
+                    ;Make sure Winsock has been started up
+                    If (i := AHKsock_Startup()) {
+                        bProcessing := False
+                        Return (i = 1) ? 3 ;The WSAStartup() call failed. The error is in ErrorLevel.
+                        : 4 ;The Winsock DLL does not support version 2.2.
+                    }
+
+                    ;Resolve the server address and port    
+                    VarSetCapacity(aiHints, 16 + 4 * A_PtrSize, 0)
+                    NumPut(2, aiHints, 4, "Int") ;ai_family = AF_INET
+                    NumPut(1, aiHints, 8, "Int") ;ai_socktype = SOCK_STREAM
+                    NumPut(6, aiHints, 12, "Int") ;ai_protocol = IPPROTO_TCP
+                    iResult := DllCall("Ws2_32\GetAddrInfo", "Ptr", &sName, "Ptr", &sPort, "Ptr", &aiHints, "Ptr*", aiResult)
+                    If (iResult != 0) Or ErrorLevel { ;Check for error
+                        ErrorLevel := ErrorLevel ? ErrorLevel : iResult
+                        bProcessing := False
+                        Return 5 ;The getaddrinfo() call failed. The error is in ErrorLevel.
+                    }
+
+                    ;Start with the first struct
+                    iPointer := aiResult
+                }
+
+                ;Create a SOCKET for connecting to server
+                sktConnect := DllCall("Ws2_32\socket", "Int", NumGet(iPointer+0, 04, "Int")
+                , "Int", NumGet(iPointer+0, 08, "Int")
+                , "Int", NumGet(iPointer+0, 12, "Int"), "Ptr")
+                If (sktConnect = 0xFFFFFFFF) Or ErrorLevel { ;Check for INVALID_SOCKET
+                    sErrorLevel := ErrorLevel ? ErrorLevel : AHKsock_LastError()
+                    DllCall("Ws2_32\FreeAddrInfo", "Ptr", aiResult)
+                    bProcessing := False
+                    ErrorLevel := sErrorLevel
+                    If (sFunction = iMessage) { ;Check if we were called asynchronously
+                        AHKsock_RaiseError(3) ;The socket() call failed. The error is in ErrorLevel.
+
+                        ;Call the function to signal that connection failed
+                        If IsFunc(sCurFunction)
+                            %sCurFunction%("CONNECTED", -1)
+                    }
+                    Return 6 ;The socket() call failed. The error is in ErrorLevel.
+                }
+
+                ;Register the socket to know when the connect() function is done. FD_CONNECT = 16
+                iMessage := AHKsock_Settings("Message") + 1
+                If AHKsock_RegisterAsyncSelect(sktConnect, 16, "AHKsock_Connect", iMessage) {
+                    sErrorLevel := ErrorLevel
+                    DllCall("Ws2_32\FreeAddrInfo", "Ptr", aiResult)
+                    DllCall("Ws2_32\closesocket", "Ptr", sktConnect)
+                    bProcessing := False
+                    ErrorLevel := sErrorLevel
+                    If (sFunction = iMessage) { ;Check if we were called asynchronously
+                        AHKsock_RaiseError(4) ;The WSAAsyncSelect() call failed. The error is in ErrorLevel.
+
+                        ;Call the function to signal that connection failed
+                        If IsFunc(sCurFunction)
+                            %sCurFunction%("CONNECTED", -1)
+                    }
+                    Return 7 ;The WSAAsyncSelect() call failed. The error is in ErrorLevel.
+                }
+
+                ;Connect to server (the connect() call also implicitly binds the socket to any host address and any port)
+                iResult := DllCall("Ws2_32\connect", "Ptr", sktConnect, "Ptr", NumGet(iPointer+0, 16 + 2 * A_PtrSize), "Int", NumGet(iPointer+0, 16))
+                If ErrorLevel Or ((iResult = -1) And (AHKsock_LastError() != 10035)) { ;Check for any error other than WSAEWOULDBLOCK
+                    sErrorLevel := ErrorLevel ? ErrorLevel : AHKsock_LastError()
+                    DllCall("Ws2_32\FreeAddrInfo", "Ptr", aiResult)
+                    DllCall("Ws2_32\closesocket", "Ptr", sktConnect)
+                    bProcessing := False
+                    ErrorLevel := sErrorLevel
+                    If (sFunction = iMessage) { ;Check if we were called asynchronously
+                        AHKsock_RaiseError(5) ;The connect() call failed. The error is in ErrorLevel.
+
+                        ;Call the function to signal that connection failed
+                        If IsFunc(sCurFunction)
+                            %sCurFunction%("CONNECTED", -1)
+                    }
+                    Return 8 ;The connect() call failed. The error is in ErrorLevel.
+                }
             }
-            
-        } Else { ;Successful connection!
-            
-            ;Get the IP we successfully connected to
-            sIP := DllCall("Ws2_32\inet_ntoa", "UInt", NumGet(NumGet(iPointer+0, 16 + 2 * A_PtrSize)+4, 0, "UInt"), "AStr")
-            
-            ;We can now free the chain of ADDRINFO structs
-            DllCall("Ws2_32\FreeAddrInfo", "Ptr", aiResult)
-            
-            ;Add socket to array
-            AHKsock_Sockets("Add", sktConnect, sCurName, sIP, sCurPort, sCurFunction)
-            
-            ;This is to ensure that the user can call AHKsock_Connect() right away upon receiving the message.
-            bProcessing := False
-            
-            ;Do this small bit in Critical so that AHKsock_AsyncSelect doesn't receive
-            ;any FD messages before we call the user function
-            Critical
-            
-            ;We must now actually register the socket
-            If AHKsock_RegisterAsyncSelect(sktConnect) {
-                sErrorLevel := ErrorLevel ? ErrorLevel : AHKsock_LastError()
-                DllCall("Ws2_32\closesocket", "Ptr", sktConnect)
-                AHKsock_Sockets("Delete", sktConnect) ;Remove from array
-                ErrorLevel := sErrorLevel
-                AHKsock_RaiseError(2) ;The WSAAsyncSelect() call failed. The error is in ErrorLevel.
-                
-                If IsFunc(sCurFunction) ;Call the function to signal that connection failed
-                    %sCurFunction%("CONNECTED", -1, sCurName, 0, sCurPort)
-                
-            } Else If IsFunc(sCurFunction) ;Call the function to signal that connection was successful
-                %sCurFunction%("CONNECTED", sktConnect, sCurName, sIP, sCurPort)
-            
-            Return
-        }
-        
-    } Else { ;We were called
-        
-        ;Make sure we even have a function
-        If Not IsFunc(sFunction)
-            Return 2 ;sFunction is not a valid function.
-        
-        bProcessing := True ;Block future calls to AHKsock_Connect() until we're done
-        
-        ;Keep the values
-        sCurName := sName
-        sCurPort := sPort
-        sCurFunction := sFunction
-        
-        ;Make sure Winsock has been started up
-        If (i := AHKsock_Startup()) {
-            bProcessing := False
-            Return (i = 1) ? 3 ;The WSAStartup() call failed. The error is in ErrorLevel.
-                           : 4 ;The Winsock DLL does not support version 2.2.
-        }
-        
-        ;Resolve the server address and port    
-        VarSetCapacity(aiHints, 16 + 4 * A_PtrSize, 0)
-        NumPut(2, aiHints,  4, "Int") ;ai_family = AF_INET
-        NumPut(1, aiHints,  8, "Int") ;ai_socktype = SOCK_STREAM
-        NumPut(6, aiHints, 12, "Int") ;ai_protocol = IPPROTO_TCP
-        iResult := DllCall("Ws2_32\GetAddrInfo", "Ptr", &sName, "Ptr", &sPort, "Ptr", &aiHints, "Ptr*", aiResult)
-        If (iResult != 0) Or ErrorLevel { ;Check for error
-            ErrorLevel := ErrorLevel ? ErrorLevel : iResult
-            bProcessing := False
-            Return 5 ;The getaddrinfo() call failed. The error is in ErrorLevel.
-        }
-        
-        ;Start with the first struct
-        iPointer := aiResult
-    }
-    
-    ;Create a SOCKET for connecting to server
-    sktConnect := DllCall("Ws2_32\socket", "Int", NumGet(iPointer+0, 04, "Int")
-                                         , "Int", NumGet(iPointer+0, 08, "Int")
-                                         , "Int", NumGet(iPointer+0, 12, "Int"), "Ptr")
-    If (sktConnect = 0xFFFFFFFF) Or ErrorLevel { ;Check for INVALID_SOCKET
-        sErrorLevel := ErrorLevel ? ErrorLevel : AHKsock_LastError()
-        DllCall("Ws2_32\FreeAddrInfo", "Ptr", aiResult)
-        bProcessing := False
-        ErrorLevel := sErrorLevel
-        If (sFunction = iMessage) { ;Check if we were called asynchronously
-            AHKsock_RaiseError(3) ;The socket() call failed. The error is in ErrorLevel.
-            
-            ;Call the function to signal that connection failed
-            If IsFunc(sCurFunction)
-                %sCurFunction%("CONNECTED", -1)
-        }
-        Return 6 ;The socket() call failed. The error is in ErrorLevel.
-    }
-    
-    ;Register the socket to know when the connect() function is done. FD_CONNECT = 16
-    iMessage := AHKsock_Settings("Message") + 1
-    If AHKsock_RegisterAsyncSelect(sktConnect, 16, "AHKsock_Connect", iMessage) {
-        sErrorLevel := ErrorLevel
-        DllCall("Ws2_32\FreeAddrInfo", "Ptr", aiResult)
-        DllCall("Ws2_32\closesocket",  "Ptr", sktConnect)
-        bProcessing := False
-        ErrorLevel := sErrorLevel
-        If (sFunction = iMessage) { ;Check if we were called asynchronously
-            AHKsock_RaiseError(4) ;The WSAAsyncSelect() call failed. The error is in ErrorLevel.
-            
-            ;Call the function to signal that connection failed
-            If IsFunc(sCurFunction)
-                %sCurFunction%("CONNECTED", -1)
-        }
-        Return 7 ;The WSAAsyncSelect() call failed. The error is in ErrorLevel.
-    }
-    
-    ;Connect to server (the connect() call also implicitly binds the socket to any host address and any port)
-    iResult := DllCall("Ws2_32\connect", "Ptr", sktConnect, "Ptr", NumGet(iPointer+0, 16 + 2 * A_PtrSize), "Int", NumGet(iPointer+0, 16))
-    If ErrorLevel Or ((iResult = -1) And (AHKsock_LastError() != 10035)) { ;Check for any error other than WSAEWOULDBLOCK
-        sErrorLevel := ErrorLevel ? ErrorLevel : AHKsock_LastError()
-        DllCall("Ws2_32\FreeAddrInfo", "Ptr", aiResult)
-        DllCall("Ws2_32\closesocket",  "Ptr", sktConnect)
-        bProcessing := False
-        ErrorLevel := sErrorLevel
-        If (sFunction = iMessage) { ;Check if we were called asynchronously
-            AHKsock_RaiseError(5) ;The connect() call failed. The error is in ErrorLevel.
-            
-            ;Call the function to signal that connection failed
-            If IsFunc(sCurFunction)
-                %sCurFunction%("CONNECTED", -1)
-        }
-        Return 8 ;The connect() call failed. The error is in ErrorLevel.
-    }
-}
 
-AHKsock_Send(iSocket, ptrData = 0, iLength = 0) {
-    
-    ;Make sure the socket is on record. Fail-safe
-    If Not AHKsock_Sockets("Index", iSocket)
-        Return -4 ;The socket specified in iSocket is not a recognized socket.
-    
-    ;Make sure Winsock has been started up
-    If Not AHKsock_Startup(1)
-        Return -1 ;WSAStartup hasn't been called yet.
-    
-    ;Make sure the socket is cleared for sending
-    If Not AHKsock_Sockets("GetSend", iSocket)
-        Return -5 ;The socket specified in iSocket is not cleared for sending.
-    
+            AHKsock_Send(iSocket, ptrData = 0, iLength = 0) {
+
+                ;Make sure the socket is on record. Fail-safe
+                If Not AHKsock_Sockets("Index", iSocket)
+                    Return -4 ;The socket specified in iSocket is not a recognized socket.
+
+                ;Make sure Winsock has been started up
+                If Not AHKsock_Startup(1)
+                    Return -1 ;WSAStartup hasn't been called yet.
+
+                ;Make sure the socket is cleared for sending
+                If Not AHKsock_Sockets("GetSend", iSocket)
+                    Return -5 ;The socket specified in iSocket is not cleared for sending.
+
     /*! Uncomment this block to simulate the possibility of an incomplete send()
     Random, iRand, 1, 100
     If (iRand <= 30) { ;Probability of failure of 30%
         Random, iRand, 1, iLength - 1 ;Randomize how much of the data will not be sent
         iLength -= iRand
     }
-    */
-    
-    iSendResult := DllCall("Ws2_32\send", "Ptr", iSocket, "Ptr", ptrData, "Int", iLength, "Int", 0)
-    If (iSendResult = -1) And ((iErr := AHKsock_LastError()) = 10035) { ;Check specifically for WSAEWOULDBLOCK
-        AHKsock_Sockets("SetSend", iSocket, False) ;Update socket's send status
-        Return -2 ;Calling send() would have blocked the thread. Try again once you get the proper update.
-    } Else If (iSendResult = -1) Or ErrorLevel {
-        ErrorLevel := ErrorLevel ? ErrorLevel : iErr
-        Return -3 ;The send() call failed. The error is in ErrorLevel.
-    } Else Return iSendResult ;The send() operation was successful
-}
+                */
 
-AHKsock_ForceSend(iSocket, ptrData, iLength) {
-    
-    ;Make sure Winsock has been started up
-    If Not AHKsock_Startup(1)
-        Return -1 ;WSAStartup hasn't been called yet
-    
-    ;Make sure the socket is on record. Fail-safe
-    If Not AHKsock_Sockets("Index", iSocket)
-        Return -4
-    
-    ;Make sure that we're not in Critical, or we won't be able to wait for FD_WRITE messages
-    If A_IsCritical
-        Return -5
-    
-    ;Extra precaution to make sure FD_WRITE messages can make it
-    Thread, Priority, 0
-    
-    ;We need to make sure not to fill up the send buffer in one call, or we'll get a performance hit.
-    ;http://support.microsoft.com/kb/823764
-    
-    ;Get the socket's send buffer size
-    If ((iMaxChunk := AHKsock_SockOpt(iSocket, "SO_SNDBUF")) = -1)
-        Return -6
-    
-    ;Check if we'll be sending in chunks or not
-    If (iMaxChunk <= 1) {
-        
-        ;We'll be sending as much as possible everytime!
-        
-        Loop { ;Keep sending the data until we're done or until an error occurs
-            
-            ;Wait until we can send data (ie. when FD_WRITE arrives)
-            While Not AHKsock_Sockets("GetSend", iSocket)
-                Sleep -1
-            
-            Loop { ;Keep sending the data until we get WSAEWOULDBLOCK or until an error occurs
-                If ((iSendResult := AHKsock_Send(iSocket, ptrData, iLength)) < 0) {
-                    If (iSendResult = -2) ;Check specifically for WSAEWOULDBLOCK
-                        Break ;Calling send() would have blocked the thread. Break the loop and we'll try again after we
-                              ;receive FD_WRITE
-                    Else Return iSendResult ;Something bad happened with AHKsock_Send. Return the same value we got.
-                } Else {
-                    
-                    ;AHKsock_Send was able to send bytes. Let's check if it sent only part of what we requested
-                    If (iSendResult < iLength) ;Move the offset up by what we were able to send
-                        ptrData += iSendResult, iLength -= iSendResult
-                    Else Return ;We're done sending all the data
-                }
+                iSendResult := DllCall("Ws2_32\send", "Ptr", iSocket, "Ptr", ptrData, "Int", iLength, "Int", 0)
+                If (iSendResult = -1) And ((iErr := AHKsock_LastError()) = 10035) { ;Check specifically for WSAEWOULDBLOCK
+                    AHKsock_Sockets("SetSend", iSocket, False) ;Update socket's send status
+                    Return -2 ;Calling send() would have blocked the thread. Try again once you get the proper update.
+                } Else If (iSendResult = -1) Or ErrorLevel {
+                    ErrorLevel := ErrorLevel ? ErrorLevel : iErr
+                    Return -3 ;The send() call failed. The error is in ErrorLevel.
+                } Else Return iSendResult ;The send() operation was successful
             }
-        }
-    } Else {
-        
-        ;We'll be sending in chunks of just under the send buffer size to avoid the performance hit
-        
-        iMaxChunk -= 1 ;Reduce by 1 to be smaller than the send buffer
-        Loop { ;Keep sending the data until we're done or until an error occurs
-            
-            ;Wait until we can send data (ie. when FD_WRITE arrives)
-            While Not AHKsock_Sockets("GetSend", iSocket)
-                Sleep -1
-            
-            ;Check if we have less than the max chunk to send
-            If (iLength < iMaxChunk) {
-                
-                Loop { ;Keep sending the data until we get WSAEWOULDBLOCK or until an error occurs
-                    ;Send using the traditional offset method
-                    If ((iSendResult := AHKsock_Send(iSocket, ptrData, iLength)) < 0) {
-                        If (iSendResult = -2) ;Check specifically for WSAEWOULDBLOCK
-                            Break ;Calling send() would have blocked the thread. Break the loop and we'll try again after we
-                                  ;receive FD_WRITE
-                        Else Return iSendResult ;Something bad happened with AHKsock_Send. Return the same value we got.
-                    } Else {
-                        
-                        ;AHKsock_Send was able to send bytes. Let's check if it sent only part of what we requested
-                        If (iSendResult < iLength) ;Move the offset up by what we were able to send
-                            ptrData += iSendResult, iLength -= iSendResult
-                        Else Return ;We're done sending all the data
+
+            AHKsock_ForceSend(iSocket, ptrData, iLength) {
+
+                ;Make sure Winsock has been started up
+                If Not AHKsock_Startup(1)
+                    Return -1 ;WSAStartup hasn't been called yet
+
+                ;Make sure the socket is on record. Fail-safe
+                If Not AHKsock_Sockets("Index", iSocket)
+                    Return -4
+
+                ;Make sure that we're not in Critical, or we won't be able to wait for FD_WRITE messages
+                If A_IsCritical
+                    Return -5
+
+                ;Extra precaution to make sure FD_WRITE messages can make it
+                Thread, Priority, 0
+
+                ;We need to make sure not to fill up the send buffer in one call, or we'll get a performance hit.
+                ;http://support.microsoft.com/kb/823764
+
+                ;Get the socket's send buffer size
+                If ((iMaxChunk := AHKsock_SockOpt(iSocket, "SO_SNDBUF")) = -1)
+                    Return -6
+
+                ;Check if we'll be sending in chunks or not
+                If (iMaxChunk <= 1) {
+
+                    ;We'll be sending as much as possible everytime!
+
+                    Loop { ;Keep sending the data until we're done or until an error occurs
+
+                        ;Wait until we can send data (ie. when FD_WRITE arrives)
+                        While Not AHKsock_Sockets("GetSend", iSocket)
+                            Sleep -1
+
+                        Loop { ;Keep sending the data until we get WSAEWOULDBLOCK or until an error occurs
+                            If ((iSendResult := AHKsock_Send(iSocket, ptrData, iLength)) < 0) {
+                                If (iSendResult = -2) ;Check specifically for WSAEWOULDBLOCK
+                                    Break ;Calling send() would have blocked the thread. Break the loop and we'll try again after we
+                                ;receive FD_WRITE
+                            Else Return iSendResult ;Something bad happened with AHKsock_Send. Return the same value we got.
+                        } Else {
+
+                            ;AHKsock_Send was able to send bytes. Let's check if it sent only part of what we requested
+                            If (iSendResult < iLength) ;Move the offset up by what we were able to send
+                                ptrData += iSendResult, iLength -= iSendResult
+                            Else Return ;We're done sending all the data
+                            }
                     }
                 }
             } Else {
-                
-                ;Send up to max chunk
-                If ((iSendResult := AHKsock_Send(iSocket, ptrData, iMaxChunk)) < 0) {
-                    If (iSendResult = -2) ;Check specifically for WSAEWOULDBLOCK
-                        Continue ;Calling send() would have blocked the thread. Continue the loop and we'll try again after
-                                 ;we receive FD_WRITE
-                    Else Return iSendResult ;Something bad happened with AHKsock_Send. Return the same value we got.
-                } Else ptrData += iSendResult, iLength -= iSendResult ;Move up offset by updating the pointer and length
+
+                ;We'll be sending in chunks of just under the send buffer size to avoid the performance hit
+
+                iMaxChunk -= 1 ;Reduce by 1 to be smaller than the send buffer
+                Loop { ;Keep sending the data until we're done or until an error occurs
+
+                    ;Wait until we can send data (ie. when FD_WRITE arrives)
+                    While Not AHKsock_Sockets("GetSend", iSocket)
+                        Sleep -1
+
+                    ;Check if we have less than the max chunk to send
+                    If (iLength < iMaxChunk) {
+
+                        Loop { ;Keep sending the data until we get WSAEWOULDBLOCK or until an error occurs
+                            ;Send using the traditional offset method
+                            If ((iSendResult := AHKsock_Send(iSocket, ptrData, iLength)) < 0) {
+                                If (iSendResult = -2) ;Check specifically for WSAEWOULDBLOCK
+                                    Break ;Calling send() would have blocked the thread. Break the loop and we'll try again after we
+                                ;receive FD_WRITE
+                            Else Return iSendResult ;Something bad happened with AHKsock_Send. Return the same value we got.
+                        } Else {
+
+                            ;AHKsock_Send was able to send bytes. Let's check if it sent only part of what we requested
+                            If (iSendResult < iLength) ;Move the offset up by what we were able to send
+                                ptrData += iSendResult, iLength -= iSendResult
+                            Else Return ;We're done sending all the data
+                            }
+                    }
+                } Else {
+
+                    ;Send up to max chunk
+                    If ((iSendResult := AHKsock_Send(iSocket, ptrData, iMaxChunk)) < 0) {
+                        If (iSendResult = -2) ;Check specifically for WSAEWOULDBLOCK
+                            Continue ;Calling send() would have blocked the thread. Continue the loop and we'll try again after
+                        ;we receive FD_WRITE
+                        Else Return iSendResult ;Something bad happened with AHKsock_Send. Return the same value we got.
+                        } Else ptrData += iSendResult, iLength -= iSendResult ;Move up offset by updating the pointer and length
+                }
             }
         }
     }
-}
 
-AHKsock_Close(iSocket = -1, iTimeout = 5000) {
-    
-    ;Make sure Winsock has been started up
-    If Not AHKsock_Startup(1)
-        Return ;There's nothing to close
-    
-    If (iSocket = -1) { ;We need to close all the sockets
-        
-        ;Check if we even have sockets to close
-        If Not AHKsock_Sockets() {
-            DllCall("Ws2_32\WSACleanup")
-            AHKsock_Startup(2) ;Reset the value to show that we've turned off Winsock
-            Return ;We're done!
-        }
-        
-        ;Take the current time (needed for time-outing)
-        iStartClose := A_TickCount
-        
-        Loop % AHKsock_Sockets() ;Close all sockets and cleanup
-            AHKsock_ShutdownSocket(AHKsock_Sockets("GetSocketFromIndex", A_Index))
-        
-        ;Check if we're in the OnExit subroutine
-        If Not A_ExitReason {
-            
-            A_IsCriticalOld := A_IsCritical
-            
-            ;Make sure we can still receive FD_CLOSE msgs
-            Critical, Off
-            Thread, Priority, 0
-            
-            ;We can try a graceful shutdown or wait for a timeout
-            While (AHKsock_Sockets()) And (A_TickCount - iStartClose < iTimeout)
-                Sleep, -1
-            
-            ;Restore previous Critical
-            Critical, %A_IsCriticalOld%
-        }
-        
+    AHKsock_Close(iSocket = -1, iTimeout = 5000) {
+
+        ;Make sure Winsock has been started up
+        If Not AHKsock_Startup(1)
+            Return ;There's nothing to close
+
+        If (iSocket = -1) { ;We need to close all the sockets
+
+            ;Check if we even have sockets to close
+            If Not AHKsock_Sockets() {
+                DllCall("Ws2_32\WSACleanup")
+                AHKsock_Startup(2) ;Reset the value to show that we've turned off Winsock
+                Return ;We're done!
+            }
+
+            ;Take the current time (needed for time-outing)
+            iStartClose := A_TickCount
+
+            Loop % AHKsock_Sockets() ;Close all sockets and cleanup
+                AHKsock_ShutdownSocket(AHKsock_Sockets("GetSocketFromIndex", A_Index))
+
+            ;Check if we're in the OnExit subroutine
+            If Not A_ExitReason {
+
+                A_IsCriticalOld := A_IsCritical
+
+                ;Make sure we can still receive FD_CLOSE msgs
+                Critical, Off
+                Thread, Priority, 0
+
+                ;We can try a graceful shutdown or wait for a timeout
+                While (AHKsock_Sockets()) And (A_TickCount - iStartClose < iTimeout)
+                    Sleep, -1
+
+                ;Restore previous Critical
+                Critical, %A_IsCriticalOld%
+            }
+
         /*! Used for debugging purposes only
         If (i := AHKsock_Sockets()) {
             If (i = 1)
@@ -24351,550 +24689,558 @@ AHKsock_Close(iSocket = -1, iTimeout = 5000) {
                 }
             }
         }
-        */
-        
-        DllCall("Ws2_32\WSACleanup")
-        AHKsock_Startup(2) ;Reset the value to show that we've turned off Winsock
-        
-    ;Close only one socket
-    } Else If AHKsock_ShutdownSocket(iSocket) ;Error-checking
+            */
+
+            DllCall("Ws2_32\WSACleanup")
+            AHKsock_Startup(2) ;Reset the value to show that we've turned off Winsock
+
+            ;Close only one socket
+        } Else If AHKsock_ShutdownSocket(iSocket) ;Error-checking
         Return 1 ;The shutdown() call failed. The error is in ErrorLevel.
-}
-
-AHKsock_GetAddrInfo(sHostName, ByRef sIPList, bOne = False) {
-    
-    ;Make sure Winsock has been started up
-    If (i := AHKsock_Startup())
-        Return i ;Return the same error (error 1 and 2)
-    
-    ;Resolve the address and port    
-    VarSetCapacity(aiHints, 16 + 4 * A_PtrSize, 0)
-    NumPut(2, aiHints,  4, "Int") ;ai_family = AF_INET
-    NumPut(1, aiHints,  8, "Int") ;ai_socktype = SOCK_STREAM
-    NumPut(6, aiHints, 12, "Int") ;ai_protocol = IPPROTO_TCP
-    iResult := DllCall("Ws2_32\GetAddrInfo", "Ptr", &sHostName, "Ptr", 0, "Ptr", &aiHints, "Ptr*", aiResult)
-    If (iResult = 11001) ;Check specifically for WSAHOST_NOT_FOUND since it's the most common error
-        Return 3 ;Received WSAHOST_NOT_FOUND. No such host is known.
-    Else If (iResult != 0) Or ErrorLevel { ;Check for any other error
-        ErrorLevel := ErrorLevel ? ErrorLevel : iResult
-        Return 4 ;The getaddrinfo() call failed. The error is in ErrorLevel.
     }
-    
-    If bOne
-        sIPList := DllCall("Ws2_32\inet_ntoa", "UInt", NumGet(NumGet(aiResult+0, 16 + 2 * A_PtrSize)+4, 0, "UInt"), "AStr")
-    Else {
-        
-        ;Start with the first addrinfo struct
-        iPointer := aiResult, sIPList := ""
-        While iPointer {
-            s := DllCall("Ws2_32\inet_ntoa", "UInt", NumGet(NumGet(iPointer+0, 16 + 2 * A_PtrSize)+4, 0, "UInt"), "AStr")
-            iPointer := NumGet(iPointer+0, 16 + 3 * A_PtrSize) ;Go to the next addrinfo struct
-            sIPList .=  s (iPointer ? "`n" : "") ;Add newline only if it's not the last one
+
+    AHKsock_GetAddrInfo(sHostName, ByRef sIPList, bOne = False) {
+
+        ;Make sure Winsock has been started up
+        If (i := AHKsock_Startup())
+            Return i ;Return the same error (error 1 and 2)
+
+        ;Resolve the address and port    
+        VarSetCapacity(aiHints, 16 + 4 * A_PtrSize, 0)
+        NumPut(2, aiHints, 4, "Int") ;ai_family = AF_INET
+        NumPut(1, aiHints, 8, "Int") ;ai_socktype = SOCK_STREAM
+        NumPut(6, aiHints, 12, "Int") ;ai_protocol = IPPROTO_TCP
+        iResult := DllCall("Ws2_32\GetAddrInfo", "Ptr", &sHostName, "Ptr", 0, "Ptr", &aiHints, "Ptr*", aiResult)
+        If (iResult = 11001) ;Check specifically for WSAHOST_NOT_FOUND since it's the most common error
+            Return 3 ;Received WSAHOST_NOT_FOUND. No such host is known.
+        Else If (iResult != 0) Or ErrorLevel { ;Check for any other error
+            ErrorLevel := ErrorLevel ? ErrorLevel : iResult
+            Return 4 ;The getaddrinfo() call failed. The error is in ErrorLevel.
+        }
+
+        If bOne
+            sIPList := DllCall("Ws2_32\inet_ntoa", "UInt", NumGet(NumGet(aiResult+0, 16 + 2 * A_PtrSize)+4, 0, "UInt"), "AStr")
+        Else {
+
+            ;Start with the first addrinfo struct
+            iPointer := aiResult, sIPList := ""
+            While iPointer {
+                s := DllCall("Ws2_32\inet_ntoa", "UInt", NumGet(NumGet(iPointer+0, 16 + 2 * A_PtrSize)+4, 0, "UInt"), "AStr")
+                iPointer := NumGet(iPointer+0, 16 + 3 * A_PtrSize) ;Go to the next addrinfo struct
+                sIPList .= s (iPointer ? "`n" : "") ;Add newline only if it's not the last one
+            }
+        }
+
+        ;We're done
+        DllCall("Ws2_32\FreeAddrInfo", "Ptr", aiResult)
+    }
+
+    AHKsock_GetNameInfo(sIP, ByRef sHostName, sPort = 0, ByRef sService = "") {
+
+        ;Make sure Winsock has been started up
+        If (i := AHKsock_Startup())
+            Return i ;Return the same error (error 1 and 2)
+
+        ;Translate to IN_ADDR
+        iIP := DllCall("Ws2_32\inet_addr", "AStr", sIP, "UInt")
+        If (iIP = 0 Or iIP = 0xFFFFFFFF) ;Check for INADDR_NONE or INADDR_ANY
+            Return 3 ;The IP address supplied in sIP is invalid.
+
+        ;Construct a sockaddr struct
+        VarSetCapacity(tSockAddr, 16, 0)
+        NumPut(2, tSockAddr, 0, "Short") ;ai_family = AF_INET
+        NumPut(iIP, tSockAddr, 4, "UInt") ;Put in the IN_ADDR
+
+        ;Fill in the port field if we're also looking up the service name
+        If sPort ;Translate to network byte order
+            NumPut(DllCall("Ws2_32\htons", "UShort", sPort, "UShort"), tSockAddr, 2, "UShort")
+
+        ;Prep vars
+        VarSetCapacity(sHostName, 1025 * 2, 0) ;NI_MAXHOST
+        If sPort
+            VarSetCapacity(sService, 32 * 2, 0) ;NI_MAXSERV
+
+        iResult := DllCall("Ws2_32\GetNameInfoW", "Ptr", &tSockAddr, "Int", 16, "Str", sHostName, "UInt", 1025 * 2
+        , sPort ? "Str" : "UInt", sPort ? sService : 0, "UInt", 32 * 2, "Int", 0)
+        If (iResult != 0) Or ErrorLevel {
+            ErrorLevel := ErrorLevel ? ErrorLevel : DllCall("Ws2_32\WSAGetLastError")
+            Return 4 ;The getnameinfo() call failed. The error is in ErrorLevel.
         }
     }
-    
-    ;We're done
-    DllCall("Ws2_32\FreeAddrInfo", "Ptr", aiResult)
-}
 
-AHKsock_GetNameInfo(sIP, ByRef sHostName, sPort = 0, ByRef sService = "") {
-    
-    ;Make sure Winsock has been started up
-    If (i := AHKsock_Startup())
-        Return i ;Return the same error (error 1 and 2)
-    
-    ;Translate to IN_ADDR
-    iIP := DllCall("Ws2_32\inet_addr", "AStr", sIP, "UInt")
-    If (iIP = 0 Or iIP = 0xFFFFFFFF) ;Check for INADDR_NONE or INADDR_ANY
-        Return 3 ;The IP address supplied in sIP is invalid.
-    
-    ;Construct a sockaddr struct
-    VarSetCapacity(tSockAddr, 16, 0)
-    NumPut(2,   tSockAddr, 0, "Short") ;ai_family = AF_INET
-    NumPut(iIP, tSockAddr, 4, "UInt") ;Put in the IN_ADDR
-    
-    ;Fill in the port field if we're also looking up the service name
-    If sPort           ;Translate to network byte order
-        NumPut(DllCall("Ws2_32\htons", "UShort", sPort, "UShort"), tSockAddr, 2, "UShort")
-    
-    ;Prep vars
-    VarSetCapacity(sHostName, 1025 * 2, 0) ;NI_MAXHOST
-    If sPort
-        VarSetCapacity(sService, 32 * 2, 0) ;NI_MAXSERV
-    
-    iResult := DllCall("Ws2_32\GetNameInfoW", "Ptr", &tSockAddr, "Int", 16, "Str", sHostName, "UInt", 1025 * 2
-                                           , sPort ? "Str" : "UInt", sPort ? sService : 0, "UInt", 32 * 2, "Int", 0)
-    If (iResult != 0) Or ErrorLevel {
-        ErrorLevel := ErrorLevel ? ErrorLevel : DllCall("Ws2_32\WSAGetLastError")
-        Return 4 ;The getnameinfo() call failed. The error is in ErrorLevel.
-    }
-}
+    AHKsock_SockOpt(iSocket, sOption, iValue = -1) {
 
-AHKsock_SockOpt(iSocket, sOption, iValue = -1) {
-    
-    ;Prep variable
-    VarSetCapacity(iOptVal, iOptValLength := 4, 0)
-    If (iValue <> -1)
-        NumPut(iValue, iOptVal, 0, "UInt")
-    
-    If (sOption = "SO_KEEPALIVE") {
-        intLevel := 0xFFFF ;SOL_SOCKET
-        intOptName := 0x0008 ;SO_KEEPALIVE
-    } Else If (sOption = "SO_SNDBUF") {
-        intLevel := 0xFFFF ;SOL_SOCKET
-        intOptName := 0x1001 ;SO_SNDBUF
-    } Else If (sOption = "SO_RCVBUF") {
-        intLevel := 0xFFFF ;SOL_SOCKET
-        intOptName := 0x1002 ;SO_SNDBUF
-    } Else If (sOption = "TCP_NODELAY") {
-        intLevel := 6 ;IPPROTO_TCP
-        intOptName := 0x0001 ;TCP_NODELAY
-    }
-    
-    ;Check if we're getting or setting
-    If (iValue = -1) {
-        iResult := DllCall("Ws2_32\getsockopt", "Ptr", iSocket, "Int", intLevel, "Int", intOptName
-                                              , "UInt*", iOptVal, "Int*", iOptValLength)
-        If (iResult = -1) Or ErrorLevel { ;Check for SOCKET_ERROR
-            ErrorLevel := ErrorLevel ? ErrorLevel : AHKsock_LastError()
-            Return -1
-        } Else Return iOptVal
-    } Else {
-        iResult := DllCall("Ws2_32\setsockopt", "Ptr", iSocket, "Int", intLevel, "Int", intOptName
-                                              , "Ptr", &iOptVal, "Int",  iOptValLength)
-        If (iResult = -1) Or ErrorLevel { ;Check for SOCKET_ERROR
-            ErrorLevel := ErrorLevel ? ErrorLevel : AHKsock_LastError()
-            Return -2
+        ;Prep variable
+        VarSetCapacity(iOptVal, iOptValLength := 4, 0)
+        If (iValue <> -1)
+            NumPut(iValue, iOptVal, 0, "UInt")
+
+        If (sOption = "SO_KEEPALIVE") {
+            intLevel := 0xFFFF ;SOL_SOCKET
+            intOptName := 0x0008 ;SO_KEEPALIVE
+        } Else If (sOption = "SO_SNDBUF") {
+            intLevel := 0xFFFF ;SOL_SOCKET
+            intOptName := 0x1001 ;SO_SNDBUF
+        } Else If (sOption = "SO_RCVBUF") {
+            intLevel := 0xFFFF ;SOL_SOCKET
+            intOptName := 0x1002 ;SO_SNDBUF
+        } Else If (sOption = "TCP_NODELAY") {
+            intLevel := 6 ;IPPROTO_TCP
+            intOptName := 0x0001 ;TCP_NODELAY
+        }
+
+        ;Check if we're getting or setting
+        If (iValue = -1) {
+            iResult := DllCall("Ws2_32\getsockopt", "Ptr", iSocket, "Int", intLevel, "Int", intOptName
+            , "UInt*", iOptVal, "Int*", iOptValLength)
+            If (iResult = -1) Or ErrorLevel { ;Check for SOCKET_ERROR
+                ErrorLevel := ErrorLevel ? ErrorLevel : AHKsock_LastError()
+                Return -1
+            } Else Return iOptVal
+        } Else {
+            iResult := DllCall("Ws2_32\setsockopt", "Ptr", iSocket, "Int", intLevel, "Int", intOptName
+            , "Ptr", &iOptVal, "Int", iOptValLength)
+            If (iResult = -1) Or ErrorLevel { ;Check for SOCKET_ERROR
+                ErrorLevel := ErrorLevel ? ErrorLevel : AHKsock_LastError()
+                Return -2
+            }
         }
     }
-}
 
 /*******************\
  Support functions  |
-                  */
+    */
 
-AHKsock_Startup(iMode = 0) {
-    Static bAlreadyStarted
-    
+    AHKsock_Startup(iMode = 0) {
+        Static bAlreadyStarted
+
     /*
     iMode = 0 ;Turns on WSAStartup()
     iMode = 1 ;Returns whether or not WSAStartup has been called
     iMode = 2 ;Resets the static variable to force another call next time iMode = 0
-    */
-    
-    If (iMode = 2)
-        bAlreadyStarted := False
-    Else If (iMode = 1)
-        Return bAlreadyStarted
-    Else If Not bAlreadyStarted { ;iMode = 0. Call the function only if it hasn't already been called.
-        
-        ;Start it up - request version 2.2
-        VarSetCapacity(wsaData, A_PtrSize = 4 ? 400 : 408, 0)
-        iResult := DllCall("Ws2_32\WSAStartup", "UShort", 0x0202, "Ptr", &wsaData)
-        If (iResult != 0) Or ErrorLevel {
-            ErrorLevel := ErrorLevel ? ErrorLevel : iResult
-            Return 1
-        }
-        
-        ;Make sure the Winsock DLL supports at least version 2.2
-        If (NumGet(wsaData, 2, "UShort") < 0x0202) {
-            DllCall("Ws2_32\WSACleanup") ;Abort
-            ErrorLevel := "The Winsock DLL does not support version 2.2."
-            Return 2
-        }
-        
-        bAlreadyStarted := True
-    }
-}
+        */
 
-AHKsock_ShutdownSocket(iSocket) {
-    
-    ;Check if it's a listening socket
-    sName := AHKsock_Sockets("GetName", iSocket)
-    If (sName != A_Space) { ;It's not a listening socket. Shutdown send operations.
-        iResult := DllCall("Ws2_32\shutdown", "Ptr", iSocket, "Int", 1) ;SD_SEND
-        If (iResult = -1) Or ErrorLevel {
-            sErrorLevel := ErrorLevel ? ErrorLevel : AHKsock_LastError()
-            DllCall("Ws2_32\closesocket", "Ptr", iSocket)
-            AHKsock_Sockets("Delete", iSocket)
-            ErrorLevel := sErrorLevel
-            Return 1
+        If (iMode = 2)
+            bAlreadyStarted := False
+        Else If (iMode = 1)
+            Return bAlreadyStarted
+        Else If Not bAlreadyStarted { ;iMode = 0. Call the function only if it hasn't already been called.
+
+            ;Start it up - request version 2.2
+            VarSetCapacity(wsaData, A_PtrSize = 4 ? 400 : 408, 0)
+            iResult := DllCall("Ws2_32\WSAStartup", "UShort", 0x0202, "Ptr", &wsaData)
+            If (iResult != 0) Or ErrorLevel {
+                ErrorLevel := ErrorLevel ? ErrorLevel : iResult
+                Return 1
+            }
+
+            ;Make sure the Winsock DLL supports at least version 2.2
+            If (NumGet(wsaData, 2, "UShort") < 0x0202) {
+                DllCall("Ws2_32\WSACleanup") ;Abort
+                ErrorLevel := "The Winsock DLL does not support version 2.2."
+                Return 2
+            }
+
+            bAlreadyStarted := True
         }
-        
-        ;Mark it
-        AHKsock_Sockets("SetShutdown", iSocket)
-        
-    } Else {
-        DllCall("Ws2_32\closesocket", "Ptr", iSocket) ;It's only a listening socket
-        AHKsock_Sockets("Delete", iSocket) ;Remove it from the array
     }
-}
+
+    AHKsock_ShutdownSocket(iSocket) {
+
+        ;Check if it's a listening socket
+        sName := AHKsock_Sockets("GetName", iSocket)
+        If (sName != A_Space) { ;It's not a listening socket. Shutdown send operations.
+            iResult := DllCall("Ws2_32\shutdown", "Ptr", iSocket, "Int", 1) ;SD_SEND
+            If (iResult = -1) Or ErrorLevel {
+                sErrorLevel := ErrorLevel ? ErrorLevel : AHKsock_LastError()
+                DllCall("Ws2_32\closesocket", "Ptr", iSocket)
+                AHKsock_Sockets("Delete", iSocket)
+                ErrorLevel := sErrorLevel
+                Return 1
+            }
+
+            ;Mark it
+            AHKsock_Sockets("SetShutdown", iSocket)
+
+        } Else {
+            DllCall("Ws2_32\closesocket", "Ptr", iSocket) ;It's only a listening socket
+            AHKsock_Sockets("Delete", iSocket) ;Remove it from the array
+        }
+    }
 
 /***********************\
  AsyncSelect functions  |
-                      */
-                                     ;FD_READ | FD_WRITE | FD_ACCEPT | FD_CLOSE
-AHKsock_RegisterAsyncSelect(iSocket, fFlags = 43, sFunction = "AHKsock_AsyncSelect", iMsg = 0) {
-    Static hwnd := False
-    
-    If Not hwnd { ;Use the main AHK window
-        A_DetectHiddenWindowsOld := A_DetectHiddenWindows
-        DetectHiddenWindows, On
-        WinGet, hwnd, ID, % "ahk_pid " DllCall("GetCurrentProcessId") " ahk_class AutoHotkey"
-        DetectHiddenWindows, %A_DetectHiddenWindowsOld%
-    }
-    
-    iMsg := iMsg ? iMsg : AHKsock_Settings("Message")
-    If (OnMessage(iMsg) <> sFunction)
-        OnMessage(iMsg, sFunction)
-    
-    iResult := DllCall("Ws2_32\WSAAsyncSelect", "Ptr", iSocket, "Ptr", hwnd, "UInt", iMsg, "Int", fFlags)
-    If (iResult = -1) Or ErrorLevel { ;Check for SOCKET_ERROR
-        ErrorLevel := ErrorLevel ? ErrorLevel : AHKsock_LastError()
-        Return 1
-    }
-}
+    */
+    ;FD_READ | FD_WRITE | FD_ACCEPT | FD_CLOSE
+    AHKsock_RegisterAsyncSelect(iSocket, fFlags = 43, sFunction = "AHKsock_AsyncSelect", iMsg = 0) {
+        Static hwnd := False
 
-AHKsock_AsyncSelect(wParam, lParam) {
-    Critical ;So that messages are buffered
-    
-    ;wParam parameter identifies the socket on which a network event has occurred
-    ;The low word of lParam specifies the network event that has occurred.
-    ;The high word of lParam contains any error code
-    
-    ;Make sure the socket is on record. Fail-safe
-    If Not AHKsock_Sockets("Index", wParam)
-        Return
-    
-    iEvent := lParam & 0xFFFF, iErrorCode := lParam >> 16
-    
+        If Not hwnd { ;Use the main AHK window
+            A_DetectHiddenWindowsOld := A_DetectHiddenWindows
+            DetectHiddenWindows, On
+            WinGet, hwnd, ID, % "ahk_pid " DllCall("GetCurrentProcessId") " ahk_class AutoHotkey"
+            DetectHiddenWindows, %A_DetectHiddenWindowsOld%
+        }
+
+        iMsg := iMsg ? iMsg : AHKsock_Settings("Message")
+        If (OnMessage(iMsg) <> sFunction)
+            OnMessage(iMsg, sFunction)
+
+        iResult := DllCall("Ws2_32\WSAAsyncSelect", "Ptr", iSocket, "Ptr", hwnd, "UInt", iMsg, "Int", fFlags)
+        If (iResult = -1) Or ErrorLevel { ;Check for SOCKET_ERROR
+            ErrorLevel := ErrorLevel ? ErrorLevel : AHKsock_LastError()
+            Return 1
+        }
+    }
+
+    AHKsock_AsyncSelect(wParam, lParam) {
+        Critical ;So that messages are buffered
+
+        ;wParam parameter identifies the socket on which a network event has occurred
+        ;The low word of lParam specifies the network event that has occurred.
+        ;The high word of lParam contains any error code
+
+        ;Make sure the socket is on record. Fail-safe
+        If Not AHKsock_Sockets("Index", wParam)
+            Return
+
+        iEvent := lParam & 0xFFFF, iErrorCode := lParam >> 16
+
     /*! Used for debugging purposes
     OutputDebug, % "AsyncSelect - A network event " iEvent " has occurred on socket " wParam
     If iErrorCode
         OutputDebug, % "AsyncSelect - Error code = " iErrorCode
-    */
-    
-    If (iEvent = 1) { ;FD_READ
-        
-        ;Check for error
-        If iErrorCode { ;WSAENETDOWN is the only possible
-            ErrorLevel := iErrorCode
-            ;FD_READ event received with an error. The error is in ErrorLevel. The socket is in iSocket.
-            AHKsock_RaiseError(6, wParam)
-            Return
-        }
-        
-        VarSetCapacity(bufReceived, bufReceivedLength := AHKsock_Settings("Buffer"), 0)
-        iResult := DllCall("Ws2_32\recv", "UInt", wParam, "Ptr", &bufReceived, "Int", bufReceivedLength, "Int", 0)
-        If (iResult > 0) { ;We received data!
-            VarSetCapacity(bufReceived, -1) ;Update the internal length
-            
-            ;Get associated function and call it
-            If IsFunc(sFunc := AHKsock_Sockets("GetFunction", wParam))
-                %sFunc%("RECEIVED", wParam, AHKsock_Sockets("GetName", wParam)
-                                          , AHKsock_Sockets("GetAddr", wParam)
-                                          , AHKsock_Sockets("GetPort", wParam), bufReceived, iResult)
-            
-        ;Check for error other than WSAEWOULDBLOCK
-        } Else If ErrorLevel Or ((iResult = -1) And Not ((iErrorCode := AHKsock_LastError()) = 10035)) {
-            ErrorLevel := ErrorLevel ? ErrorLevel : iErrorCode
-            AHKsock_RaiseError(7, wParam) ;The recv() call failed. The error is in ErrorLevel. The socket is in iSocket.
-            iResult = -1 ;So that if it's a spoofed call from FD_CLOSE, we exit the loop and close the socket
-        }
-        
-        ;Here, we bother with returning a value in case it's a spoofed call from FD_CLOSE
-        Return iResult
-        
-    } Else If (iEvent = 2) { ;FD_WRITE
-        
-        ;Check for error
-        If iErrorCode { ;WSAENETDOWN is the only possible
-            ErrorLevel := iErrorCode
-            ;FD_WRITE event received with an error. The error is in ErrorLevel. The socket is in iSocket.
-            AHKsock_RaiseError(8, wParam)
-            Return
-        }
-        
-        ;Update socket's setting
-        AHKsock_Sockets("SetSend", wParam, True)
-        
-        ;Make sure the socket isn't already shut down
-        If Not AHKsock_Sockets("GetShutdown", wParam)
-            If IsFunc(sFunc := AHKsock_Sockets("GetFunction", wParam))
-                %sFunc%("SEND", wParam, AHKsock_Sockets("GetName", wParam)
-                                      , AHKsock_Sockets("GetAddr", wParam)
-                                      , AHKsock_Sockets("GetPort", wParam))
-        
-    } Else If (iEvent = 8) { ;FD_ACCEPT
-        
-        ;Check for error
-        If iErrorCode { ;WSAENETDOWN is the only possible
-            ErrorLevel := iErrorCode
-            ;FD_ACCEPT event received with an error. The error is in ErrorLevel. The socket is in iSocket.
-            AHKsock_RaiseError(9, wParam)
-            Return
-        }
-        
-        ;We need to accept the connection
-        VarSetCapacity(tSockAddr, tSockAddrLength := 16, 0)
-        sktClient := DllCall("Ws2_32\accept", "Ptr", wParam, "Ptr", &tSockAddr, "Int*", tSockAddrLength)
-        If (sktClient = -1) And ((iErrorCode := AHKsock_LastError()) = 10035) ;Check specifically for WSAEWOULDBLOCK
-            Return ;We'll be called again next time we can retry accept()
-        Else If (sktClient = -1) Or ErrorLevel { ;Check for INVALID_SOCKET
-            ErrorLevel := ErrorLevel ? ErrorLevel : iErrorCode
-            ;The accept() call failed. The error is in ErrorLevel. The listening socket is in iSocket.
-            AHKsock_RaiseError(10, wParam)
-            Return
-        }
-        
-        ;Add to array
-        sName := ""
-        sAddr := DllCall("Ws2_32\inet_ntoa", "UInt", NumGet(tSockAddr, 4, "UInt"), "AStr")
-        sPort := AHKsock_Sockets("GetPort", wParam)
-        sFunc := AHKsock_Sockets("GetFunction", wParam)
-        AHKsock_Sockets("Add", sktClient, sName, sAddr, sPort, sFunc)
-        
-        ;Go back to listening
-        iResult := DllCall("Ws2_32\listen", "Ptr", wParam, "Int", 0x7FFFFFFF) ;SOMAXCONN       
-        If (iResult = -1) Or ErrorLevel { ;Check for SOCKET_ERROR
-            sErrorLevel := ErrorLevel ? ErrorLevel : AHKsock_LastError()
-            DllCall("Ws2_32\closesocket", "Ptr", wParam)
-            AHKsock_Sockets("Delete", wParam) ;Remove from array
-            ErrorLevel := sErrorLevel
-            ;The listen() call failed. The error is in ErrorLevel. The listening socket is in iSocket.
-            AHKsock_RaiseError(12, wParam)
-            Return
-        }
-        
-        ;Get associated function and call it
-        If IsFunc(sFunc)
-            %sFunc%("ACCEPTED", sktClient, sName, sAddr, sPort)
-        
-    } Else If (iEvent = 32) { ;FD_CLOSE
-        
-        ;Keep receiving data before closing the socket by spoofing an FD_READ event to call recv()
-        While (AHKsock_AsyncSelect(wParam, 1) > 0)
-            Sleep, -1
-        
-        ;Check if we initiated it
-        If Not AHKsock_Sockets("GetShutdown", wParam) {
-            
-            ;Last chance to send data. Get associated function and call it.
-            If IsFunc(sFunc := AHKsock_Sockets("GetFunction", wParam))
-                %sFunc%("SENDLAST", wParam, AHKsock_Sockets("GetName", wParam)
-                                          , AHKsock_Sockets("GetAddr", wParam)
-                                          , AHKsock_Sockets("GetPort", wParam))
-            
-            ;Shutdown the socket. This is to attempt a graceful shutdown
-            If AHKsock_ShutdownSocket(wParam) {
-                ;The shutdown() call failed. The error is in ErrorLevel. The socket is in iSocket.
-                AHKsock_RaiseError(13, wParam)
+        */
+
+        If (iEvent = 1) { ;FD_READ
+
+            ;Check for error
+            If iErrorCode { ;WSAENETDOWN is the only possible
+                ErrorLevel := iErrorCode
+                ;FD_READ event received with an error. The error is in ErrorLevel. The socket is in iSocket.
+                AHKsock_RaiseError(6, wParam)
                 Return
             }
+
+            VarSetCapacity(bufReceived, bufReceivedLength := AHKsock_Settings("Buffer"), 0)
+            iResult := DllCall("Ws2_32\recv", "UInt", wParam, "Ptr", &bufReceived, "Int", bufReceivedLength, "Int", 0)
+            If (iResult > 0) { ;We received data!
+                VarSetCapacity(bufReceived, -1) ;Update the internal length
+
+                ;Get associated function and call it
+                If IsFunc(sFunc := AHKsock_Sockets("GetFunction", wParam))
+                    %sFunc%("RECEIVED", wParam, AHKsock_Sockets("GetName", wParam)
+                , AHKsock_Sockets("GetAddr", wParam)
+                , AHKsock_Sockets("GetPort", wParam), bufReceived, iResult)
+
+                ;Check for error other than WSAEWOULDBLOCK
+            } Else If ErrorLevel Or ((iResult = -1) And Not ((iErrorCode := AHKsock_LastError()) = 10035)) {
+                ErrorLevel := ErrorLevel ? ErrorLevel : iErrorCode
+                AHKsock_RaiseError(7, wParam) ;The recv() call failed. The error is in ErrorLevel. The socket is in iSocket.
+                iResult = -1 ;So that if it's a spoofed call from FD_CLOSE, we exit the loop and close the socket
+            }
+
+            ;Here, we bother with returning a value in case it's a spoofed call from FD_CLOSE
+            Return iResult
+
+        } Else If (iEvent = 2) { ;FD_WRITE
+
+            ;Check for error
+            If iErrorCode { ;WSAENETDOWN is the only possible
+                ErrorLevel := iErrorCode
+                ;FD_WRITE event received with an error. The error is in ErrorLevel. The socket is in iSocket.
+                AHKsock_RaiseError(8, wParam)
+                Return
+            }
+
+            ;Update socket's setting
+            AHKsock_Sockets("SetSend", wParam, True)
+
+            ;Make sure the socket isn't already shut down
+            If Not AHKsock_Sockets("GetShutdown", wParam)
+                If IsFunc(sFunc := AHKsock_Sockets("GetFunction", wParam))
+                %sFunc%("SEND", wParam, AHKsock_Sockets("GetName", wParam)
+            , AHKsock_Sockets("GetAddr", wParam)
+            , AHKsock_Sockets("GetPort", wParam))
+
+        } Else If (iEvent = 8) { ;FD_ACCEPT
+
+            ;Check for error
+            If iErrorCode { ;WSAENETDOWN is the only possible
+                ErrorLevel := iErrorCode
+                ;FD_ACCEPT event received with an error. The error is in ErrorLevel. The socket is in iSocket.
+                AHKsock_RaiseError(9, wParam)
+                Return
+            }
+
+            ;We need to accept the connection
+            VarSetCapacity(tSockAddr, tSockAddrLength := 16, 0)
+            sktClient := DllCall("Ws2_32\accept", "Ptr", wParam, "Ptr", &tSockAddr, "Int*", tSockAddrLength)
+            If (sktClient = -1) And ((iErrorCode := AHKsock_LastError()) = 10035) ;Check specifically for WSAEWOULDBLOCK
+                Return ;We'll be called again next time we can retry accept()
+            Else If (sktClient = -1) Or ErrorLevel { ;Check for INVALID_SOCKET
+                ErrorLevel := ErrorLevel ? ErrorLevel : iErrorCode
+                ;The accept() call failed. The error is in ErrorLevel. The listening socket is in iSocket.
+                AHKsock_RaiseError(10, wParam)
+                Return
+            }
+
+            ;Add to array
+            sName := ""
+            sAddr := DllCall("Ws2_32\inet_ntoa", "UInt", NumGet(tSockAddr, 4, "UInt"), "AStr")
+            sPort := AHKsock_Sockets("GetPort", wParam)
+            sFunc := AHKsock_Sockets("GetFunction", wParam)
+            AHKsock_Sockets("Add", sktClient, sName, sAddr, sPort, sFunc)
+
+            ;Go back to listening
+            iResult := DllCall("Ws2_32\listen", "Ptr", wParam, "Int", 0x7FFFFFFF) ;SOMAXCONN       
+            If (iResult = -1) Or ErrorLevel { ;Check for SOCKET_ERROR
+                sErrorLevel := ErrorLevel ? ErrorLevel : AHKsock_LastError()
+                DllCall("Ws2_32\closesocket", "Ptr", wParam)
+                AHKsock_Sockets("Delete", wParam) ;Remove from array
+                ErrorLevel := sErrorLevel
+                ;The listen() call failed. The error is in ErrorLevel. The listening socket is in iSocket.
+                AHKsock_RaiseError(12, wParam)
+                Return
+            }
+
+            ;Get associated function and call it
+            If IsFunc(sFunc)
+                %sFunc%("ACCEPTED", sktClient, sName, sAddr, sPort)
+
+        } Else If (iEvent = 32) { ;FD_CLOSE
+
+            ;Keep receiving data before closing the socket by spoofing an FD_READ event to call recv()
+            While (AHKsock_AsyncSelect(wParam, 1) > 0)
+                Sleep, -1
+
+            ;Check if we initiated it
+            If Not AHKsock_Sockets("GetShutdown", wParam) {
+
+                ;Last chance to send data. Get associated function and call it.
+                If IsFunc(sFunc := AHKsock_Sockets("GetFunction", wParam))
+                    %sFunc%("SENDLAST", wParam, AHKsock_Sockets("GetName", wParam)
+                , AHKsock_Sockets("GetAddr", wParam)
+                , AHKsock_Sockets("GetPort", wParam))
+
+                ;Shutdown the socket. This is to attempt a graceful shutdown
+                If AHKsock_ShutdownSocket(wParam) {
+                    ;The shutdown() call failed. The error is in ErrorLevel. The socket is in iSocket.
+                    AHKsock_RaiseError(13, wParam)
+                    Return
+                }
+            }
+
+            ;We just have to close the socket then
+            DllCall("Ws2_32\closesocket", "Ptr", wParam)
+
+            ;Get associated data before deleting
+            sFunc := AHKsock_Sockets("GetFunction", wParam)
+            sName := AHKsock_Sockets("GetName", wParam)
+            sAddr := AHKsock_Sockets("GetAddr", wParam)
+            sPort := AHKsock_Sockets("GetPort", wParam)
+
+            ;We can remove it from the array
+            AHKsock_Sockets("Delete", wParam)
+
+            If IsFunc(sFunc)
+                %sFunc%("DISCONNECTED", wParam, sName, sAddr, sPort)
         }
-        
-        ;We just have to close the socket then
-        DllCall("Ws2_32\closesocket", "Ptr", wParam)
-        
-        ;Get associated data before deleting
-        sFunc := AHKsock_Sockets("GetFunction", wParam)
-        sName := AHKsock_Sockets("GetName", wParam)
-        sAddr := AHKsock_Sockets("GetAddr", wParam)
-        sPort := AHKsock_Sockets("GetPort", wParam)
-        
-        ;We can remove it from the array
-        AHKsock_Sockets("Delete", wParam)
-        
-        If IsFunc(sFunc)
-            %sFunc%("DISCONNECTED", wParam, sName, sAddr, sPort)
     }
-}
 
 /******************\
  Array controller  |
-                 */
+    */
 
-AHKsock_Sockets(sAction = "Count", iSocket = "", sName = "", sAddr = "", sPort = "", sFunction = "") {
-    Static
-    Static aSockets0 := 0
-    Static iLastSocket := 0xFFFFFFFF ;Cache to lessen index lookups on the same socket
-    Local i, ret, A_IsCriticalOld
-    
-    A_IsCriticalOld := A_IsCritical
-    Critical
-    
-    If (sAction = "Count") {
-        ret := aSockets0
-        
-    } Else If (sAction = "Add") {
-        aSockets0 += 1 ;Expand array
-        aSockets%aSockets0%_Sock := iSocket
-        aSockets%aSockets0%_Name := sName
-        aSockets%aSockets0%_Addr := sAddr
-        aSockets%aSockets0%_Port := sPort
-        aSockets%aSockets0%_Func := sFunction
-        aSockets%aSockets0%_Shutdown := False
-        aSockets%aSockets0%_Send := False
-        
-    } Else If (sAction = "Delete") {
-        
-        ;First we need the index
-        i := (iSocket = iLastSocket) ;Check cache
-        ? iLastSocketIndex
-        : AHKsock_Sockets("Index", iSocket)
-        
-        If i {
-            iLastSocket := 0xFFFF ;Clear cache
-            If (i < aSockets0) { ;Let the last item overwrite this one
-                aSockets%i%_Sock := aSockets%aSockets0%_Sock
-                aSockets%i%_Name := aSockets%aSockets0%_Name
-                aSockets%i%_Addr := aSockets%aSockets0%_Addr
-                aSockets%i%_Port := aSockets%aSockets0%_Port
-                aSockets%i%_Func := aSockets%aSockets0%_Func
-                aSockets%i%_Shutdown := aSockets%aSockets0%_Shutdown
-                aSockets%i%_Send := aSockets%aSockets0%_Send
-                
+    AHKsock_Sockets(sAction = "Count", iSocket = "", sName = "", sAddr = "", sPort = "", sFunction = "") {
+        Static
+        Static aSockets0 := 0
+        Static iLastSocket := 0xFFFFFFFF ;Cache to lessen index lookups on the same socket
+        Local i, ret, A_IsCriticalOld
+
+        A_IsCriticalOld := A_IsCritical
+        Critical
+
+        If (sAction = "Count") {
+            ret := aSockets0
+
+        } Else If (sAction = "Add") {
+            aSockets0 += 1 ;Expand array
+            aSockets%aSockets0%_Sock := iSocket
+            aSockets%aSockets0%_Name := sName
+            aSockets%aSockets0%_Addr := sAddr
+            aSockets%aSockets0%_Port := sPort
+            aSockets%aSockets0%_Func := sFunction
+            aSockets%aSockets0%_Shutdown := False
+            aSockets%aSockets0%_Send := False
+
+        } Else If (sAction = "Delete") {
+
+            ;First we need the index
+            i := (iSocket = iLastSocket) ;Check cache
+            ? iLastSocketIndex
+            : AHKsock_Sockets("Index", iSocket)
+
+            If i {
+                iLastSocket := 0xFFFF ;Clear cache
+                If (i < aSockets0) { ;Let the last item overwrite this one
+                    aSockets%i%_Sock := aSockets%aSockets0%_Sock
+                    aSockets%i%_Name := aSockets%aSockets0%_Name
+                    aSockets%i%_Addr := aSockets%aSockets0%_Addr
+                    aSockets%i%_Port := aSockets%aSockets0%_Port
+                    aSockets%i%_Func := aSockets%aSockets0%_Func
+                    aSockets%i%_Shutdown := aSockets%aSockets0%_Shutdown
+                    aSockets%i%_Send := aSockets%aSockets0%_Send
+
+                }
+                aSockets0 -= 1 ;Remove element
             }
-            aSockets0 -= 1 ;Remove element
-        }
-        
-    } Else If (sAction = "GetName") {
-        i := (iSocket = iLastSocket) ;Check cache
-        ? iLastSocketIndex
-        : AHKsock_Sockets("Index", iSocket)
-        ret := aSockets%i%_Name
-        
-    } Else If (sAction = "GetAddr") {
-        i := (iSocket = iLastSocket) ;Check cache
-        ? iLastSocketIndex
-        : AHKsock_Sockets("Index", iSocket)
-        ret := aSockets%i%_Addr
-        
-    } Else If (sAction = "GetPort") {
-        i := (iSocket = iLastSocket) ;Check cache
-        ? iLastSocketIndex
-        : AHKsock_Sockets("Index", iSocket)
-        ret := aSockets%i%_Port
-        
-    } Else If (sAction = "GetFunction") {
-        i := (iSocket = iLastSocket) ;Check cache
-        ? iLastSocketIndex
-        : AHKsock_Sockets("Index", iSocket)
-        ret := aSockets%i%_Func
-        
-    } Else If (sAction = "SetFunction") {
-        i := (iSocket = iLastSocket) ;Check cache
-        ? iLastSocketIndex
-        : AHKsock_Sockets("Index", iSocket)
-        aSockets%i%_Func := sName
-        
-    } Else If (sAction = "GetSend") {
-        i := (iSocket = iLastSocket) ;Check cache
-        ? iLastSocketIndex
-        : AHKsock_Sockets("Index", iSocket)
-        ret := aSockets%i%_Send
-        
-    } Else If (sAction = "SetSend") {
-        i := (iSocket = iLastSocket) ;Check cache
-        ? iLastSocketIndex
-        : AHKsock_Sockets("Index", iSocket)
-        aSockets%i%_Send := sName
-        
-    } Else If (sAction = "GetShutdown") {
-        i := (iSocket = iLastSocket) ;Check cache
-        ? iLastSocketIndex
-        : AHKsock_Sockets("Index", iSocket)
-        ret := aSockets%i%_Shutdown
-        
-    } Else If (sAction = "SetShutdown") {
-        i := (iSocket = iLastSocket) ;Check cache
-        ? iLastSocketIndex
-        : AHKsock_Sockets("Index", iSocket)
-        aSockets%i%_Shutdown := True
-        
-    } Else If (sAction = "GetSocketFromNamePort") {
-        Loop % aSockets0 {
-            If (aSockets%A_Index%_Name = iSocket)
-            And (aSockets%A_Index%_Port = sName) {
-                ret := aSockets%A_Index%_Sock
-                Break
+
+        } Else If (sAction = "GetName") {
+            i := (iSocket = iLastSocket) ;Check cache
+            ? iLastSocketIndex
+            : AHKsock_Sockets("Index", iSocket)
+            ret := aSockets%i%_Name
+
+        } Else If (sAction = "GetAddr") {
+            i := (iSocket = iLastSocket) ;Check cache
+            ? iLastSocketIndex
+            : AHKsock_Sockets("Index", iSocket)
+            ret := aSockets%i%_Addr
+
+        } Else If (sAction = "GetPort") {
+            i := (iSocket = iLastSocket) ;Check cache
+            ? iLastSocketIndex
+            : AHKsock_Sockets("Index", iSocket)
+            ret := aSockets%i%_Port
+
+        } Else If (sAction = "GetFunction") {
+            i := (iSocket = iLastSocket) ;Check cache
+            ? iLastSocketIndex
+            : AHKsock_Sockets("Index", iSocket)
+            ret := aSockets%i%_Func
+
+        } Else If (sAction = "SetFunction") {
+            i := (iSocket = iLastSocket) ;Check cache
+            ? iLastSocketIndex
+            : AHKsock_Sockets("Index", iSocket)
+            aSockets%i%_Func := sName
+
+        } Else If (sAction = "GetSend") {
+            i := (iSocket = iLastSocket) ;Check cache
+            ? iLastSocketIndex
+            : AHKsock_Sockets("Index", iSocket)
+            ret := aSockets%i%_Send
+
+        } Else If (sAction = "SetSend") {
+            i := (iSocket = iLastSocket) ;Check cache
+            ? iLastSocketIndex
+            : AHKsock_Sockets("Index", iSocket)
+            aSockets%i%_Send := sName
+
+        } Else If (sAction = "GetShutdown") {
+            i := (iSocket = iLastSocket) ;Check cache
+            ? iLastSocketIndex
+            : AHKsock_Sockets("Index", iSocket)
+            ret := aSockets%i%_Shutdown
+
+        } Else If (sAction = "SetShutdown") {
+            i := (iSocket = iLastSocket) ;Check cache
+            ? iLastSocketIndex
+            : AHKsock_Sockets("Index", iSocket)
+            aSockets%i%_Shutdown := True
+
+        } Else If (sAction = "GetSocketFromNamePort") {
+            Loop % aSockets0 {
+                If (aSockets%A_Index%_Name = iSocket)
+                And (aSockets%A_Index%_Port = sName) {
+                    ret := aSockets%A_Index%_Sock
+                    Break
+                }
+            }
+
+        } Else If (sAction = "GetSocketFromIndex") {
+            ret := aSockets%iSocket%_Sock
+
+        } Else If (sAction = "Index") {
+            Loop % aSockets0 {
+                If (aSockets%A_Index%_Sock = iSocket) {
+                    iLastSocketIndex := A_Index, iLastSocket := iSocket
+                    ret := A_Index
+                    Break
+                }
             }
         }
-        
-    } Else If (sAction = "GetSocketFromIndex") {
-        ret := aSockets%iSocket%_Sock
-    
-    } Else If (sAction = "Index") {
-        Loop % aSockets0 {
-            If (aSockets%A_Index%_Sock = iSocket) {
-                iLastSocketIndex := A_Index, iLastSocket := iSocket
-                ret := A_Index
-                Break
-            }
-        }
+
+        ;Restore old Critical setting
+        Critical %A_IsCriticalOld%
+        Return ret
     }
-    
-    ;Restore old Critical setting
-    Critical %A_IsCriticalOld%
-    Return ret
-}
 
 /*****************\
  Error Functions  |
-                */
+    */
 
-AHKsock_LastError() {
-    Return DllCall("Ws2_32\WSAGetLastError")
-}
+    AHKsock_LastError() {
+        Return DllCall("Ws2_32\WSAGetLastError")
+    }
 
-AHKsock_ErrorHandler(sFunction = """") {
-    Static sCurrentFunction
-    If (sFunction = """")
-        Return sCurrentFunction
-    Else sCurrentFunction := sFunction
-}
+    AHKsock_ErrorHandler(sFunction = """") {
+        Static sCurrentFunction
+        If (sFunction = """")
+            Return sCurrentFunction
+        Else sCurrentFunction := sFunction
+        }
 
-AHKsock_RaiseError(iError, iSocket = -1) {
-    If IsFunc(sFunc := AHKsock_ErrorHandler())
-        %sFunc%(iError, iSocket)
-}
+    AHKsock_RaiseError(iError, iSocket = -1) {
+        If IsFunc(sFunc := AHKsock_ErrorHandler())
+            %sFunc%(iError, iSocket)
+    }
 
 /*******************\
  Settings Function  |
-                  */
+    */
 
-AHKsock_Settings(sSetting, sValue = "") {
-    Static iMessage := 0x8000
-    Static iBuffer := 65536
-    
-    If (sSetting = "Message") {
-        If Not sValue
-            Return iMessage
-        Else iMessage := (sValue = "Reset") ? 0x8000 : sValue
-    } Else If (sSetting = "Buffer") {
-        If Not sValue
-            Return iBuffer
-        Else iBuffer := (sValue = "Reset") ? 65536 : sValue
+    AHKsock_Settings(sSetting, sValue = "") {
+        Static iMessage := 0x8000
+        Static iBuffer := 65536
+
+        If (sSetting = "Message") {
+            If Not sValue
+                Return iMessage
+            Else iMessage := (sValue = "Reset") ? 0x8000 : sValue
+        } Else If (sSetting = "Buffer") {
+            If Not sValue
+                Return iBuffer
+            Else iBuffer := (sValue = "Reset") ? 65536 : sValue
+            }
     }
-}
-btnConnect:
+    btnConnect:
         GuiControlGet, btnText,, btnConnect
 
         If (btnText = "Connect to Server") {
             GuiControlGet, srvAddress,, srvAddress
+            GuiControlGet, srvPort,, srvPort
             GuiControlGet, AutoReconnect,, chkAutoReconnect
 
-            ; Save server address for auto-reconnect
-            LastServerAddress := srvAddress
-
-            ; Connect to server
-            If (i := AHKsock_Connect(srvAddress, 27016, "ClientEvents")) {
-                AddLog("ERROR: AHKsock_Connect() failed with return value = " i " and ErrorLevel = " ErrorLevel)
-                MsgBox, 0x10, Connection Error, Could not connect to server at: %srvAddress%
+            ; Validate port
+            If (srvPort = "" || srvPort < 1 || srvPort > 65535) {
+                MsgBox, 0x10, Invalid Port, Please enter a valid port number (1-65535)
                 Return
             }
 
-            AddLog("Connecting to " srvAddress ":27016...")
+            ; Save server address and port for auto-reconnect
+            LastServerAddress := srvAddress
+            LastServerPort := srvPort
+
+            ; Connect to server
+            If (i := AHKsock_Connect(srvAddress, srvPort, "ClientEvents")) {
+                AddLog("ERROR: AHKsock_Connect() failed with return value = " i " and ErrorLevel = " ErrorLevel)
+                MsgBox, 0x10, Connection Error, Could not connect to server at: %srvAddress%:%srvPort%
+                Return
+            }
+
+            AddLog("Connecting to " srvAddress ":" srvPort "...")
             GuiControl, Disable, btnConnect
 
         } Else {
@@ -25136,10 +25482,10 @@ btnConnect:
                 Return
             }
 
-            AddLog("Attempting to reconnect to " LastServerAddress "...")
+            AddLog("Attempting to reconnect to " LastServerAddress ":" LastServerPort "...")
 
             ; Try to connect
-            If (i := AHKsock_Connect(LastServerAddress, 27016, "ClientEvents")) {
+            If (i := AHKsock_Connect(LastServerAddress, LastServerPort, "ClientEvents")) {
                 AddLog("Reconnect failed - will retry in 15 seconds")
                 ; Restart timer for next attempt
                 SetTimer, AttemptReconnect, 15000
