@@ -584,34 +584,44 @@ ShowThumbnailView:
     thumbHeight := 240
     spacing := 10
     
-    ; Calculate total width
-    totalWidth := (thumbWidth * activeCount) + (spacing * (activeCount + 1))
-    totalHeight := thumbHeight + (spacing * 2) + 30  ; Extra space for labels
+    ; Calculate columns (2 rows layout)
+    columns := Ceil(activeCount / 2.0)
+    
+    ; Calculate total dimensions for 2-row layout
+    totalWidth := (thumbWidth * columns) + (spacing * (columns + 1))
+    totalHeight := (thumbHeight * 2) + (spacing * 3) + 60  ; 2 rows + spacing + labels
     
     ; Store configuration globally for resize
     global thumbCount := activeCount
     global baseThumbWidth := thumbWidth
     global baseThumbHeight := thumbHeight
     global thumbSpacing := spacing
+    global thumbColumns := columns
     
     ; Create GUI
     Gui, Thumbnail:New, +AlwaysOnTop +Resize
     Gui, Thumbnail:Color, 202020
     
-    ; Create thumbnail controls for each window
+    ; Create thumbnail controls for each window in 2-row layout
     ThumbnailData := []
-    xPos := spacing
     
     Loop, %activeCount% {
         index := A_Index
         winData := activeWindows[index]
         
-        ; Add label with unique variable name for moving later
+        ; Calculate position (alternating top/bottom rows)
+        col := Ceil(index / 2.0) - 1  ; 0-based column
+        row := Mod(index - 1, 2)      ; 0 for top row, 1 for bottom row
+        
+        xPos := spacing + (col * (thumbWidth + spacing))
+        yPos := spacing + 20 + (row * (thumbHeight + spacing + 20))
+        labelY := yPos - 20
+        
+        ; Add label
         labelText := winData.title
-        Gui, Add, Text, x%xPos% y%spacing% w%thumbWidth% Center cWhite BackgroundTrans vStatic%index%, %labelText%
+        Gui, Add, Text, x%xPos% y%labelY% w%thumbWidth% Center cWhite BackgroundTrans vStatic%index%, %labelText%
         
         ; Add clickable area for thumbnail
-        yPos := spacing + 20
         Gui, Add, Text, x%xPos% y%yPos% w%thumbWidth% h%thumbHeight% vThumb%index% gThumbnailClick Background000000 +Border
         
         ; Store data
@@ -624,8 +634,8 @@ ShowThumbnailView:
         ThumbnailData[index].width := thumbWidth
         ThumbnailData[index].height := thumbHeight
         ThumbnailData[index].thumbnailHandle := 0
-        
-        xPos += thumbWidth + spacing
+        ThumbnailData[index].row := row
+        ThumbnailData[index].col := col
     }
     
     Gui, Thumbnail:Show, w%totalWidth% h%totalHeight%, Game Thumbnails
@@ -664,7 +674,7 @@ ShowThumbnailView:
 return
 
 ThumbnailGuiSize:
-    global ThumbnailData, thumbnailGuiHandle, thumbCount, baseThumbWidth, baseThumbHeight, thumbSpacing
+    global ThumbnailData, thumbnailGuiHandle, thumbCount, baseThumbWidth, baseThumbHeight, thumbSpacing, thumbColumns
     
     ; Get current GUI client area size
     Gui, Thumbnail:+LastFound
@@ -676,40 +686,43 @@ ThumbnailGuiSize:
     if (!thumbCount || thumbCount = 0)
         return
     
-    ; Calculate new thumbnail dimensions based on window size
+    ; Calculate new thumbnail dimensions based on window size (2-row layout)
     spacing := thumbSpacing
-    labelHeight := 30
+    labelHeight := 20
     
     ; Calculate available space
-    availableWidth := clientWidth - (spacing * (thumbCount + 1))
-    availableHeight := clientHeight - (spacing * 2) - labelHeight
+    availableWidth := clientWidth - (spacing * (thumbColumns + 1))
+    availableHeight := clientHeight - (spacing * 3) - (labelHeight * 2)
     
-    ; Calculate new thumbnail size (divide width equally among thumbnails)
-    newThumbWidth := Floor(availableWidth / thumbCount)
-    newThumbHeight := availableHeight
+    ; Calculate new thumbnail size
+    newThumbWidth := Floor(availableWidth / thumbColumns)
+    newThumbHeight := Floor(availableHeight / 2)
     
     ; Update stored dimensions and positions in ThumbnailData
-    xPos := spacing
     Loop, %thumbCount% {
         index := A_Index
         thumbData := ThumbnailData[index]
+        
+        ; Calculate position (alternating top/bottom rows)
+        col := thumbData.col
+        row := thumbData.row
+        
+        xPos := spacing + (col * (newThumbWidth + spacing))
+        yPos := spacing + labelHeight + (row * (newThumbHeight + spacing + labelHeight))
+        labelY := yPos - labelHeight
         
         ; Update dimensions
         ThumbnailData[index].width := newThumbWidth
         ThumbnailData[index].height := newThumbHeight
         ThumbnailData[index].xPos := xPos
-        ThumbnailData[index].yPos := spacing + 20
+        ThumbnailData[index].yPos := yPos
         
         ; Move the control
         controlName := thumbData.controlName
-        yPos := spacing + 20
         GuiControl, Move, %controlName%, x%xPos% y%yPos% w%newThumbWidth% h%newThumbHeight%
         
         ; Move the label too
-        labelY := spacing
         GuiControl, Move, Static%index%, x%xPos% y%labelY% w%newThumbWidth%
-        
-        xPos += newThumbWidth + spacing
     }
     
     ; Update all thumbnails with new dimensions
