@@ -161,9 +161,12 @@ global ccPatterns := {} ; Store all CC patterns
 global ccPatternKeys := {} ; Store key assignments for CC patterns
 global ccPatternNames := {} ; Store custom names for CC patterns
 global ccStunDurations := {} ; Store stun durations for CC patterns
+global ccTypes := {} ; Store CC types (aoe or single)
 global ccCounter := 1 ; Counter for automatic CC pattern naming
 global ccPriorities := [] ; Array to store skill priority order
 global isccRunning := false ; Flag for CC monitoring
+global lastAoeCCTime := 0 ; Track when last AoE CC was used
+global aoeCCCooldown := 0 ; Duration until next AoE CC can be used
 ; QWERTY to QWERTZ conversion
 global qwertzModeEnabled := false ; Flag for QWERTY to QWERTZ key conversion
 ; Define healing skill patterns
@@ -795,40 +798,38 @@ CreateCombinedGUI:
     Gui, Tab, Tools
 
     ; Quick Tools Section
-    Gui, Add, GroupBox, x20 y40 w470 h120, Quick Tools
-    ;Gui, Add, Button, x30 y60 w110 h30 gskillboxesnpc, MasterBoxes NPC
-    Gui, Add, Button, x150 y60 w110 h30 genchanter, Gear Enchanter
-    ;Gui, Add, Button, x270 y60 w110 h30 gBuffheal2nd, Buff&Heal 2nd
-    ;Gui, Add, Button, x390 y60 w80 h30 galtassist, Alt Assist
-
-    ; File Editor Section
-    Gui, Add, GroupBox, x20 y170 w470 h100, File Editor
-    Gui, Add, Button, x30 y190 w100 h25 gSelectFile, Select File
-    Gui, Add, Text, x140 y190 w320 h20 vSelectedFilePath, No file selected
-    Gui, Add, Text, x30 y220 w60 h20, RADIUS:
-    Gui, Add, Edit, x90 y220 w100 h20 vRadiusValue
-    Gui, Add, Button, x200 y220 w60 h25 gSaveRadius, Save
+    Gui, Add, GroupBox, x20 y40 w470 h180, Quick Tools
+    Gui, Add, Text, x30 y60 w100 h20, Available Scripts:
+    Gui, Add, ListBox, x30 y85 w350 h100 vScriptListBox, Accessory Awakening||Citadel Store|Gear Enchanter|Rupee Monitor|Exp Monitor|AltAssist v2
+    Gui, Add, Button, x390 y85 w80 h30 gLaunchScript, Launch
 
     ; Coordinate Settings Section
-    Gui, Add, GroupBox, x20 y280 w470 h120, Coordinate Settings
-    Gui, Add, Button, x30 y300 w140 h30 gSetSkillbarArea, Set Skillbar Area
-    Gui, Add, Button, x180 y300 w180 h30 gSetCheckSnapshotCoords, Set CheckWeight/Snapshot Area
-    Gui, Add, Text, x30 y340 w450 h25 vToolsSkillbarCoords, Skillbar: Not set
-    Gui, Add, Text, x30 y360 w450 h25 vCheckSnapshotCoordsText, CheckWeight/Snapshot: Not set
+    Gui, Add, GroupBox, x20 y230 w470 h120, Coordinate Settings
+    Gui, Add, Button, x30 y250 w140 h30 gSetSkillbarArea, Set Skillbar Area
+    Gui, Add, Button, x180 y250 w180 h30 gSetCheckSnapshotCoords, Set CheckWeight/Snapshot Area
+    Gui, Add, Text, x30 y290 w450 h25 vToolsSkillbarCoords, Skillbar: Not set
+    Gui, Add, Text, x30 y310 w450 h25 vCheckSnapshotCoordsText, CheckWeight/Snapshot: Not set
 
-    Gui, Add, GroupBox, x20 y420 w470 h120, Memory Monitor
-    Gui, Add, Text, x30 y440 w440 h20, Click buttons 1-8 then left-click to select windows to monitor:
-    Gui, Add, Button, x30 y460 w25 h25 gMonitorButton, 1
-    Gui, Add, Button, x60 y460 w25 h25 gMonitorButton, 2
-    Gui, Add, Button, x90 y460 w25 h25 gMonitorButton, 3
-    Gui, Add, Button, x120 y460 w25 h25 gMonitorButton, 4
-    Gui, Add, Button, x150 y460 w25 h25 gMonitorButton, 5
-    Gui, Add, Button, x180 y460 w25 h25 gMonitorButton, 6
-    Gui, Add, Button, x210 y460 w25 h25 gMonitorButton, 7
-    Gui, Add, Button, x240 y460 w25 h25 gMonitorButton, 8
-    Gui, Add, Button, x30 y490 w100 h25 gclosemonitors, Close Monitors
-    Gui, Add, Button, x140 y490 w80 h25 gexpmonitor, Exp Monitor
-    Gui, Add, Button, x230 y490 w90 h25 gRupeemonitor, Rupee Monitor
+    ; File Editor Section
+    Gui, Add, GroupBox, x20 y360 w470 h100, File Editor
+    Gui, Add, Button, x30 y380 w100 h25 gSelectFile, Select File
+    Gui, Add, Text, x140 y380 w320 h20 vSelectedFilePath, No file selected
+    Gui, Add, Text, x30 y410 w60 h20, RADIUS:
+    Gui, Add, Edit, x90 y410 w100 h20 vRadiusValue
+    Gui, Add, Button, x200 y410 w60 h25 gSaveRadius, Save
+
+    ; Memory Monitor Section
+    Gui, Add, GroupBox, x20 y470 w470 h80, Memory Monitor
+    Gui, Add, Text, x30 y490 w440 h20, Click buttons 1-8 then left-click to select windows to monitor:
+    Gui, Add, Button, x30 y510 w25 h25 gMonitorButton, 1
+    Gui, Add, Button, x60 y510 w25 h25 gMonitorButton, 2
+    Gui, Add, Button, x90 y510 w25 h25 gMonitorButton, 3
+    Gui, Add, Button, x120 y510 w25 h25 gMonitorButton, 4
+    Gui, Add, Button, x150 y510 w25 h25 gMonitorButton, 5
+    Gui, Add, Button, x180 y510 w25 h25 gMonitorButton, 6
+    Gui, Add, Button, x210 y510 w25 h25 gMonitorButton, 7
+    Gui, Add, Button, x240 y510 w25 h25 gMonitorButton, 8
+    Gui, Add, Button, x280 y510 w100 h25 gclosemonitors, Close Monitors
 
     ; ===== Navigation Tab =====
 
@@ -1029,35 +1030,47 @@ CreateCombinedGUI:
     gui,tab, Network
     Clients := []
 
-    ; Network Tab - Host Section
-    Gui, Add, Text, x20 y40 w200 h20, === HOST CONTROLS ===
-    Gui, Add, Text, x20 y65 w200 h15, Connected Clients:
-    Gui, Add, Text, x20 y85 w200 h20 vlblClients cBlue, 0 clients connected
-    Gui, Add, Button, x20 y110 w200 h25 gbtnListen vbtnListen, Start Listening
-
-    Gui, Add, GroupBox, x20 y145 w480 h80, Regular Send (Active Window)
-    Gui, Add, Button, x30 y170 w140 h25 gbtnPress3, Send: Press 3
-    Gui, Add, Button, x180 y170 w140 h25 gbtnPress1, Send: Press 1
-    Gui, Add, Button, x330 y170 w140 h25 gbtnPress31, Send: Press 3 then 1
-
-    Gui, Add, GroupBox, x20 y235 w480 h110, ControlSend to Window
-    Gui, Add, Text, x30 y260 w80 h20, Window Title:
-    Gui, Add, Edit, x115 y260 w360 h20 vwinTitle, win1
-    Gui, Add, Button, x30 y290 w140 h25 gbtnCtrlPress1, ControlSend: 1
-    Gui, Add, Button, x180 y290 w140 h25 gbtnCtrlPress3, ControlSend: 3
-    Gui, Add, Button, x330 y290 w140 h25 gbtnCtrlCustom, ControlSend Custom
-
-    Gui, Add, Button, x20 y355 w480 h25 gbtnCustom, Send Custom Command
-    Gui, Add, Edit, x20 y390 w480 h70 vtxtLog ReadOnly VScroll, Server Log:`n
-
-    ; Network Tab - Client Section
-    Gui, Add, Text, x20 y470 w200 h20, === CLIENT CONTROLS ===
-    Gui, Add, Text, x20 y495 w100 h20, Server Address:
-    Gui, Add, Edit, x125 y495 w200 h20 vsrvAddress, localhost
-    Gui, Add, Button, x20 y525 w200 h25 gbtnConnect vbtnConnect, Connect to Server
-    Gui, Add, Checkbox, x230 y525 w200 h25 vchkAutoReconnect Checked, Auto-reconnect every 15s
-    Gui, Add, Text, x20 y555 w200 h20 vlblStatus, Not Connected
-    Gui, Add, Edit, x20 y580 w480 h60 vtxtClientLog ReadOnly VScroll, Client Log:`n
+    ; ==================== NETWORK TAB ====================
+    ; SERVER MODE - Host a server that other clients connect to
+    Gui, Add, GroupBox, x15 y35 w490 h130, SERVER MODE - Host
+    Gui, Add, Text, x25 y58 w460 h15, Run as server to allow other game clients to connect and receive commands
+    
+    Gui, Add, Text, x25 y80 w60 h20, Listen Port:
+    Gui, Add, Edit, x90 y80 w60 h20 vhostPort gUpdateListenButton, 27016
+    Gui, Add, Text, x160 y80 w340 h20, (Port number for other clients to connect to)
+    
+    Gui, Add, Button, x25 y105 w200 h25 gbtnListen vbtnListen, Start Listening (27016)
+    Gui, Add, Text, x235 y105 w120 h25 vlblClients cBlue +0x200, 0 clients connected
+    
+    Gui, Add, Button, x25 y135 w150 h25 gbtnCustom, Send Custom Command
+    Gui, Add, Text, x185 y138 w315 h20, (Send commands to all connected clients)
+    
+    ; SERVER LOG
+    Gui, Add, GroupBox, x15 y170 w490 h95, Server Activity Log
+    Gui, Add, Edit, x25 y190 w470 h65 vtxtLog ReadOnly VScroll, Waiting to start server...`n
+    
+    ; CLIENT MODE - Connect to another server
+    Gui, Add, GroupBox, x15 y275 w490 h150, CLIENT MODE - Connect to Server
+    Gui, Add, Text, x25 y298 w460 h15, Run as client to connect to another game instance (server) and receive commands
+    
+    Gui, Add, Text, x25 y320 w100 h20, Server Address:
+    Gui, Add, Edit, x130 y320 w150 h20 vsrvAddress gUpdateConnectButton, localhost
+    Gui, Add, Text, x290 y320 w30 h20, Port:
+    Gui, Add, Edit, x325 y320 w60 h20 vsrvPort gUpdateConnectButton, 27016
+    
+    Gui, Add, Button, x25 y350 w200 h25 gbtnConnect vbtnConnect, Connect (localhost:27016)
+    Gui, Add, Checkbox, x235 y350 w250 h25 vchkAutoReconnect Checked, Auto-reconnect every 15s
+    
+    Gui, Add, Text, x25 y380 w150 h25 vlblStatus, Status: Not Connected
+    Gui, Add, Text, x185 y380 w315 h20 cGray, (Connection status will appear here)
+    
+    ; CLIENT LOG
+    Gui, Add, GroupBox, x15 y435 w490 h95, Client Activity Log
+    Gui, Add, Edit, x25 y455 w470 h65 vtxtClientLog ReadOnly VScroll, Not connected to any server...`n
+    
+    ; QUICK REFERENCE
+    Gui, Add, GroupBox, x15 y540 w490 h90, Quick Reference
+    Gui, Add, Text, x25 y560 w460 h60, • SERVER: Start listening to receive connections from other clients`n• CLIENT: Connect to another server to receive commands`n• Use waypoint commands (netskill, netcombat, netnav, etc.) to control multiple clients`n• See Commands tab for full list of network commands
 
     ; ===== GLOBAL CONTROLS =====
     Gui, Tab
@@ -1119,11 +1132,11 @@ return
 LoadGameWindowSettings() {
     global TargetGameWindow, TargetGameTitle, TargetGamePID, iniFile, win1
 
-    ; Check if window title "win4" exists first
+    ; Check if window title "win2" exists first
     WinGet, win4ID, ID, win4
     if (win4ID) {
         TargetGameWindow := win4ID
-        win1 := win4ID
+        win4 := win4ID
         TargetGameTitle := "win4"
         WinGet, win4PID, PID, ahk_id %win4ID%
         TargetGamePID := win4PID
@@ -3275,7 +3288,7 @@ DestroySkyPotions(force := false) {
                 Y := entry.y
 
                 ; Click with Alt held
-                SendMessageClick(X, Y, WIN1)
+                SendMessageClick2(X, Y, WIN1)
                 ;FindText().Click(X, Y, "L")
                 Sleep, 100
             }
@@ -3836,6 +3849,35 @@ return
 enchanter:
     Run, %A_ScriptDir%\gear_enchanter.ahk
 return
+
+LaunchScript:
+    Gui, Submit, NoHide
+    GuiControlGet, selectedScript,, ScriptListBox
+    
+    if (selectedScript = "Accessory Awakening") {
+        scriptFile := A_ScriptDir "\Accessory awakening.ahk"
+    } else if (selectedScript = "Citadel Store") {
+        scriptFile := A_ScriptDir "\citadelstore.ahk"
+    } else if (selectedScript = "Gear Enchanter") {
+        scriptFile := A_ScriptDir "\gear_enchanter.ahk"
+    } else if (selectedScript = "Rupee Monitor") {
+        scriptFile := A_ScriptDir "\rupeesperhour.ahk"
+    } else if (selectedScript = "Exp Monitor") {
+        scriptFile := A_ScriptDir "\expperhour.ahk"
+    } else if (selectedScript = "AltAssist v2") {
+        scriptFile := A_ScriptDir "\AltAssistV2.exe"
+    } else {
+        MsgBox, 48, No Selection, Please select a script from the list first!
+        return
+    }
+    
+    if FileExist(scriptFile) {
+        Run, %scriptFile%
+    } else {
+        MsgBox, 16, Error, Script file not found:`n%scriptFile%
+    }
+return
+
 ; ========= HEALER FUNCTIONS =========
 
 ; Calculate health check X position based on percentage threshold
@@ -3868,7 +3910,7 @@ DetectPartyMembers() {
     searchX2 := partyBar.1.x + 175
     searchY2 := partyBar.1.y + 430
 
-    playerPatterns := magus . "|" . Corruptor . "|" . voidmage . "|" . deadeye . "|" . beastmaster . "|" . slayer . "|" . berserker . "|" . overlord . "|" . masterbreeder . "|" . Marksman
+    playerPatterns := magus . "|" . Corruptor . "|" . voidmage . "|" . deadeye . "|" . beastmaster . "|" . slayer . "|" . berserker . "|" . overlord . "|" . masterbreeder . "|" . Marksman . "|" Templar
     petPatterns := windpixie . "|" . gnoll . "|" . etherealpixie
 
     playerCount := 0
@@ -4056,7 +4098,7 @@ HandleResurrection() {
         ; Validate coordinates
         if (clickX > 0 && clickY > 0 && clickX < A_ScreenWidth && clickY < A_ScreenHeight) {
             ; Use SendMessage to click - it handles coordinate conversion
-            SendMessageClick(clickX, clickY, win1)
+            SendMessageClick2(clickX, clickY, win1)
             Sleep, 500
 
             ; Increment counter
@@ -4358,7 +4400,7 @@ DynamicHealthCheck:
     searchX2 := partyBar.1.x + 175
     searchY2 := partyBar.1.y + 430
 
-    playerPatterns := magus . "|" . Corruptor . "|" . voidmage . "|" . deadeye . "|" . beastmaster . "|" . slayer . "|" . berserker . "|" . overlord . "|" . masterbreeder . "|" . Marksman
+    playerPatterns := magus . "|" . Corruptor . "|" . voidmage . "|" . deadeye . "|" . beastmaster . "|" . slayer . "|" . berserker . "|" . overlord . "|" . masterbreeder . "|" . Marksman . "|" Templar
     petPatterns := windpixie . "|" . gnoll . "|" . etherealpixie
 
     ; Check players in party area
@@ -4381,7 +4423,7 @@ DynamicHealthCheck:
                 ; Validate coordinates before clicking
                 if (clickX > 0 && clickY > 0 && clickX < A_ScreenWidth && clickY < A_ScreenHeight) {
                     ;ToolTip, Dynamic Player Click at %clickX%`, %clickY%, , , 3
-                    SendMessageClick(clickX, clickY)
+                    ControlClick, x%clickX% y%clickY%, ahk_id %win1%
                     TryCastHealingSkill()
                     Sleep, 25
                 } else {
@@ -4411,7 +4453,7 @@ DynamicHealthCheck:
                 ; Validate coordinates before clicking
                 if (clickX > 0 && clickY > 0 && clickX < A_ScreenWidth && clickY < A_ScreenHeight) {
                     ;;;;;ToolTip, Dynamic Pet Click at %clickX%`, %clickY%, , , 4
-                    SendMessageClick(clickX, clickY)
+                    ControlClick, x%clickX% y%clickY%, ahk_id %win1%,, Left, 1
                     TryCastHealingSkill()
                     Sleep, 25
                 } else {
@@ -4937,7 +4979,7 @@ TryCastHealingSkill() {
                         ; Validate coordinates before clicking
                         if (X > 0 && Y > 0 && X < A_ScreenWidth && Y < A_ScreenHeight) {
                             ToolTip, Heal Click at %X%`, %Y%, , , 2
-                            SendMessageClick(X, Y)
+                            ControlClick, x%X% y%Y%, ahk_id %win1%,, Left, 1
                             Sleep, 25
                             skillCastSuccessfully := true
                         } else {
@@ -7452,8 +7494,15 @@ AssignHealKeys:
                                                                         if (stunDuration = "" || !RegExMatch(stunDuration, "^\d+$"))
                                                                             stunDuration := 2000
 
-                                                                        SaveCCPattern(patternName, capturedText, assignedKey, customName, stunDuration)
-                                                                        UpdateCCStatus("CC skill captured and saved as '" . customName . "' [" . patternName . "] with " . stunDuration . "ms stun")
+                                                                        ; Prompt for CC type
+                                                                        MsgBox, 4, CC Type, Is this an AoE (Area of Effect) stun?`n`nClick Yes for AoE`nClick No for Single Target
+                                                                        IfMsgBox Yes
+                                                                            ccType := "aoe"
+                                                                        Else
+                                                                            ccType := "single"
+
+                                                                        SaveCCPattern(patternName, capturedText, assignedKey, customName, stunDuration, ccType)
+                                                                        UpdateCCStatus("CC skill captured and saved as '" . customName . "' [" . patternName . "] with " . stunDuration . "ms stun (" . ccType . ")")
                                                                         ccCounter++
 
                                                                         ; Add to priority list at the end
@@ -8595,20 +8644,22 @@ AssignHealKeys:
                                                                                             SendMessage, 0x0115, 6, 0, , ahk_id %DPSStatusEdit% ; WM_VSCROLL, SB_TOP
                                                                                         }
                                                                                         ;  ========= CC Helper Functions =========
-                                                                                        SaveCCPattern(patternName, patternText, keyAssignment, customName, stunDuration) {
-                                                                                            global iniFile, ccPatterns, ccPatternKeys, ccPatternNames, ccStunDurations
+                                                                                        SaveCCPattern(patternName, patternText, keyAssignment, customName, stunDuration, ccType) {
+                                                                                            global iniFile, ccPatterns, ccPatternKeys, ccPatternNames, ccStunDurations, ccTypes
 
                                                                                             FileEncoding, UTF-8
                                                                                             IniWrite, %patternText%, %iniFile%, CCPatterns, %patternName%
                                                                                             IniWrite, %keyAssignment%, %iniFile%, CCPatternKeys, %patternName%
                                                                                             IniWrite, %customName%, %iniFile%, CCPatternNames, %patternName%
                                                                                             IniWrite, %stunDuration%, %iniFile%, CCStunDurations, %patternName%
+                                                                                            IniWrite, %ccType%, %iniFile%, CCTypes, %patternName%
                                                                                             FileEncoding
 
                                                                                             ccPatterns[patternName] := patternText
                                                                                             ccPatternKeys[patternName] := keyAssignment
                                                                                             ccPatternNames[patternName] := customName
                                                                                             ccStunDurations[patternName] := stunDuration
+                                                                                            ccTypes[patternName] := ccType
                                                                                         }
 
                                                                                         SaveCCPatternKey(patternName, keyAssignment) {
@@ -8691,7 +8742,7 @@ AssignHealKeys:
                                                                                         }
 
                                                                                         LoadAllCCPatterns() {
-                                                                                            global iniFile, ccPatterns, ccPatternKeys, ccPatternNames, ccStunDurations
+                                                                                            global iniFile, ccPatterns, ccPatternKeys, ccPatternNames, ccStunDurations, ccTypes
 
                                                                                             ; Load CC patterns
                                                                                             IniRead, ccPatternsList, %iniFile%, CCPatterns
@@ -8756,6 +8807,23 @@ AssignHealKeys:
                                                                                                             patternName := SubStr(A_LoopField, 1, equalsPos - 1)
                                                                                                             stunDuration := SubStr(A_LoopField, equalsPos + 1)
                                                                                                             ccStunDurations[patternName] := stunDuration
+                                                                                                        }
+                                                                                                    }
+                                                                                                }
+                                                                                            }
+
+                                                                                            ; Load CC types
+                                                                                            IniRead, ccTypesList, %iniFile%, CCTypes
+                                                                                            if (ccTypesList != "ERROR") {
+                                                                                                Loop, Parse, ccTypesList, `n
+                                                                                                {
+                                                                                                    if (A_LoopField != "") {
+                                                                                                        ; Find first equals sign position
+                                                                                                        equalsPos := InStr(A_LoopField, "=")
+                                                                                                        if (equalsPos > 0) {
+                                                                                                            patternName := SubStr(A_LoopField, 1, equalsPos - 1)
+                                                                                                            ccType := SubStr(A_LoopField, equalsPos + 1)
+                                                                                                            ccTypes[patternName] := ccType
                                                                                                         }
                                                                                                     }
                                                                                                 }
@@ -8833,16 +8901,31 @@ AssignHealKeys:
                                                                                         }
 
                                                                                         TryCastCC() {
-                                                                                            global ccPatterns, ccPatternKeys, ccPriorities, ccStunDurations
+                                                                                            global ccPatterns, ccPatternKeys, ccPriorities, ccStunDurations, ccTypes
                                                                                             global SkillBarX1, SkillBarY1, SkillBarX2, SkillBarY2, isCcRunning, ccOnCooldown
+                                                                                            global lastAoeCCTime, aoeCCCooldown, ClientSocket
+                                                                                            
+                                                                                            currentTime := A_TickCount
 
-                                                                                            ; Skip if on cooldown
+                                                                                            ; Skip if on local cooldown (can't use ANY CC until own cooldown expires)
                                                                                             if (ccOnCooldown)
                                                                                                 return false
 
                                                                                             for index, priorityPattern in ccPriorities {
                                                                                                 if (!ccPatterns.HasKey(priorityPattern))
                                                                                                     continue
+
+                                                                                                ; Check CC type
+                                                                                                ccType := ccTypes.HasKey(priorityPattern) ? ccTypes[priorityPattern] : "single"
+                                                                                                
+                                                                                                ; If AoE, check network-wide AoE cooldown
+                                                                                                if (ccType = "aoe") {
+                                                                                                    if (currentTime < lastAoeCCTime + aoeCCCooldown) {
+                                                                                                        ; Another client's AoE is still active, skip this AoE skill
+                                                                                                        continue
+                                                                                                    }
+                                                                                                }
+                                                                                                ; Single-target stuns can always be attempted if local cooldown is clear
 
                                                                                                 patternText := ccPatterns[priorityPattern]
 
@@ -8930,15 +9013,29 @@ AssignHealKeys:
                                                                                                     ; Status message
                                                                                                 method := hasKey ? "key: " . ccPatternKeys[priorityPattern] : "clicking"
                                                                                                 prefix := isCcRunning ? "" : "TEST: "
-                                                                                                    ;UpdateCCStatus(prefix . "Used " . displayName . " with " . method . " (" . spamCount . "x)")
 
                                                                                                     ; Set cooldown based on stun duration
                                                                                                     if (ccStunDurations.HasKey(priorityPattern)) {
                                                                                                         stunDurationMs := ccStunDurations[priorityPattern]
                                                                                                         if (stunDurationMs > 0) {
+                                                                                                            ; Set local cooldown (prevents THIS client from using any CC)
                                                                                                             ccOnCooldown := true
                                                                                                             stunDurationSec := stunDurationMs / 1000.0
-                                                                                                            UpdateCCStatus(prefix . "Used " . displayName . " with " . method . " - CC on cooldown for " . stunDurationSec . "s")
+                                                                                                            
+                                                                                                            ; If AoE, also update network-wide AoE cooldown and broadcast
+                                                                                                            if (ccType = "aoe") {
+                                                                                                                lastAoeCCTime := A_TickCount
+                                                                                                                aoeCCCooldown := stunDurationMs
+                                                                                                                
+                                                                                                                ; Broadcast to network if connected
+                                                                                                                if (ClientSocket != -1) {
+                                                                                                                    SendCommandToAll("STUNUSED:AOE|" . stunDurationMs)
+                                                                                                                }
+                                                                                                                UpdateCCStatus(prefix . "Used " . displayName . " (AoE) - Local & Network CC locked for " . stunDurationSec . "s")
+                                                                                                            } else {
+                                                                                                                UpdateCCStatus(prefix . "Used " . displayName . " (Single) - Local CC locked for " . stunDurationSec . "s")
+                                                                                                            }
+                                                                                                            
                                                                                                             SetTimer, ResetCCCooldown, -%stunDurationMs%
                                                                                                         }
                                                                                                     }
@@ -23615,26 +23712,40 @@ Script_End() {
 
 ;
   
+; Update Listen button text with current port
+UpdateListenButton:
+    Gui, Submit, NoHide
+    GuiControlGet, btnText,, btnListen
+    ; Only update if currently showing "Start Listening" (not "Stop Listening")
+    If (InStr(btnText, "Start Listening")) {
+        GuiControl,, btnListen, Start Listening (%hostPort%)
+    }
+Return
+
 btnListen:
     GuiControlGet, btnText,, btnListen
     
-    If (btnText = "Start Listening") {
-        ; Prompt for port number
-        InputBox, serverPort, Server Port, Enter port number to listen on:, , 300, 130, , , , , 27016
-        If (ErrorLevel || serverPort = "")
+    If (InStr(btnText, "Start Listening")) {
+        GuiControlGet, hostPort,, hostPort
+        
+        ; Validate port
+        If (hostPort = "" || hostPort < 1 || hostPort > 65535) {
+            MsgBox, 0x10, Invalid Port, Please enter a valid port number (1-65535)
             Return
+        }
         
         ; Start listening on specified port
-        If (i := AHKsock_Listen(serverPort, "ServerEvents")) {
+        If (i := AHKsock_Listen(hostPort, "ServerEvents")) {
             AddLog("ERROR: AHKsock_Listen() failed with return value = " i " and ErrorLevel = " ErrorLevel)
             Return
         }
-        GuiControl,, btnListen, Stop Listening (Port %serverPort%)
-        AddLog("Server started on port " serverPort)
+        GuiControl,, btnListen, Stop Listening (%hostPort%)
+        AddLog("Server started on port " hostPort)
     } Else {
         ; Stop listening
-        AHKsock_Listen(27016)
-        GuiControl,, btnListen, Start Listening
+        GuiControlGet, hostPort,, hostPort
+        AHKsock_Listen(hostPort)
+        GuiControl,, btnListen, Start Listening (%hostPort%)
         AddLog("Server stopped")
         
         ; Close all client connections
@@ -23792,21 +23903,40 @@ ServerEvents(sEvent, iSocket = 0, sName = 0, sAddr = 0, sPort = 0, ByRef bData =
     Global Clients
     
     If (sEvent = "ACCEPTED") {
-        ; A client connected
-        Clients.Push(iSocket)
-        AddLog("Client connected from " sAddr ":" sPort " (Socket: " iSocket ")")
-        UpdateClientCount()
-        
-    } Else If (sEvent = "DISCONNECTED") {
-        ; Client disconnected
+        ; A client connected - check if socket already exists before adding
+        alreadyExists := False
         For index, socket in Clients {
             If (socket = iSocket) {
-                Clients.RemoveAt(index)
+                alreadyExists := True
                 Break
             }
         }
-        AddLog("Client disconnected (Socket: " iSocket ")")
-        UpdateClientCount()
+        
+        If (!alreadyExists) {
+            Clients.Push(iSocket)
+            AddLog("Client connected from " sAddr ":" sPort " (Socket: " iSocket ")")
+            AddLog("DEBUG: Array now has " Clients.Length() " clients")
+            UpdateClientCount()
+        } Else {
+            AddLog("DEBUG: Socket " iSocket " already in array, not adding")
+        }
+        
+    } Else If (sEvent = "DISCONNECTED") {
+        ; Client disconnected - find and remove from array
+        removed := False
+        For index, socket in Clients {
+            If (socket = iSocket) {
+                Clients.RemoveAt(index)
+                removed := True
+                AddLog("Client disconnected (Socket: " iSocket ")")
+                AddLog("DEBUG: Removed at index " index ", array now has " Clients.Length() " clients")
+                UpdateClientCount()
+                Break
+            }
+        }
+        If (!removed) {
+            AddLog("DEBUG: DISCONNECTED event for socket " iSocket " but not found in array (current count: " Clients.Length() ")")
+        }
         
     } Else If (sEvent = "RECEIVED") {
         ; Received data from client (optional - for client responses)
@@ -23817,23 +23947,52 @@ ServerEvents(sEvent, iSocket = 0, sName = 0, sAddr = 0, sPort = 0, ByRef bData =
 
 UpdateClientCount() {
     Global Clients
-    count := Clients.MaxIndex() ? Clients.MaxIndex() : 0
+    count := Clients.Length()
     GuiControl,, lblClients, %count% client(s) connected
 }
 
 AddLog(message) {
     GuiControlGet, currentLog,, txtLog
     FormatTime, timestamp,, HH:mm:ss
-    newLog := currentLog . timestamp . " - " . message . "`n"
+    newEntry := timestamp . " - " . message . "`n"
     
-    ; Keep only last 10 lines
+    ; Add new entry at the top
+    newLog := newEntry . currentLog
+    
+    ; Keep only last 100 lines
+    lineCount := 0
+    trimmedLog := ""
     Loop, Parse, newLog, `n
     {
-        If (A_Index > 100)
+        lineCount++
+        If (lineCount > 100)
             Break
-        lines .= A_LoopField . "`n"
+        trimmedLog .= A_LoopField . "`n"
     }
-    GuiControl,, txtLog, %newLog%
+    
+    GuiControl,, txtLog, %trimmedLog%
+}
+
+AddClientLog(message) {
+    GuiControlGet, currentLog,, txtClientLog
+    FormatTime, timestamp,, HH:mm:ss
+    newEntry := timestamp . " - " . message . "`n"
+    
+    ; Add new entry at the top
+    newLog := newEntry . currentLog
+    
+    ; Keep only last 100 lines
+    lineCount := 0
+    trimmedLog := ""
+    Loop, Parse, newLog, `n
+    {
+        lineCount++
+        If (lineCount > 100)
+            Break
+        trimmedLog .= A_LoopField . "`n"
+    }
+    
+    GuiControl,, txtClientLog, %trimmedLog%
 }
 
 GuiEscape:
@@ -25215,10 +25374,43 @@ across multiple RECEIVED events. This would also demonstrate your application's 
             Else iBuffer := (sValue = "Reset") ? 65536 : sValue
             }
     }
+    
+    ; Update Connect button text with current address and port
+    UpdateConnectButton:
+        Gui, Submit, NoHide
+        GuiControlGet, btnText,, btnConnect
+        ; Only update if currently showing "Connect" (not "Disconnect")
+        If (InStr(btnText, "Connect")) {
+            GuiControl,, btnConnect, Connect (%srvAddress%:%srvPort%)
+        }
+    Return
+    
     btnConnect:
         GuiControlGet, btnText,, btnConnect
 
-        If (btnText = "Connect to Server") {
+        If (InStr(btnText, "Disconnect")) {
+            ; Disconnect and stop auto-reconnect
+            SetTimer, AttemptReconnect, Off
+            If (ClientSocket != -1) {
+                AHKsock_Close(ClientSocket)
+            }
+            Connected := False
+            ClientSocket := -1
+            GuiControlGet, srvAddress,, srvAddress
+            GuiControlGet, srvPort,, srvPort
+            GuiControl,, btnConnect, Connect (%srvAddress%:%srvPort%)
+            GuiControl,, lblStatus, Status: Not Connected
+            GuiControl, Enable, btnConnect
+            AddClientLog("Disconnected from server")
+            
+        } Else {
+            ; Connect to server
+            ; Check if already connected - prevent multiple connections
+            If (Connected && ClientSocket != -1) {
+                MsgBox, 0x10, Already Connected, You are already connected. Please disconnect first.
+                Return
+            }
+            
             GuiControlGet, srvAddress,, srvAddress
             GuiControlGet, srvPort,, srvPort
             GuiControlGet, AutoReconnect,, chkAutoReconnect
@@ -25235,24 +25427,13 @@ across multiple RECEIVED events. This would also demonstrate your application's 
 
             ; Connect to server
             If (i := AHKsock_Connect(srvAddress, srvPort, "ClientEvents")) {
-                AddLog("ERROR: AHKsock_Connect() failed with return value = " i " and ErrorLevel = " ErrorLevel)
+                AddClientLog("ERROR: AHKsock_Connect() failed with return value = " i " and ErrorLevel = " ErrorLevel)
                 MsgBox, 0x10, Connection Error, Could not connect to server at: %srvAddress%:%srvPort%
                 Return
             }
 
-            AddLog("Connecting to " srvAddress ":" srvPort "...")
+            AddClientLog("Connecting to " srvAddress ":" srvPort "...")
             GuiControl, Disable, btnConnect
-
-        } Else {
-            ; Disconnect and stop auto-reconnect
-            SetTimer, AttemptReconnect, Off
-            AHKsock_Close(ClientSocket)
-            Connected := False
-            ClientSocket := -1
-            GuiControl,, btnConnect, Connect to Server
-            GuiControl,, lblStatus, Not Connected
-            GuiControl, Enable, btnConnect
-            AddLog("Disconnected from server")
         }
     Return
 
@@ -25263,7 +25444,7 @@ across multiple RECEIVED events. This would also demonstrate your application's 
         If (sEvent = "CONNECTED") {
             ; Check if connection was successful
             If (iSocket = -1) {
-                AddLog("ERROR: Connection failed")
+                AddClientLog("ERROR: Connection failed")
                 GuiControl, Enable, btnConnect
                 MsgBox, 0x10, Connection Error, Could not connect to the server.
                 Return
@@ -25274,24 +25455,24 @@ across multiple RECEIVED events. This would also demonstrate your application's 
             ClientSocket := iSocket
             buffer := "" ; Clear buffer on new connection
             GuiControl,, btnConnect, Disconnect
-            GuiControl,, lblStatus, Connected to %sName%:%sPort%
+            GuiControl,, lblStatus, Status: Connected to %sName%:%sPort%
             GuiControl, Enable, btnConnect
-            AddLog("Connected successfully to " sName ":" sPort)
+            AddClientLog("Connected successfully to " sName ":" sPort)
 
         } Else If (sEvent = "DISCONNECTED") {
             ; Disconnected from server
             Connected := False
             ClientSocket := -1
             buffer := "" ; Clear buffer on disconnect
-            GuiControl,, btnConnect, Connect to Server
-            GuiControl,, lblStatus, Disconnected
+            GuiControl,, btnConnect, Connect (%LastServerAddress%:%LastServerPort%)
+            GuiControl,, lblStatus, Status: Disconnected
             GuiControl, Enable, btnConnect
-            AddLog("Disconnected from server")
+            AddClientLog("Disconnected from server")
 
             ; Start auto-reconnect timer if enabled
             GuiControlGet, AutoReconnect,, chkAutoReconnect
             If (AutoReconnect) {
-                AddLog("Auto-reconnect enabled - will retry in 15 seconds")
+                AddClientLog("Auto-reconnect enabled - will retry in 15 seconds")
                 SetTimer, AttemptReconnect, 15000
             }
 
@@ -25369,25 +25550,21 @@ across multiple RECEIVED events. This would also demonstrate your application's 
 
         } Else If (SubStr(command, 1, 9) = "STUNUSED:") {
             ; Another client used a stun - update coordination
-            global LastStunUser, LastStunTime, LastStunDuration, MyClientID
+            global lastAoeCCTime, aoeCCCooldown
             stunData := SubStr(command, 10)
 
-            ; Parse clientID and duration (format: clientID|duration)
+            ; Parse type and duration (format: AOE|duration or SINGLE|duration)
             pipePos := InStr(stunData, "|")
             if (pipePos > 0) {
-                stunUserID := SubStr(stunData, 1, pipePos - 1)
+                stunType := SubStr(stunData, 1, pipePos - 1)
                 stunDuration := SubStr(stunData, pipePos + 1)
-            } else {
-                ; Fallback for old format
-                stunUserID := stunData
-                stunDuration := 15000
-            }
-
-            if (stunUserID != MyClientID) {
-                LastStunUser := stunUserID
-                LastStunTime := A_TickCount
-                LastStunDuration := stunDuration
-                AddLog("[Stun Coord] Stun notification: " . Round(stunDuration/1000, 1) . "s cooldown")
+                
+                ; Only apply cooldown for AoE stuns
+                if (stunType = "AOE") {
+                    lastAoeCCTime := A_TickCount
+                    aoeCCCooldown := stunDuration
+                    AddClientLog("[CC Sync] AoE stun used by another client - " . Round(stunDuration/1000, 1) . "s cooldown")
+                }
             }
 
         } Else If (SubStr(command, 1, 5) = "CALL:") {
@@ -25482,13 +25659,13 @@ across multiple RECEIVED events. This would also demonstrate your application's 
                 Return
             }
 
-            AddLog("Attempting to reconnect to " LastServerAddress ":" LastServerPort "...")
+            AddClientLog("Attempting to reconnect to " LastServerAddress ":" LastServerPort "...")
 
             ; Try to connect
             If (i := AHKsock_Connect(LastServerAddress, LastServerPort, "ClientEvents")) {
-                AddLog("Reconnect failed - will retry in 15 seconds")
+                AddClientLog("Reconnect failed - will retry in 15 seconds")
                 ; Restart timer for next attempt
                 SetTimer, AttemptReconnect, 15000
             } Else {
-                AddLog("Reconnecting...")
+                AddClientLog("Reconnecting...")
             }
