@@ -545,7 +545,7 @@ return
 
 CreateCombinedGUI:
     ; Create main GUI with tabs (added Templar tab)
-    Gui, Add, Tab3, x10 y10 w520 h630 vMainTabs, Setup|Healer|DPS|CC|Buffs|Tools|Navigation|Templar|Network
+    Gui, Add, Tab3, x10 y10 w520 h630 vMainTabs, Setup|Healer|DPS|CC|Buffs|Settings|Navigation|Templar|Network
 
     ; ===== Setup tab =====
     Gui, Tab, Setup
@@ -813,42 +813,23 @@ CreateCombinedGUI:
     Gui, Add, Button, x270 y570 w200 h30 gShowAdditionalBuffSequences, Additional Buff Sequences
     ;Gui, Add, Button, x270 y610 w200 h30 gImageClickerSettings, Image Clicker
 
-    ; ===== Tools Tab ======
-    Gui, Tab, Tools
-
-    ; Quick Tools Section
-    Gui, Add, GroupBox, x20 y40 w470 h180, Quick Tools
-    Gui, Add, Text, x30 y60 w100 h20, Available Scripts:
-    Gui, Add, ListBox, x30 y85 w350 h100 vScriptListBox, Accessory Awakening||Citadel Store|Gear Enchanter|Rupee Monitor|Exp Monitor|AltAssist v2
-    Gui, Add, Button, x390 y85 w80 h30 gLaunchScript, Launch
+    ; ===== Settings Tab ======
+    Gui, Tab, Settings
 
     ; Coordinate Settings Section
-    Gui, Add, GroupBox, x20 y230 w470 h120, Coordinate Settings
-    Gui, Add, Button, x30 y250 w140 h30 gSetSkillbarArea, Set Skillbar Area
-    Gui, Add, Button, x180 y250 w180 h30 gSetCheckSnapshotCoords, Set CheckWeight/Snapshot Area
-    Gui, Add, Text, x30 y290 w450 h25 vToolsSkillbarCoords, Skillbar: Not set
-    Gui, Add, Text, x30 y310 w450 h25 vCheckSnapshotCoordsText, CheckWeight/Snapshot: Not set
+    Gui, Add, GroupBox, x20 y40 w470 h120, Coordinate Settings
+    Gui, Add, Button, x30 y60 w140 h30 gSetSkillbarArea, Set Skillbar Area
+    Gui, Add, Button, x180 y60 w180 h30 gSetCheckSnapshotCoords, Set CheckWeight/Snapshot Area
+    Gui, Add, Text, x30 y100 w450 h25 vToolsSkillbarCoords, Skillbar: Not set
+    Gui, Add, Text, x30 y120 w450 h25 vCheckSnapshotCoordsText, CheckWeight/Snapshot: Not set
 
     ; File Editor Section
-    Gui, Add, GroupBox, x20 y360 w470 h100, File Editor
-    Gui, Add, Button, x30 y380 w100 h25 gSelectFile, Select File
-    Gui, Add, Text, x140 y380 w320 h20 vSelectedFilePath, No file selected
-    Gui, Add, Text, x30 y410 w60 h20, RADIUS:
-    Gui, Add, Edit, x90 y410 w100 h20 vRadiusValue
-    Gui, Add, Button, x200 y410 w60 h25 gSaveRadius, Save
-
-    ; Memory Monitor Section
-    Gui, Add, GroupBox, x20 y470 w470 h80, Memory Monitor
-    Gui, Add, Text, x30 y490 w440 h20, Click buttons 1-8 then left-click to select windows to monitor:
-    Gui, Add, Button, x30 y510 w25 h25 gMonitorButton, 1
-    Gui, Add, Button, x60 y510 w25 h25 gMonitorButton, 2
-    Gui, Add, Button, x90 y510 w25 h25 gMonitorButton, 3
-    Gui, Add, Button, x120 y510 w25 h25 gMonitorButton, 4
-    Gui, Add, Button, x150 y510 w25 h25 gMonitorButton, 5
-    Gui, Add, Button, x180 y510 w25 h25 gMonitorButton, 6
-    Gui, Add, Button, x210 y510 w25 h25 gMonitorButton, 7
-    Gui, Add, Button, x240 y510 w25 h25 gMonitorButton, 8
-    Gui, Add, Button, x280 y510 w100 h25 gclosemonitors, Close Monitors
+    Gui, Add, GroupBox, x20 y170 w470 h100, File Editor
+    Gui, Add, Button, x30 y190 w100 h25 gSelectFile, Select File
+    Gui, Add, Text, x140 y190 w320 h20 vSelectedFilePath, No file selected
+    Gui, Add, Text, x30 y220 w60 h20, RADIUS:
+    Gui, Add, Edit, x90 y220 w100 h20 vRadiusValue
+    Gui, Add, Button, x200 y220 w60 h25 gSaveRadius, Save
 
     ; ===== Navigation Tab =====
 
@@ -1077,7 +1058,7 @@ CreateCombinedGUI:
     Gui, Add, Text, x25 y320 w100 h20, Server Address:
     Gui, Add, Edit, x130 y320 w150 h20 vsrvAddress gUpdateConnectButton, localhost
     Gui, Add, Text, x290 y320 w30 h20, Port:
-    Gui, Add, Edit, x325 y320 w60 h20 vsrvPort gUpdateConnectButton, 27016
+    Gui, Add, Edit, x325 y320 w60 h20 vsrvPort gUpdateConnectButton, 12345
     
     Gui, Add, Button, x25 y350 w200 h25 gbtnConnect vbtnConnect, Connect (localhost:27016)
     Gui, Add, Checkbox, x235 y350 w250 h25 vchkAutoReconnect Checked, Auto-reconnect every 15s
@@ -1106,7 +1087,7 @@ CreateCombinedGUI:
     GuiControl,, AutoFollowHotkey, %autofollowhotkeydefault%
 
     ; Show GUI
-    Gui, Show, x1394 y0 w540 h680, Rappelz Automation Nexus
+    Gui, Show, x1024 y30 w540 h680, Rappelz Automation Nexus
     gui, +AlwaysOnTop
     ;SetTimer, CheckWindowActivity, 500
 
@@ -25853,6 +25834,40 @@ across multiple RECEIVED events. This would also demonstrate your application's 
                     StrPut(ack, &ackBuf, "CP0")
                     AHKsock_Send(ClientSocket, &ackBuf, StrLen(ack))
                 }
+            }
+
+        } Else If (SubStr(command, 1, 9) = "LOADPATH:") {
+            ; Load path from network
+            global SelectedRouteFile, NavSelectedRouteFile, Waypoints, TargetNodes
+            pathData := SubStr(command, 10)
+            AddLog("[Network] Loading path data (" StrLen(pathData) " bytes)")
+            
+            ; Decode the path content (restore newlines)
+            pathData := StrReplace(pathData, "<NL>", "`n")
+            
+            ; Create a temporary INI file in the script directory
+            tempPathFile := A_ScriptDir . "\temp_loaded_path.ini"
+            FileDelete, %tempPathFile%
+            FileAppend, %pathData%, %tempPathFile%
+            
+            If (FileExist(tempPathFile)) {
+                ; Set as the selected route file
+                SelectedRouteFile := tempPathFile
+                NavSelectedRouteFile := tempPathFile
+                
+                ; Load waypoints and nodes using existing functions
+                LoadWaypoints()
+                LoadNodes()
+                
+                ; Update GUI
+                SplitPath, tempPathFile, fileName
+                GuiControl,, SelectedRouteFileDisplay, %fileName%
+                
+                waypointCount := Waypoints.Length()
+                nodeCount := TargetNodes.Length()
+                AddLog("[Network] Path loaded: " waypointCount " waypoints, " nodeCount " nodes")
+            } Else {
+                AddLog("[Network] ERROR: Failed to create temp path file")
             }
 
         } Else If (command = "STARTHEALING") {

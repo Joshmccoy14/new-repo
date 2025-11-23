@@ -471,6 +471,12 @@ Global NodeMoveMode := false ; Track if in interactive move mode
 Global NodesMovedDuringSession := {} ; Track which nodes were moved during move mode
 Global ResourcesINI := A_ScriptDir . "\resources.ini"
 
+; Network client globals
+Global Connected := False
+Global ClientSocket := -1
+Global LastServerAddress := ""
+Global LastServerPort := ""
+
 ; ========= Initialization =========
 ; Load saved text patterns when script starts
 LoadAllPatterns()
@@ -523,8 +529,8 @@ LoadDefaultProfile()
 ; Create the combined GUI
 Gosub, CreateCombinedGUI
 
-; Auto-start network server
-SetTimer, AutoStartServer, -1000
+; Auto-start network server (DISABLED - use GUI button instead)
+; SetTimer, AutoStartServer, -1000
 return
 
 AutoStartServer:
@@ -539,9 +545,38 @@ AutoStartServer:
     }
 return
 
+AutoConnectToServer:
+    ; Auto-connect to server as client
+    global Connected, ClientSocket, LastServerAddress, LastServerPort
+    
+    ; Only connect if not already connected
+    If (Connected || ClientSocket != -1) {
+        return
+    }
+    
+    srvAddress := "localhost"
+    srvPort := 12345
+    
+    GuiControl,, srvAddress, %srvAddress%
+    GuiControl,, srvPort, %srvPort%
+    GuiControl,, btnConnect, Connect (%srvAddress%:%srvPort%)
+    
+    ; Save for auto-reconnect
+    LastServerAddress := srvAddress
+    LastServerPort := srvPort
+    
+    ; Connect to server
+    If (i := AHKsock_Connect(srvAddress, srvPort, "ClientEvents")) {
+        AddClientLog("ERROR: Auto-connect failed: " i)
+    } Else {
+        AddClientLog("Auto-connecting to " srvAddress ":" srvPort "...")
+        GuiControl, Disable, btnConnect
+    }
+return
+
 CreateCombinedGUI:
     ; Create main GUI with tabs (added Templar tab)
-    Gui, Add, Tab3, x10 y10 w520 h630 vMainTabs, Setup|Healer|DPS|CC|Buffs|Tools|Navigation|Templar|Network
+    Gui, Add, Tab3, x10 y10 w520 h630 vMainTabs, Setup|Healer|DPS|CC|Buffs|Settings|Navigation|Templar|Network
 
     ; ===== Setup tab =====
     Gui, Tab, Setup
@@ -809,42 +844,23 @@ CreateCombinedGUI:
     Gui, Add, Button, x270 y570 w200 h30 gShowAdditionalBuffSequences, Additional Buff Sequences
     ;Gui, Add, Button, x270 y610 w200 h30 gImageClickerSettings, Image Clicker
 
-    ; ===== Tools Tab ======
-    Gui, Tab, Tools
-
-    ; Quick Tools Section
-    Gui, Add, GroupBox, x20 y40 w470 h180, Quick Tools
-    Gui, Add, Text, x30 y60 w100 h20, Available Scripts:
-    Gui, Add, ListBox, x30 y85 w350 h100 vScriptListBox, Accessory Awakening||Citadel Store|Gear Enchanter|Rupee Monitor|Exp Monitor|AltAssist v2
-    Gui, Add, Button, x390 y85 w80 h30 gLaunchScript, Launch
+    ; ===== Settings Tab ======
+    Gui, Tab, Settings
 
     ; Coordinate Settings Section
-    Gui, Add, GroupBox, x20 y230 w470 h120, Coordinate Settings
-    Gui, Add, Button, x30 y250 w140 h30 gSetSkillbarArea, Set Skillbar Area
-    Gui, Add, Button, x180 y250 w180 h30 gSetCheckSnapshotCoords, Set CheckWeight/Snapshot Area
-    Gui, Add, Text, x30 y290 w450 h25 vToolsSkillbarCoords, Skillbar: Not set
-    Gui, Add, Text, x30 y310 w450 h25 vCheckSnapshotCoordsText, CheckWeight/Snapshot: Not set
+    Gui, Add, GroupBox, x20 y40 w470 h120, Coordinate Settings
+    Gui, Add, Button, x30 y60 w140 h30 gSetSkillbarArea, Set Skillbar Area
+    Gui, Add, Button, x180 y60 w180 h30 gSetCheckSnapshotCoords, Set CheckWeight/Snapshot Area
+    Gui, Add, Text, x30 y100 w450 h25 vToolsSkillbarCoords, Skillbar: Not set
+    Gui, Add, Text, x30 y120 w450 h25 vCheckSnapshotCoordsText, CheckWeight/Snapshot: Not set
 
     ; File Editor Section
-    Gui, Add, GroupBox, x20 y360 w470 h100, File Editor
-    Gui, Add, Button, x30 y380 w100 h25 gSelectFile, Select File
-    Gui, Add, Text, x140 y380 w320 h20 vSelectedFilePath, No file selected
-    Gui, Add, Text, x30 y410 w60 h20, RADIUS:
-    Gui, Add, Edit, x90 y410 w100 h20 vRadiusValue
-    Gui, Add, Button, x200 y410 w60 h25 gSaveRadius, Save
-
-    ; Memory Monitor Section
-    Gui, Add, GroupBox, x20 y470 w470 h80, Memory Monitor
-    Gui, Add, Text, x30 y490 w440 h20, Click buttons 1-8 then left-click to select windows to monitor:
-    Gui, Add, Button, x30 y510 w25 h25 gMonitorButton, 1
-    Gui, Add, Button, x60 y510 w25 h25 gMonitorButton, 2
-    Gui, Add, Button, x90 y510 w25 h25 gMonitorButton, 3
-    Gui, Add, Button, x120 y510 w25 h25 gMonitorButton, 4
-    Gui, Add, Button, x150 y510 w25 h25 gMonitorButton, 5
-    Gui, Add, Button, x180 y510 w25 h25 gMonitorButton, 6
-    Gui, Add, Button, x210 y510 w25 h25 gMonitorButton, 7
-    Gui, Add, Button, x240 y510 w25 h25 gMonitorButton, 8
-    Gui, Add, Button, x280 y510 w100 h25 gclosemonitors, Close Monitors
+    Gui, Add, GroupBox, x20 y170 w470 h100, File Editor
+    Gui, Add, Button, x30 y190 w100 h25 gSelectFile, Select File
+    Gui, Add, Text, x140 y190 w320 h20 vSelectedFilePath, No file selected
+    Gui, Add, Text, x30 y220 w60 h20, RADIUS:
+    Gui, Add, Edit, x90 y220 w100 h20 vRadiusValue
+    Gui, Add, Button, x200 y220 w60 h25 gSaveRadius, Save
 
     ; ===== Navigation Tab =====
 
@@ -1062,46 +1078,32 @@ CreateCombinedGUI:
     Gui, Add, Button, x370 y135 w130 h25 gTestAutoFollow, Test AutoFollow
     Gui, Add, Button, x370 y105 w130 h25 gTestCharSelect, Char Select
     
-    ; CLIENT SELECTION - Choose which clients to send commands to
-    Gui, Add, GroupBox, x15 y170 w490 h60, Target Clients (Select which windows to send commands)
-    Gui, Add, Checkbox, x25 y190 w60 h20 vTargetWin1, Win1
-    Gui, Add, Checkbox, x90 y190 w60 h20 vTargetWin2 Checked, Win2
-    Gui, Add, Checkbox, x155 y190 w60 h20 vTargetWin3 Checked, Win3
-    Gui, Add, Checkbox, x220 y190 w60 h20 vTargetWin4 Checked, Win4
-    Gui, Add, Checkbox, x285 y190 w60 h20 vTargetWin5 Checked, Win5
-    Gui, Add, Checkbox, x350 y190 w60 h20 vTargetWin6 Checked, Win6
-    Gui, Add, Checkbox, x415 y190 w60 h20 vTargetWin7 Checked, Win7
-    Gui, Add, Checkbox, x25 y207 w60 h20 vTargetWin8 Checked, Win8
-    Gui, Add, Button, x90 y207 w70 h20 gSelectAllClients, All
-    Gui, Add, Button, x165 y207 w70 h20 gSelectNoneClients, None
-    Gui, Add, Button, x245 y207 w150 h20 gOpenCommandList, Execute Commands
-    
     ; SERVER LOG
-    Gui, Add, GroupBox, x15 y240 w490 h95, Server Activity Log
-    Gui, Add, Edit, x25 y260 w470 h65 vtxtLog ReadOnly VScroll, Waiting to start server...`n
+    Gui, Add, GroupBox, x15 y170 w490 h95, Server Activity Log
+    Gui, Add, Edit, x25 y190 w470 h65 vtxtLog ReadOnly VScroll, Waiting to start server...`n
     
     ; CLIENT MODE - Connect to another server
-    Gui, Add, GroupBox, x15 y345 w490 h150, CLIENT MODE - Connect to Server
-    Gui, Add, Text, x25 y368 w460 h15, Run as client to connect to another game instance (server) and receive commands
+    Gui, Add, GroupBox, x15 y275 w490 h150, CLIENT MODE - Connect to Server
+    Gui, Add, Text, x25 y298 w460 h15, Run as client to connect to another game instance (server) and receive commands
     
-    Gui, Add, Text, x25 y390 w100 h20, Server Address:
-    Gui, Add, Edit, x130 y390 w150 h20 vsrvAddress gUpdateConnectButton, localhost
-    Gui, Add, Text, x290 y390 w30 h20, Port:
-    Gui, Add, Edit, x325 y390 w60 h20 vsrvPort gUpdateConnectButton, 27016
+    Gui, Add, Text, x25 y320 w100 h20, Server Address:
+    Gui, Add, Edit, x130 y320 w150 h20 vsrvAddress gUpdateConnectButton, localhost
+    Gui, Add, Text, x290 y320 w30 h20, Port:
+    Gui, Add, Edit, x325 y320 w60 h20 vsrvPort gUpdateConnectButton, 12345
     
-    Gui, Add, Button, x25 y420 w200 h25 gbtnConnect vbtnConnect, Connect (localhost:27016)
-    Gui, Add, Checkbox, x235 y420 w250 h25 vchkAutoReconnect Checked, Auto-reconnect every 15s
+    Gui, Add, Button, x25 y350 w200 h25 gbtnConnect vbtnConnect, Connect (localhost:27016)
+    Gui, Add, Checkbox, x235 y350 w250 h25 vchkAutoReconnect Checked, Auto-reconnect every 15s
     
-    Gui, Add, Text, x25 y450 w150 h25 vlblStatus, Status: Not Connected
-    Gui, Add, Text, x185 y450 w315 h20 cGray, (Connection status will appear here)
+    Gui, Add, Text, x25 y380 w150 h25 vlblStatus, Status: Not Connected
+    Gui, Add, Text, x185 y380 w315 h20 cGray, (Connection status will appear here)
     
     ; CLIENT LOG
-    Gui, Add, GroupBox, x15 y505 w490 h95, Client Activity Log
-    Gui, Add, Edit, x25 y525 w470 h65 vtxtClientLog ReadOnly VScroll, Not connected to any server...`n
+    Gui, Add, GroupBox, x15 y435 w490 h95, Client Activity Log
+    Gui, Add, Edit, x25 y455 w470 h65 vtxtClientLog ReadOnly VScroll, Not connected to any server...`n
     
     ; QUICK REFERENCE
-    Gui, Add, GroupBox, x15 y610 w490 h90, Quick Reference
-    Gui, Add, Text, x25 y630 w460 h60, • SERVER: Start listening to receive connections from other clients`n• CLIENT: Connect to another server to receive commands`n• Use waypoint commands (netskill, netcombat, netnav, etc.) to control multiple clients`n• See Commands tab for full list of network commands
+    Gui, Add, GroupBox, x15 y540 w490 h90, Quick Reference
+    Gui, Add, Text, x25 y560 w460 h60, • SERVER: Start listening to receive connections from other clients`n• CLIENT: Connect to another server to receive commands`n• Use waypoint commands (netskill, netcombat, netnav, etc.) to control multiple clients`n• See Commands tab for full list of network commands
 
     ; ===== GLOBAL CONTROLS =====
     Gui, Tab
@@ -1116,8 +1118,11 @@ CreateCombinedGUI:
     GuiControl,, AutoFollowHotkey, %autofollowhotkeydefault%
 
     ; Show GUI
-    Gui, Show, x1394 y0 w540 h680, Rappelz Automation Nexus
+    Gui, Show, x1024 y30 w540 h680, Rappelz Automation Nexus
     gui, +AlwaysOnTop
+    
+    ; Auto-connect to server after 1 second
+    SetTimer, AutoConnectToServer, -1000
     ;SetTimer, CheckWindowActivity, 500
 
     ; Start timer signal checking immediately
@@ -26457,6 +26462,40 @@ across multiple RECEIVED events. This would also demonstrate your application's 
                 AddLog("Sent /info command to game window")
             } Else {
                 AddLog("No game window selected")
+            }
+
+        } Else If (SubStr(command, 1, 9) = "LOADPATH:") {
+            ; Load path from network
+            global SelectedRouteFile, NavSelectedRouteFile, Waypoints, TargetNodes
+            pathData := SubStr(command, 10)
+            AddLog("[Network] Loading path data (" StrLen(pathData) " bytes)")
+            
+            ; Decode the path content (restore newlines)
+            pathData := StrReplace(pathData, "<NL>", "`n")
+            
+            ; Create a temporary INI file in the script directory
+            tempPathFile := A_ScriptDir . "\temp_loaded_path.ini"
+            FileDelete, %tempPathFile%
+            FileAppend, %pathData%, %tempPathFile%
+            
+            If (FileExist(tempPathFile)) {
+                ; Set as the selected route file
+                SelectedRouteFile := tempPathFile
+                NavSelectedRouteFile := tempPathFile
+                
+                ; Load waypoints and nodes using existing functions
+                LoadWaypoints()
+                LoadNodes()
+                
+                ; Update GUI
+                SplitPath, tempPathFile, fileName
+                GuiControl,, SelectedRouteFileDisplay, %fileName%
+                
+                waypointCount := Waypoints.Length()
+                nodeCount := TargetNodes.Length()
+                AddLog("[Network] Path loaded: " waypointCount " waypoints, " nodeCount " nodes")
+            } Else {
+                AddLog("[Network] ERROR: Failed to create temp path file")
             }
 
         } Else If (command = "STARTHEALING") {
