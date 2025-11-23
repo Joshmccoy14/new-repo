@@ -1107,10 +1107,10 @@ CreateCombinedGUI:
 
     ; ===== GLOBAL CONTROLS =====
     Gui, Tab
-    Gui, Add, Button, x30 y710 w60 h25 gMinimizeToTray, Minimize
-    Gui, Add, Button, x150 y710 w60 h25 gSaveAllSettings, Save All
-    Gui, Add, Button, x220 y710 w60 h25 gCloseApp, Close
-    Gui, Add, Button, x290 y710 w60 h25 greload, Reload
+    Gui, Add, Button, x30 y640 w60 h25 gMinimizeToTray, Minimize
+    Gui, Add, Button, x150 y640 w60 h25 gSaveAllSettings, Save All
+    Gui, Add, Button, x220 y640 w60 h25 gCloseApp, Close
+    Gui, Add, Button, x290 y640 w60 h25 greload, Reload
 
     ; Populate profile dropdown from INI so renamed/new profiles appear
     RefreshProfileDropdown()

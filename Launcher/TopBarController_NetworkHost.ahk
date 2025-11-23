@@ -18,6 +18,9 @@ global ClientCount
 global NetWin1, NetWin2, NetWin3, NetWin4, NetWin5, NetWin6, NetWin7, NetWin8
 global CommandDropdown
 global UtilityScriptDropdown
+global ThumbnailData := []
+global thumbnailsVisible := false
+global actBarGuiHandle := 0
 
 ; Screen dimensions for GUI positioning
 SysGet, ScreenWidth, 78
@@ -27,7 +30,9 @@ SysGet, ScreenHeight, 79
 ; AUTO-EXECUTE
 ; ==========================================
 CreateTopBarGUI()
+CreateActivationBar()
 SetTimer, AutoRefreshPIDs, 500
+SetTimer, UpdateActivationBar, 1000
 ; Auto-start network server
 SetTimer, AutoStartServer, -1000
 return
@@ -108,6 +113,358 @@ CreateTopBarGUI() {
     ; Show the GUI
     Gui, TopBar:Show, x0 y0 w%ScreenWidth% h30,Rappelz Network Controller
 }
+
+; ==========================================
+; ACTIVATION BAR GUI
+; ==========================================
+CreateActivationBar() {
+    global
+    ; Create activation bar at bottom of screen
+    Gui, ActBar:New, +ToolWindow -Caption
+    Gui, ActBar:Color, 0x1E1E1E
+    Gui, ActBar:Font, s8, Segoe UI
+    
+    ; Hide Bar button
+    Gui, ActBar:Add, Button, x0 y3 w55 h24 gToggleActBarVisibility, Hide Bar
+    
+    ; "Activate Window" label
+    Gui, ActBar:Font, s9 cRed Bold, Segoe UI
+    Gui, ActBar:Add, Text, x65 y5 w120 h20, Activate Window
+    
+    ; Window activation buttons (initially hidden)
+    Gui, ActBar:Font, s8 cWhite, Segoe UI
+    Gui, ActBar:Add, Button, x195 y3 w60 h24 gActivateWin1 vActBtn1 Hidden, Win1
+    Gui, ActBar:Add, Button, x260 y3 w60 h24 gActivateWin2 vActBtn2 Hidden, Win2
+    Gui, ActBar:Add, Button, x325 y3 w60 h24 gActivateWin3 vActBtn3 Hidden, Win3
+    Gui, ActBar:Add, Button, x390 y3 w60 h24 gActivateWin4 vActBtn4 Hidden, Win4
+    Gui, ActBar:Add, Button, x455 y3 w60 h24 gActivateWin5 vActBtn5 Hidden, Win5
+    Gui, ActBar:Add, Button, x520 y3 w60 h24 gActivateWin6 vActBtn6 Hidden, Win6
+    Gui, ActBar:Add, Button, x585 y3 w60 h24 gActivateWin7 vActBtn7 Hidden, Win7
+    Gui, ActBar:Add, Button, x650 y3 w60 h24 gActivateWin8 vActBtn8 Hidden, Win8
+    
+    ; Show Thumbnails button
+    Gui, ActBar:Add, Button, x720 y3 w110 h24 gToggleThumbnails vBtnThumbnails, Show Thumbnails
+    
+    ; Show at y=794
+    Gui, ActBar:Show, x0 y794 w1028 h30, Window Activator
+    Gui, ActBar:+LastFound
+    actBarGuiHandle := WinExist()
+}
+
+UpdateActivationBar:
+    ; Check which windows are available and show/hide buttons accordingly
+    DetectRunningNexusScripts()
+    
+    ; Check if any Nexus window is active and bring ActBar to front if so
+    Loop, 8 {
+        winNum := A_Index
+        winName := "win" . winNum
+        btnControl := "ActBtn" . winNum
+        
+        ; Check if this window's Nexus script is running
+        if (NexusPIDs[winName] != "") {
+            GuiControl, ActBar:Show, %btnControl%
+            
+            ; Check if this window is currently active
+            pid := NexusPIDs[winName]
+            if WinActive("ahk_pid " pid) {
+                Gui, ActBar:Show, NoActivate
+            }
+        } else {
+            GuiControl, ActBar:Hide, %btnControl%
+        }
+    }
+return
+
+; Window activation handlers
+ActivateWin1:
+    ActivateNexusWindow("win1")
+return
+
+ActivateWin2:
+    ActivateNexusWindow("win2")
+return
+
+ActivateWin3:
+    ActivateNexusWindow("win3")
+return
+
+ActivateWin4:
+    ActivateNexusWindow("win4")
+return
+
+ActivateWin5:
+    ActivateNexusWindow("win5")
+return
+
+ActivateWin6:
+    ActivateNexusWindow("win6")
+return
+
+ActivateWin7:
+    ActivateNexusWindow("win7")
+return
+
+ActivateWin8:
+    ActivateNexusWindow("win8")
+return
+
+ActivateNexusWindow(winName) {
+    global NexusPIDs
+    
+    ; First activate and show the Nexus manager
+    pid := NexusPIDs[winName]
+    if (pid != "") {
+        WinActivate, ahk_pid %pid%
+        WinShow, ahk_pid %pid%
+    }
+    
+    ; Then immediately activate the game client window on top
+    SetTitleMatchMode, 3  ; Exact match
+    WinGet, gameWinID, ID, %winName%
+    if (gameWinID) {
+        WinActivate, ahk_id %gameWinID%
+    }
+}
+
+ToggleActBarVisibility:
+    GuiControlGet, btnText, ActBar:, Button1
+    If (InStr(btnText, "Hide")) {
+        ; Hide thumbnails first if visible
+        global thumbnailsVisible
+        if (thumbnailsVisible) {
+            Gosub, HideThumbnails
+        }
+        ; Hide entire bar and show only [+] button at x0 y794
+        Gui, ActBar:Show, x0 y794 w30 h30
+        GuiControl, ActBar:, Button1, [+]
+        GuiControl, ActBar:Move, Button1, x0 y0 w30 h30
+    } Else {
+        ; Show full bar at x0 y794
+        Gui, ActBar:Show, x0 y794 w1028 h30
+        GuiControl, ActBar:, Button1, Hide Bar
+        GuiControl, ActBar:Move, Button1, x0 y3 w55 h24
+    }
+return
+
+ToggleThumbnails:
+    global thumbnailsVisible
+    if (thumbnailsVisible) {
+        Gosub, HideThumbnails
+    } else {
+        Gosub, ShowThumbnails
+    }
+return
+
+ShowThumbnails:
+    global ThumbnailData, thumbnailsVisible, actBarGuiHandle, NexusPIDs
+    
+    ; Collect all active game windows
+    activeWindows := []
+    Loop, 8 {
+        winName := "win" . A_Index
+        SetTitleMatchMode, 3
+        WinGet, gameWinID, ID, %winName%
+        if (gameWinID && WinExist("ahk_id " . gameWinID)) {
+            activeWindows.Push({id: gameWinID, num: A_Index, title: winName})
+        }
+    }
+    
+    if (activeWindows.Length() = 0) {
+        MsgBox, No active game clients found!
+        return
+    }
+    
+    ; Configuration
+    thumbWidth := 200
+    thumbHeight := 150
+    spacing := 5
+    startY := 35  ; Below the main bar
+    
+    activeCount := activeWindows.Length()
+    
+    ; Calculate layout: 4 per row
+    columns := 4
+    rows := Ceil(activeCount / 4.0)
+    
+    ; Calculate total height needed
+    totalHeight := startY + (rows * (thumbHeight + 20 + spacing))
+    
+    ; Expand bar downward from y794
+    Gui, ActBar:Show, x0 y794 w1028 h%totalHeight%
+    
+    ; Create or show thumbnail controls
+    ThumbnailData := []
+    
+    Loop, % activeCount {
+        index := A_Index
+        winData := activeWindows[index]
+        
+        ; Calculate position (4 per row)
+        col := Mod(index - 1, 4)
+        row := Floor((index - 1) / 4)
+        
+        xPos := 10 + (col * (thumbWidth + spacing))
+        yPos := startY + (row * (thumbHeight + 20 + spacing))
+        labelY := yPos + thumbHeight + 2  ; Position label below thumbnail
+        
+        ; Check if controls already exist
+        GuiControlGet, existingControl, ActBar:Hwnd, Thumb%index%
+        
+        if (ErrorLevel) {
+            ; Controls don't exist, create them
+            labelText := winData.title
+            Gui, ActBar:Add, Text, x%xPos% y%yPos% w%thumbWidth% h%thumbHeight% vThumb%index% gThumbnailClick Background000000 +Border
+            Gui, ActBar:Add, Text, x%xPos% y%labelY% w%thumbWidth% Center cWhite BackgroundTrans vThumbLabel%index%, %labelText%
+        } else {
+            ; Controls exist, just show and reposition them
+            GuiControl, ActBar:Show, Thumb%index%
+            GuiControl, ActBar:Show, ThumbLabel%index%
+            GuiControl, ActBar:Move, Thumb%index%, x%xPos% y%yPos% w%thumbWidth% h%thumbHeight%
+            GuiControl, ActBar:Move, ThumbLabel%index%, x%xPos% y%labelY% w%thumbWidth%
+        }
+        
+        ; Store data
+        ThumbnailData[index] := {}
+        ThumbnailData[index].sourceWindow := winData.id
+        ThumbnailData[index].clientNum := winData.num
+        ThumbnailData[index].controlName := "Thumb" . index
+        ThumbnailData[index].xPos := xPos
+        ThumbnailData[index].yPos := yPos
+        ThumbnailData[index].width := thumbWidth
+        ThumbnailData[index].height := thumbHeight
+        ThumbnailData[index].thumbnailHandle := 0
+    }
+    
+    Sleep, 100
+    
+    ; Register all thumbnails
+    Loop, % activeCount {
+        index := A_Index
+        thumbData := ThumbnailData[index]
+        controlName := thumbData.controlName
+        
+        GuiControlGet, hControl, Hwnd, %controlName%
+        
+        ; Register thumbnail to the GUI window
+        hThumbnail := 0
+        result := DllCall("dwmapi\DwmRegisterThumbnail", "Ptr", actBarGuiHandle, "Ptr", thumbData.sourceWindow, "Ptr*", hThumbnail)
+        
+        if (result = 0 && hThumbnail) {
+            ThumbnailData[index].thumbnailHandle := hThumbnail
+            ThumbnailData[index].controlHandle := hControl
+        }
+    }
+    
+    thumbnailsVisible := true
+    GuiControl, ActBar:, BtnThumbnails, Hide Thumbnails
+    
+    ; Update all thumbnails
+    Gosub, UpdateThumbnails
+    
+    ; Set timer to keep updating
+    SetTimer, UpdateThumbnails, 100
+return
+
+HideThumbnails:
+    global ThumbnailData, thumbnailsVisible
+    
+    SetTimer, UpdateThumbnails, Off
+    
+    thumbCount := ThumbnailData.MaxIndex()
+    if (!thumbCount)
+        thumbCount := ThumbnailData.Length()
+    
+    ; Unregister all thumbnails
+    Loop, % thumbCount {
+        index := A_Index
+        if (ThumbnailData[index].thumbnailHandle) {
+            DllCall("dwmapi\DwmUnregisterThumbnail", "Ptr", ThumbnailData[index].thumbnailHandle)
+        }
+        
+        ; Hide controls
+        GuiControl, ActBar:Hide, Thumb%index%
+        GuiControl, ActBar:Hide, ThumbLabel%index%
+    }
+    
+    ThumbnailData := []
+    thumbnailsVisible := false
+    GuiControl, ActBar:, BtnThumbnails, Show Thumbnails
+    
+    ; Restore original bar size
+    Gui, ActBar:Show, x0 y794 w1028 h30
+return
+
+UpdateThumbnails:
+    global ThumbnailData
+    
+    thumbCount := ThumbnailData.MaxIndex()
+    if (!thumbCount)
+        thumbCount := ThumbnailData.Length()
+    if (!thumbCount)
+        return
+    
+    Loop, % thumbCount {
+        index := A_Index
+        thumbData := ThumbnailData[index]
+        
+        if (!thumbData.thumbnailHandle)
+            continue
+        
+        ; Get source window size
+        VarSetCapacity(RECT, 16, 0)
+        DllCall("GetWindowRect", "Ptr", thumbData.sourceWindow, "Ptr", &RECT)
+        srcWidth := NumGet(RECT, 8, "Int") - NumGet(RECT, 0, "Int")
+        srcHeight := NumGet(RECT, 12, "Int") - NumGet(RECT, 4, "Int")
+        
+        ; Calculate destination rectangle position
+        destLeft := thumbData.xPos
+        destTop := thumbData.yPos
+        destRight := destLeft + thumbData.width
+        destBottom := destTop + thumbData.height
+        
+        ; Set thumbnail properties
+        VarSetCapacity(DWM_THUMBNAIL_PROPERTIES, 40, 0)
+        NumPut(0x1F, DWM_THUMBNAIL_PROPERTIES, 0, "UInt")
+        NumPut(destLeft, DWM_THUMBNAIL_PROPERTIES, 4, "Int")
+        NumPut(destTop, DWM_THUMBNAIL_PROPERTIES, 8, "Int")
+        NumPut(destRight, DWM_THUMBNAIL_PROPERTIES, 12, "Int")
+        NumPut(destBottom, DWM_THUMBNAIL_PROPERTIES, 16, "Int")
+        NumPut(0, DWM_THUMBNAIL_PROPERTIES, 20, "Int")
+        NumPut(0, DWM_THUMBNAIL_PROPERTIES, 24, "Int")
+        NumPut(srcWidth, DWM_THUMBNAIL_PROPERTIES, 28, "Int")
+        NumPut(srcHeight, DWM_THUMBNAIL_PROPERTIES, 32, "Int")
+        NumPut(255, DWM_THUMBNAIL_PROPERTIES, 36, "UChar")
+        NumPut(1, DWM_THUMBNAIL_PROPERTIES, 37, "UChar")
+        NumPut(0, DWM_THUMBNAIL_PROPERTIES, 38, "UChar")
+        
+        DllCall("dwmapi\DwmUpdateThumbnailProperties", "Ptr", thumbData.thumbnailHandle, "Ptr", &DWM_THUMBNAIL_PROPERTIES)
+    }
+return
+
+ThumbnailClick:
+    global ThumbnailData
+    
+    ; Get which thumbnail was clicked
+    clickedControl := A_GuiControl
+    
+    thumbCount := ThumbnailData.MaxIndex()
+    if (!thumbCount)
+        thumbCount := ThumbnailData.Length()
+    
+    ; Find the corresponding window
+    Loop, % thumbCount {
+        index := A_Index
+        thumbData := ThumbnailData[index]
+        
+        if (thumbData.controlName = clickedControl) {
+            ; Activate the game window using existing function
+            winName := "win" . thumbData.clientNum
+            ActivateNexusWindow(winName)
+            break
+        }
+    }
+return
 
 ; ==========================================
 ; AUTO-START SERVER
@@ -266,9 +623,15 @@ ToggleLauncherGui:
     
     launcherTitle := "Rappelz Multi-Client Launcher"
     
-    ; Check if launcher window exists
+    ; Check if launcher window exists - try multiple methods
     DetectHiddenWindows, On
-    launcherID := WinExist(launcherTitle " ahk_class AutoHotkeyGUI")
+    SetTitleMatchMode, 2  ; Contains
+    launcherID := WinExist(launcherTitle)
+    
+    If (!launcherID) {
+        ; Try with class
+        launcherID := WinExist(launcherTitle " ahk_class AutoHotkeyGUI")
+    }
     
     If (launcherID) {
         ; Window exists, toggle visibility
@@ -280,9 +643,24 @@ ToggleLauncherGui:
             WinActivate, ahk_id %launcherID%
         }
     } Else {
-        MsgBox, Launcher window not found
+        ; Launcher not found, launch it
+        launcherPath := A_ScriptDir "\..\RappelzMultiClientLauncher.ahk"
+        if (FileExist(launcherPath)) {
+            Run, %launcherPath%
+            Sleep, 1000  ; Wait for it to load
+            ; Show and activate it
+            DetectHiddenWindows, On
+            launcherID := WinExist(launcherTitle)
+            if (launcherID) {
+                WinShow, ahk_id %launcherID%
+                WinActivate, ahk_id %launcherID%
+            }
+        } else {
+            MsgBox, Launcher file not found: %launcherPath%
+        }
     }
     DetectHiddenWindows, Off
+    SetTitleMatchMode, 1  ; Reset to default
 return
 
 ToggleServer:

@@ -13,7 +13,13 @@ BaseDir := A_ScriptDir
 LoadAccounts()
 DetectExistingClients()
 ShowMainGui()
-Run %A_ScriptDir%\launcher\TopBarController_NetworkHost.ahk
+
+; Check if TopBarController is already running
+DetectHiddenWindows, On
+if (!WinExist("Rappelz Network Controller ahk_class AutoHotkeyGUI")) {
+    Run %A_ScriptDir%\launcher\TopBarController_NetworkHost.ahk
+}
+DetectHiddenWindows, Off
 Return
 
 DetectExistingClients() {
