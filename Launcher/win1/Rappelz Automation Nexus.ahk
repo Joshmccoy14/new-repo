@@ -522,6 +522,21 @@ LoadDefaultProfile()
 
 ; Create the combined GUI
 Gosub, CreateCombinedGUI
+
+; Auto-start network server
+SetTimer, AutoStartServer, -1000
+return
+
+AutoStartServer:
+    ; Auto-start server on port 12345
+    hostPort := 12345
+    GuiControl,, hostPort, %hostPort%
+    If (i := AHKsock_Listen(hostPort, "ServerEvents")) {
+        AddLog("ERROR: Auto-start server failed: " i)
+    } Else {
+        GuiControl,, btnListen, Stop Listening (%hostPort%)
+        AddLog("Server auto-started on port " hostPort)
+    }
 return
 
 CreateCombinedGUI:
@@ -662,7 +677,7 @@ CreateCombinedGUI:
     Gui, Add, Text, x50 y394 w180 h20, Auto Follow Hotkey (e.g. F2):
     gui, add, hotkey, x240 y392 w60 h20 vautofollowhotkey gautofollowhotkey, Auto Follow, %autofollowhotkey%
     gui, add, text, x320 y394 w70 h20, Follow Who?
-    Gui, Add, DropDownList, x390 y392 w60 h120 vselectedKey, F2||F3|F4|F5|F6|F7|F8
+    Gui, Add, DropDownList, x390 y392 w60 h120 vselectedKey gUpdateFollowKey, F2||F3|F4|F5|F6|F7|F8
 
     ; Melee Attack After Skill Cast
     Gui, Add, Checkbox, x50 y416 w250 h20 vmeleeAttackEnabled gMeleeAttackToggle, Enable Melee After Skill Cast (dps/heal/cc)
@@ -1044,40 +1059,56 @@ CreateCombinedGUI:
     
     Gui, Add, Button, x25 y135 w150 h25 gbtnCustom, Send Custom Command
     Gui, Add, Text, x185 y138 w315 h20, (Send commands to all connected clients)
+    Gui, Add, Button, x370 y135 w130 h25 gTestAutoFollow, Test AutoFollow
+    Gui, Add, Button, x370 y105 w130 h25 gTestCharSelect, Char Select
+    
+    ; CLIENT SELECTION - Choose which clients to send commands to
+    Gui, Add, GroupBox, x15 y170 w490 h60, Target Clients (Select which windows to send commands)
+    Gui, Add, Checkbox, x25 y190 w60 h20 vTargetWin1, Win1
+    Gui, Add, Checkbox, x90 y190 w60 h20 vTargetWin2 Checked, Win2
+    Gui, Add, Checkbox, x155 y190 w60 h20 vTargetWin3 Checked, Win3
+    Gui, Add, Checkbox, x220 y190 w60 h20 vTargetWin4 Checked, Win4
+    Gui, Add, Checkbox, x285 y190 w60 h20 vTargetWin5 Checked, Win5
+    Gui, Add, Checkbox, x350 y190 w60 h20 vTargetWin6 Checked, Win6
+    Gui, Add, Checkbox, x415 y190 w60 h20 vTargetWin7 Checked, Win7
+    Gui, Add, Checkbox, x25 y207 w60 h20 vTargetWin8 Checked, Win8
+    Gui, Add, Button, x90 y207 w70 h20 gSelectAllClients, All
+    Gui, Add, Button, x165 y207 w70 h20 gSelectNoneClients, None
+    Gui, Add, Button, x245 y207 w150 h20 gOpenCommandList, Execute Commands
     
     ; SERVER LOG
-    Gui, Add, GroupBox, x15 y170 w490 h95, Server Activity Log
-    Gui, Add, Edit, x25 y190 w470 h65 vtxtLog ReadOnly VScroll, Waiting to start server...`n
+    Gui, Add, GroupBox, x15 y240 w490 h95, Server Activity Log
+    Gui, Add, Edit, x25 y260 w470 h65 vtxtLog ReadOnly VScroll, Waiting to start server...`n
     
     ; CLIENT MODE - Connect to another server
-    Gui, Add, GroupBox, x15 y275 w490 h150, CLIENT MODE - Connect to Server
-    Gui, Add, Text, x25 y298 w460 h15, Run as client to connect to another game instance (server) and receive commands
+    Gui, Add, GroupBox, x15 y345 w490 h150, CLIENT MODE - Connect to Server
+    Gui, Add, Text, x25 y368 w460 h15, Run as client to connect to another game instance (server) and receive commands
     
-    Gui, Add, Text, x25 y320 w100 h20, Server Address:
-    Gui, Add, Edit, x130 y320 w150 h20 vsrvAddress gUpdateConnectButton, localhost
-    Gui, Add, Text, x290 y320 w30 h20, Port:
-    Gui, Add, Edit, x325 y320 w60 h20 vsrvPort gUpdateConnectButton, 27016
+    Gui, Add, Text, x25 y390 w100 h20, Server Address:
+    Gui, Add, Edit, x130 y390 w150 h20 vsrvAddress gUpdateConnectButton, localhost
+    Gui, Add, Text, x290 y390 w30 h20, Port:
+    Gui, Add, Edit, x325 y390 w60 h20 vsrvPort gUpdateConnectButton, 27016
     
-    Gui, Add, Button, x25 y350 w200 h25 gbtnConnect vbtnConnect, Connect (localhost:27016)
-    Gui, Add, Checkbox, x235 y350 w250 h25 vchkAutoReconnect Checked, Auto-reconnect every 15s
+    Gui, Add, Button, x25 y420 w200 h25 gbtnConnect vbtnConnect, Connect (localhost:27016)
+    Gui, Add, Checkbox, x235 y420 w250 h25 vchkAutoReconnect Checked, Auto-reconnect every 15s
     
-    Gui, Add, Text, x25 y380 w150 h25 vlblStatus, Status: Not Connected
-    Gui, Add, Text, x185 y380 w315 h20 cGray, (Connection status will appear here)
+    Gui, Add, Text, x25 y450 w150 h25 vlblStatus, Status: Not Connected
+    Gui, Add, Text, x185 y450 w315 h20 cGray, (Connection status will appear here)
     
     ; CLIENT LOG
-    Gui, Add, GroupBox, x15 y435 w490 h95, Client Activity Log
-    Gui, Add, Edit, x25 y455 w470 h65 vtxtClientLog ReadOnly VScroll, Not connected to any server...`n
+    Gui, Add, GroupBox, x15 y505 w490 h95, Client Activity Log
+    Gui, Add, Edit, x25 y525 w470 h65 vtxtClientLog ReadOnly VScroll, Not connected to any server...`n
     
     ; QUICK REFERENCE
-    Gui, Add, GroupBox, x15 y540 w490 h90, Quick Reference
-    Gui, Add, Text, x25 y560 w460 h60, • SERVER: Start listening to receive connections from other clients`n• CLIENT: Connect to another server to receive commands`n• Use waypoint commands (netskill, netcombat, netnav, etc.) to control multiple clients`n• See Commands tab for full list of network commands
+    Gui, Add, GroupBox, x15 y610 w490 h90, Quick Reference
+    Gui, Add, Text, x25 y630 w460 h60, • SERVER: Start listening to receive connections from other clients`n• CLIENT: Connect to another server to receive commands`n• Use waypoint commands (netskill, netcombat, netnav, etc.) to control multiple clients`n• See Commands tab for full list of network commands
 
     ; ===== GLOBAL CONTROLS =====
     Gui, Tab
-    Gui, Add, Button, x30 y640 w60 h25 gMinimizeToTray, Minimize
-    Gui, Add, Button, x150 y640 w60 h25 gSaveAllSettings, Save All
-    Gui, Add, Button, x220 y640 w60 h25 gCloseApp, Close
-    Gui, Add, Button, x290 y640 w60 h25 greload, Reload
+    Gui, Add, Button, x30 y710 w60 h25 gMinimizeToTray, Minimize
+    Gui, Add, Button, x150 y710 w60 h25 gSaveAllSettings, Save All
+    Gui, Add, Button, x220 y710 w60 h25 gCloseApp, Close
+    Gui, Add, Button, x290 y710 w60 h25 greload, Reload
 
     ; Populate profile dropdown from INI so renamed/new profiles appear
     RefreshProfileDropdown()
@@ -1130,9 +1161,9 @@ CreateCombinedGUI:
     ;InitializeNavigation()
 return
 LoadGameWindowSettings() {
-    global TargetGameWindow, TargetGameTitle, TargetGamePID, iniFile, win1
+    global TargetGameWindow, TargetGameTitle, TargetGamePID, iniFile, win1, NavTargetGameWindow, NavTargetGamePID
 
-    ; Check if window title "win2" exists first
+    ; Check if window title "win1" exists first
     WinGet, win1ID, ID, win1
     if (win1ID) {
         TargetGameWindow := win1ID
@@ -1140,6 +1171,8 @@ LoadGameWindowSettings() {
         TargetGameTitle := "win1"
         WinGet, win1PID, PID, ahk_id %win1ID%
         TargetGamePID := win1PID
+        NavTargetGameWindow := win1ID
+        NavTargetGamePID := win1PID
         FindText().BindWindow(win1ID)
         SetTimer, UpdateWindowDisplayDelayed, -200
         return
@@ -1158,6 +1191,8 @@ LoadGameWindowSettings() {
             TargetGameWindow := winIDFromPID
             win1 := winIDFromPID
             TargetGamePID := loadedPID
+            NavTargetGameWindow := winIDFromPID
+            NavTargetGamePID := loadedPID
 
             ; Get current window title (may have changed)
             WinGetTitle, currentTitle, ahk_id %winIDFromPID%
@@ -1179,6 +1214,7 @@ LoadGameWindowSettings() {
     if (loadedWindowID != "" && loadedWindowID != "ERROR") {
         TargetGameWindow := loadedWindowID
         win1 := loadedWindowID
+        NavTargetGameWindow := loadedWindowID
         if (loadedWindowTitle != "" && loadedWindowTitle != "ERROR") {
             TargetGameTitle := loadedWindowTitle
         }
@@ -1190,8 +1226,11 @@ LoadGameWindowSettings() {
             TargetGameTitle := ""
             TargetGamePID := ""
             win1 := ""
+            NavTargetGameWindow := ""
+            NavTargetGamePID := ""
         } else {
             ; Window exists, bind it
+            NavTargetGamePID := testPID
             FindText().BindWindow(TargetGameWindow)
         }
     }
@@ -8088,6 +8127,13 @@ AssignHealKeys:
                                                                                         if (meleeAttackKey != "")
                                                                                             UpdateDPSStatus("melee attack key set to: " . meleeAttackKey)
                                                                                     return
+                                                                                    
+                                                                                    UpdateFollowKey:
+                                                                                        Gui, Submit, NoHide
+                                                                                        ; Save to INI
+                                                                                        IniWrite, %selectedKey%, %iniFile%, Settings, FollowWhoKey
+                                                                                    return
+                                                                                    
                                                                                     UseRefreshScroll:
                                                                                         if (refreshscrollEnabled) {
                                                                                             ; Simulate refresh scroll key press
@@ -11338,8 +11384,17 @@ AssignHealKeys:
                                                                         }
                                                                     return
 
-                                                                    AutoFollowAction: 
-                                                                        ReturnToMainCharacter()
+                                                                    autofollowaction: 
+                                                                        ; Server executes locally first, then broadcasts to all clients
+                                                                        ProcessCommand("AUTOFOLLOW")
+                                                                        
+                                                                        ; Broadcast to all connected clients
+                                                                        SendCommandToAll("AUTOFOLLOW")
+                                                                    return
+
+                                                                    charselectaction:
+                                                                        ; Execute character selection sequence
+                                                                        PerformCharacterSelect()
                                                                     return
                                                                     ; ========== END PROFILE MANAGEMENT FUNCTIONS ==========
                                                                     ; ========== CROWD CONTROL COOLDOWN HANDLING ==========
@@ -12208,6 +12263,7 @@ AssignHealKeys:
                                                             return
 
                                                             CheckDPSNavigation() {
+                                                                global dpsNavTargetX, dpsNavTargetY, dpsNavRadius, NavTargetGameWindow
                                                                 if (!NavTargetGameWindow || dpsNavTargetX = "" || dpsNavTargetY = "") {
                                                                     return
                                                                 }
@@ -12217,13 +12273,12 @@ AssignHealKeys:
                                                                     return
                                                                 }
 
-                                                                ; Check if already at target coordinates (within 50 units)
-                                                                if (Abs(currentX - dpsNavTargetX) <= 50 && Abs(currentY - dpsNavTargetY) <= 50) {
-                                                                    return ; Already there, skip navigation
+                                                                ; Check if outside group radius - navigate back if needed
+                                                                radiusToUse := (dpsNavRadius != "" && dpsNavRadius > 0) ? dpsNavRadius : 50
+                                                                if (Abs(currentX - dpsNavTargetX) > radiusToUse || Abs(currentY - dpsNavTargetY) > radiusToUse) {
+                                                                    ; Outside radius, navigate back to target
+                                                                    NavigateToNavCoordinates(dpsNavTargetX, dpsNavTargetY)
                                                                 }
-
-                                                                ; Navigate to target coordinates
-                                                                NavigateToNavCoordinates(dpsNavTargetX, dpsNavTargetY)
                                                             }
                                                             CheckDPSNavigation2() {
                                                                 if (!NavTargetGameWindow || dpsNavTargetX = "" || dpsNavTargetY = "") {
@@ -13189,7 +13244,7 @@ AssignHealKeys:
                                                             }
 
                                                             ReturnToMainCharacter() {
-                                                                global selectedKey
+                                                                global selectedKey, TargetGameWindow
 
                                                                 selectedcharacteroptions := "|<>*74$17.zzzzzzzzzzzlE44F44IE0E04404EDxzzzzzzy003zzw"
                                                                 selectedcharacteroptions .= "|<>**50$18.zzz51F8W90I108131V1X10q10Q1zzzU"
@@ -13199,16 +13254,16 @@ AssignHealKeys:
 
                                                                 ; Use the selected key from the dropdown (default F2)
                                                             keyToSend := selectedKey != "" ? selectedKey : "F2"
-                                                                ControlSend,, {%keyToSend%}, ahk_id %win1% 
+                                                                ControlSend,, {%keyToSend%}, ahk_id %TargetGameWindow% 
                                                                 Sleep, 200
 
                                                                 foundOptions := false
                                                                 Loop, 20 {
                                                                     if (FindText(X, Y, 0, 0, A_ScreenWidth, A_ScreenHeight, 0, 0, selectedcharacteroptions)) {
-                                                                        WinGetPos, winX, winY,,, ahk_id %win1%
+                                                                        WinGetPos, winX, winY,,, ahk_id %TargetGameWindow%
                                                                         relativeX := X - winX
                                                                         relativeY := Y - winY
-                                                                        ControlClick, x%relativeX% y%relativeY%, ahk_id %win1%
+                                                                        ControlClick, x%relativeX% y%relativeY%, ahk_id %TargetGameWindow%
                                                                         Sleep, 10
                                                                         foundOptions := true
                                                                         break
@@ -13221,10 +13276,10 @@ AssignHealKeys:
 
                                                                 Loop, 20 {
                                                                     if (FindText(X, Y, 0, 0, A_ScreenWidth, A_ScreenHeight, 0, 0, follow)) {
-                                                                        WinGetPos, winX, winY,,, ahk_id %win1%
+                                                                        WinGetPos, winX, winY,,, ahk_id %TargetGameWindow%
                                                                         relativeX := X - winX
                                                                         relativeY := Y - winY
-                                                                        ControlClick, x%relativeX% y%relativeY%, ahk_id %win1%
+                                                                        ControlClick, x%relativeX% y%relativeY%, ahk_id %TargetGameWindow%
                                                                         Sleep, 10
                                                                         ; if (moving)
                                                                         ; {
@@ -15533,6 +15588,14 @@ AssignHealKeys:
                                                                 MsgBox, No waypoints loaded. Please select a route first.
                                                                 return
                                                             }
+                                                            
+                                                            ; Reset navigation state to fix reverse direction bug
+                                                            IsTraveling := false
+                                                            SetTimer, TravelLoop, Off
+                                                            SetTimer, UpdateCoordinatesDisplay, Off
+                                                            Sleep, 100
+                                                            
+                                                            ; Now start fresh
                                                             IsTraveling := true
                                                             SingleWaypointMode := false ; Full route travel
                                                             CurrentWaypoint := 1
@@ -16787,7 +16850,115 @@ AssignHealKeys:
                                                     MsgBox, BD5 camera settings applied!`nRadius: 900`nXAngle: 1.510000`nZAngle: 3.129320`n`nFile: %CameraFile%
                                                 }
 
-                                                ; CalibrateLive() {
+                                                PerformCharacterSelect() {
+                                                    global TargetGameWindow, navCameraFile, CameraRadius
+                                                    
+                                                    ; Send z key
+                                                    ControlSend,, z, ahk_id %TargetGameWindow%
+                                                    Sleep, 250
+                                                    
+                                                    ; Define search patterns
+                                                    charselect := "|<>FFFFFF-0.90$68.0E000000000II00008000U610000200201UKB+oItGUU+E4E+0c8WU84I102U82080M10E8cW0U2000M40+0U80U0E4102U+288011CECcuQNu0QDM"
+                                                    charselect .= "|<>FFFFFF-0.90$71.200000000020I00008004U4080000E00E080KB+oItGUU+GUW1E514I1UWcV02U82080M102154E40E002040+0U80U0E4080I1EF1008+6ECcuQNu0wDHs"
+                                                    
+                                                    ; Search for character select button
+                                                    if (FindText(X, Y, 0, 0, A_ScreenWidth, A_ScreenHeight, 0, 0, charselect)) {
+                                                        WinGetPos, winX, winY,,, ahk_id %TargetGameWindow%
+                                                        relativeX := X - winX
+                                                        relativeY := Y - winY
+                                                        ControlClick, x%relativeX% y%relativeY%, ahk_id %TargetGameWindow%
+                                                        Sleep, 250
+                                                    } else {
+                                                        AddLog("[CharSelect] Character select button not found")
+                                                        return
+                                                    }
+                                                    
+                                                    ; Define confirm patterns
+                                                    confirm := "|<>FFFFFF-0.90$40.00010014000008001000U+/7JKM14WFF4E02154FU084IF600UFF4I4G154FCC84IF6"
+                                                    confirm .= "|<>FFFFFF-0.90$40.00010014000008001000U+/7JKM14WFF4E02154FU084IF600UFF4E4G154FC+84IF6"
+                                                    
+                                                    ; Search for first confirm button
+                                                    if (FindText(X, Y, 0, 0, A_ScreenWidth, A_ScreenHeight, 0, 0, confirm)) {
+                                                        AddLog("[CharSelect] First confirm found, clicking until it disappears...")
+                                                        
+                                                        ; Click first confirm button repeatedly until it disappears
+                                                        confirmDisappeared := false
+                                                        Loop, 1200 {  ; 2 minutes = 120 seconds = 1200 iterations at 100ms
+                                                            if (FindText(X, Y, 0, 0, A_ScreenWidth, A_ScreenHeight, 0, 0, confirm)) {
+                                                                WinGetPos, winX, winY,,, ahk_id %TargetGameWindow%
+                                                                relativeX := X - winX
+                                                                relativeY := Y - winY
+                                                                ControlClick, x%relativeX% y%relativeY%, ahk_id %TargetGameWindow%
+                                                            } else {
+                                                                confirmDisappeared := true
+                                                                AddLog("[CharSelect] First confirm disappeared, screen transitioned")
+                                                                break
+                                                            }
+                                                            Sleep, 100
+                                                        }
+                                                        
+                                                        if (!confirmDisappeared) {
+                                                            AddLog("[CharSelect] First confirm did not disappear after 2 minutes")
+                                                            return
+                                                        }
+                                                    } else {
+                                                        AddLog("[CharSelect] First confirm button not found")
+                                                        return
+                                                    }
+                                                    
+                    ; Define confirm2 patterns
+                    confirm2 := "|<>FFFFFF-0.90$40.00010014000008001000U+/7JKM14WFF4E02154F0084IF600UFF4E4G154FC+84IF6"
+                    confirm2 .= "|<>FFFFFF-0.90$40.0001001400E008001000U+/bJKM14WFF4E02154FU084IF600UFF4I4G154FC+84IF6"
+                    
+                    ; Loop search until confirm2 is found
+                    AddLog("[CharSelect] Searching for final confirm button...")
+                    foundConfirm2 := false
+                    confirm2X := 0
+                    confirm2Y := 0
+                    Loop, 50 {
+                        if (FindText(X, Y, 0, 0, A_ScreenWidth, A_ScreenHeight, 0, 0, confirm2)) {
+                            foundConfirm2 := true
+                            confirm2X := X
+                            confirm2Y := Y
+                            AddLog("[CharSelect] Final confirm button found on screen")
+                            break
+                        }
+                        Sleep, 100
+                    }
+                    
+                    if (!foundConfirm2) {
+                        AddLog("[CharSelect] Final confirm button not found after 50 attempts")
+                        return
+                    }
+                    
+                    ; Perform BD5 camera setup without message box (only after confirm2 is visible)
+                    if (navCameraFile) {
+                        bd5Content := "RADIUS|900.0000|XANGLE|1.473184|ZANGLE|0.006136|"
+                        FileDelete, %navCameraFile%
+                        Sleep, 50
+                        FileAppend, %bd5Content%, %navCameraFile%
+                        CameraRadius := 900.000000
+                        GuiControl,, RadiusEdit, %CameraRadius%
+                        AddLog("[CharSelect] BD5 camera settings applied")
+                    }
+                    
+                    ; Click confirm2 button repeatedly until it disappears
+                    AddLog("[CharSelect] Clicking confirm2 until it disappears...")
+                    Loop, 1200 {  ; 2 minutes max
+                        if (FindText(X, Y, 0, 0, A_ScreenWidth, A_ScreenHeight, 0, 0, confirm2)) {
+                            WinGetPos, winX, winY,,, ahk_id %TargetGameWindow%
+                            relativeX := X - winX
+                            relativeY := Y - winY
+                            ControlClick, x%relativeX% y%relativeY%, ahk_id %TargetGameWindow%
+                        } else {
+                            AddLog("[CharSelect] Confirm2 disappeared, character selected")
+                            break
+                        }
+                        Sleep, 100
+                    }
+                    
+                    AddLog("[CharSelect] Character selection sequence completed")
+                }                                                ; CalibrateLive() {
                                                 ;     if (!TargetGameWindow) {
                                                 ;         MsgBox, Please select a game window first!
                                                 ;         return
@@ -23868,33 +24039,616 @@ CustomCmdCancel:
 CustomCmdGuiClose:
     Gui, CustomCmd:Destroy
     Return
+
+SelectAllClients:
+    GuiControl,, TargetWin1, 1
+    GuiControl,, TargetWin2, 1
+    GuiControl,, TargetWin3, 1
+    GuiControl,, TargetWin4, 1
+    GuiControl,, TargetWin5, 1
+    GuiControl,, TargetWin6, 1
+    GuiControl,, TargetWin7, 1
+    GuiControl,, TargetWin8, 1
+    Return
+
+SelectNoneClients:
+    GuiControl,, TargetWin1, 0
+    GuiControl,, TargetWin2, 0
+    GuiControl,, TargetWin3, 0
+    GuiControl,, TargetWin4, 0
+    GuiControl,, TargetWin5, 0
+    GuiControl,, TargetWin6, 0
+    GuiControl,, TargetWin7, 0
+    GuiControl,, TargetWin8, 0
+    Return
+
+OpenCommandList:
+    ; Create a new GUI window with a list of commands
+    Gui, CmdList:New, +AlwaysOnTop, Execute Commands on Selected Clients
+    Gui, CmdList:Add, Text, x10 y10 w380 h20, Select a command to execute on the checked windows:
+    
+    ; Add ListBox with available commands
+    Gui, CmdList:Add, ListBox, x10 y35 w380 h300 vSelectedCommand, AutoFollow Toggle|Character Select BD5|Get Coords|Load Path for All Clients|Start Healing|Stop Healing|Start DPS|Stop DPS|Setup DPS Navigation|Start Travel|Stop Travel|Press Key: 1|Press Key: 2|Press Key: 3|Press Key: 4|Press Key: 5|Press Key: F1|Press Key: F2|Press Key: F3|Press Key: F4|Press Key: F5|Press Key: F6|Press Key: F7|Press Key: F8|Press Key: Space|Press Key: Enter|Press Key: Escape|Reload Script
+    
+    Gui, CmdList:Add, Button, x10 y345 w180 h30 gExecuteSelectedCommand Default, Execute on Selected
+    Gui, CmdList:Add, Button, x200 y345 w180 h30 gCmdListCancel, Cancel
+    
+    Gui, CmdList:Show, w400 h390
+    Return
+
+ExecuteSelectedCommand:
+    Gui, CmdList:Submit, NoHide
+    
+    If (SelectedCommand = "") {
+        MsgBox, Please select a command first!
+        Return
+    }
+    
+    ; Get checkbox values from the MAIN GUI (not the CmdList GUI)
+    Gui, 1:Default
+    GuiControlGet, TargetWin1
+    GuiControlGet, TargetWin2
+    GuiControlGet, TargetWin3
+    GuiControlGet, TargetWin4
+    GuiControlGet, TargetWin5
+    GuiControlGet, TargetWin6
+    GuiControlGet, TargetWin7
+    GuiControlGet, TargetWin8
+    
+    ; Map the selected command to the actual command string
+    commandToSend := ""
+    
+    If (SelectedCommand = "AutoFollow Toggle")
+        commandToSend := "AUTOFOLLOW"
+    Else If (SelectedCommand = "Character Select BD5")
+        commandToSend := "CHARSELECT"
+    Else If (SelectedCommand = "Get Coords")
+        commandToSend := "GETCOORDS"
+    Else If (SelectedCommand = "Load Path for All Clients") {
+        ; Prompt user to select a path file
+        FileSelectFile, selectedPath, 3, , Select a path file to load on all clients, INI Files (*.ini)
+        If (ErrorLevel || selectedPath = "") {
+            MsgBox, No file selected. Operation cancelled.
+            Return
+        }
+        ; Read the entire file content
+        FileRead, pathContent, %selectedPath%
+        If (ErrorLevel) {
+            MsgBox, Failed to read the selected file.
+            Return
+        }
+        ; Encode the path content to send it (replace newlines with special marker)
+        pathContent := StrReplace(pathContent, "`n", "<NL>")
+        pathContent := StrReplace(pathContent, "`r", "")
+        commandToSend := "LOADPATH:" . pathContent
+    }
+    Else If (SelectedCommand = "Start Healing")
+        commandToSend := "STARTHEALING"
+    Else If (SelectedCommand = "Stop Healing")
+        commandToSend := "STOPHEALING"
+    Else If (SelectedCommand = "Start DPS")
+        commandToSend := "STARTDPS"
+    Else If (SelectedCommand = "Stop DPS")
+        commandToSend := "STOPDPS"
+    Else If (SelectedCommand = "Setup DPS Navigation") {
+        ; Prompt for group radius
+        InputBox, groupRadius, DPS Navigation Setup, Enter the group radius (default 50):, , 300, 130, , , , , 50
+        If (ErrorLevel)
+            Return  ; User cancelled
+        If (groupRadius = "")
+            groupRadius := 50
+        commandToSend := "SETUPDPSNAV:" . groupRadius
+    }
+    Else If (SelectedCommand = "Start Travel")
+        commandToSend := "STARTTRAVEL"
+    Else If (SelectedCommand = "Stop Travel")
+        commandToSend := "STOPTRAVEL"
+    Else If (SelectedCommand = "Press Key: 1")
+        commandToSend := "PRESS:1"
+    Else If (SelectedCommand = "Press Key: 2")
+        commandToSend := "PRESS:2"
+    Else If (SelectedCommand = "Press Key: 3")
+        commandToSend := "PRESS:3"
+    Else If (SelectedCommand = "Press Key: 4")
+        commandToSend := "PRESS:4"
+    Else If (SelectedCommand = "Press Key: 5")
+        commandToSend := "PRESS:5"
+    Else If (SelectedCommand = "Press Key: F1")
+        commandToSend := "PRESS:F1"
+    Else If (SelectedCommand = "Press Key: F2")
+        commandToSend := "PRESS:F2"
+    Else If (SelectedCommand = "Press Key: F3")
+        commandToSend := "PRESS:F3"
+    Else If (SelectedCommand = "Press Key: F4")
+        commandToSend := "PRESS:F4"
+    Else If (SelectedCommand = "Press Key: F5")
+        commandToSend := "PRESS:F5"
+    Else If (SelectedCommand = "Press Key: F6")
+        commandToSend := "PRESS:F6"
+    Else If (SelectedCommand = "Press Key: F7")
+        commandToSend := "PRESS:F7"
+    Else If (SelectedCommand = "Press Key: F8")
+        commandToSend := "PRESS:F8"
+    Else If (SelectedCommand = "Press Key: Space")
+        commandToSend := "PRESS:Space"
+    Else If (SelectedCommand = "Press Key: Enter")
+        commandToSend := "PRESS:Enter"
+    Else If (SelectedCommand = "Press Key: Escape")
+        commandToSend := "PRESS:Escape"
+    Else If (SelectedCommand = "Reload Script")
+        commandToSend := "CALL:Reload"
+    
+    If (commandToSend != "") {
+        AddLog("[COMMAND LIST] Executing: " SelectedCommand " (" commandToSend ")")
+        AddLog("[DEBUG] Target states - Win1:" TargetWin1 " Win2:" TargetWin2 " Win3:" TargetWin3 " Win4:" TargetWin4 " Win5:" TargetWin5 " Win6:" TargetWin6 " Win7:" TargetWin7 " Win8:" TargetWin8)
+        
+        ; Execute locally if Win1 is checked
+        If (TargetWin1) {
+            AddLog("[COMMAND LIST] Executing locally on Win1")
+            
+            ; Handle special commands directly without going through labels that broadcast
+            If (commandToSend = "AUTOFOLLOW") {
+                ; Toggle autofollow and call ReturnToMainCharacter directly
+                global autofolloww
+                if (autofolloww) {
+                    autofolloww := false
+                    GuiControl,, StatusText, Status: Autofollow Disabled (Local)
+                    AddLog("[Local] Autofollow disabled")
+                } else {
+                    autofolloww := true
+                    GuiControl,, StatusText, Status: Autofollow Enabled (Local)
+                    AddLog("[Local] Autofollow enabled")
+                }
+                ReturnToMainCharacter()
+            } Else If (commandToSend = "CHARSELECT") {
+                ; Call character select function directly
+                PerformCharacterSelect()
+            } Else If (commandToSend = "GETCOORDS") {
+                ; Trigger Get Coords locally
+                If (TargetGameWindow != "") {
+                    WinActivate, ahk_id %TargetGameWindow%
+                    Sleep, 150
+                    Clipboard := "/info"
+                    Send, {Enter}
+                    Sleep, 80
+                    Send, ^v
+                    Sleep, 80
+                    Send, {Enter}
+                    Sleep, 300
+                    AddLog("[Local] Sent /info command to game window")
+                } Else {
+                    AddLog("[Local] No game window selected")
+                }
+            } Else If (commandToSend = "STARTTRAVEL") {
+                ; Start travel locally
+                AddLog("[Local] Starting travel")
+                StartTravel()
+            } Else If (commandToSend = "STOPTRAVEL") {
+                ; Stop travel locally
+                AddLog("[Local] Stopping travel")
+                Gosub, StopTravel
+            } Else If (InStr(commandToSend, "LOADPATH:")) {
+                ; Load path locally
+                global SelectedRouteFile, NavSelectedRouteFile, Waypoints, TargetNodes
+                pathData := SubStr(commandToSend, 10)
+                AddLog("[Local] Loading path data")
+                
+                ; Decode the path content (restore newlines)
+                pathData := StrReplace(pathData, "<NL>", "`n")
+                
+                ; Create a temporary INI file in the script directory
+                tempPathFile := A_ScriptDir . "\temp_loaded_path.ini"
+                FileDelete, %tempPathFile%
+                FileAppend, %pathData%, %tempPathFile%
+                
+                If (FileExist(tempPathFile)) {
+                    ; Set as the selected route file
+                    SelectedRouteFile := tempPathFile
+                    NavSelectedRouteFile := tempPathFile
+                    
+                    ; Load waypoints and nodes using existing functions
+                    LoadWaypoints()
+                    LoadNodes()
+                    
+                    ; Update GUI status
+                    waypointCount := Waypoints.Length()
+                    nodeCount := TargetNodes.Length()
+                    GuiControl,, RouteStatus, Route: Loaded from network (%waypointCount% waypoints)
+                    GuiControl,, NodeStatus, Nodes: %nodeCount% placed
+                    GuiControl,, NavRouteStatus, Route: Loaded from network (%waypointCount% waypoints)
+                    
+                    ; Enable navigation buttons if waypoints exist
+                    if (waypointCount > 0) {
+                        GuiControl, Enable, PrevWaypointBtn
+                        GuiControl, Enable, NextWaypointBtn
+                        GuiControl, Enable, GotoBtn
+                    }
+                    
+                    AddLog("[Local] Path loaded: " waypointCount " waypoints, " nodeCount " nodes")
+                } Else {
+                    AddLog("[Local] ERROR: Failed to create temporary path file")
+                }
+            } Else {
+                ; For other commands, use ProcessCommand
+                ProcessCommand(commandToSend)
+            }
+        }
+        
+        ; Send to selected network clients (Win2-Win8) only if any are checked
+        If (TargetWin2 || TargetWin3 || TargetWin4 || TargetWin5 || TargetWin6 || TargetWin7 || TargetWin8) {
+            AddLog("[DEBUG] Sending to network clients")
+            ; AutoFollow and Load Path execute simultaneously on all clients (no sequential queue)
+            If (commandToSend = "AUTOFOLLOW" || InStr(commandToSend, "LOADPATH:")) {
+                SendCommandToSelectedSimultaneous(commandToSend)
+            } Else {
+                SendCommandToSelected(commandToSend)
+            }
+        } Else {
+            AddLog("[DEBUG] No network clients selected, skipping network send")
+        }
+        
+        ; Close the command list GUI
+        Gui, CmdList:Destroy
+    }
+    Return
+
+CmdListCancel:
+CmdListGuiClose:
+    Gui, CmdList:Destroy
+    Return
+
+TestAutoFollow:
+    AddLog("[TEST] Processing AUTOFOLLOW locally and sending to selected clients...")
+    ; Process locally first
+    ProcessCommand("AUTOFOLLOW")
+    ; Then send to selected clients
+    SendCommandToSelected("AUTOFOLLOW")
+    Return
+
+TestCharSelect:
+    ; Execute locally first using ProcessCommand
+    ProcessCommand("CHARSELECT")
+    ; Then send to selected clients
+    SendCommandToSelected("CHARSELECT")
+    Return
 Return
 
-SendCommandToAll(command) {
-    Global Clients
+SendCommandToAll(command, excludeSocket := "") {
+    Global Clients, ClientSocket
+    
+    ; If we're connected as a client, send to the server
+    If (ClientSocket != "" && ClientSocket != -1) {
+        message := command . "`n"
+        bufferSize := StrPut(message, "CP0")
+        VarSetCapacity(msgBuffer, bufferSize)
+        bytesWritten := StrPut(message, &msgBuffer, "CP0")
+        ; Send the actual bytes (excluding null terminator)
+        result := AHKsock_ForceSend(ClientSocket, &msgBuffer, bufferSize - 1)
+        ; AHKsock_ForceSend returns nothing on success, negative on error
+        If (result = "" || result >= 0)
+            AddLog("Sent '" command "' to server (ClientSocket: " ClientSocket ")")
+        Else
+            AddLog("Failed to send to server (result: " result ")")
+        Return
+    }
+    
+    ; Otherwise, we're the server - send to all connected clients
     If (Clients.MaxIndex() = "" || Clients.MaxIndex() = 0) {
-        AddLog("No clients connected")
+        ; Not connected to anyone - that's ok, just execute locally
         Return
     }
     
     ; Add newline delimiter to mark end of message
     message := command . "`n"
+    bufferSize := StrPut(message, "CP0")
     sent := 0
     failed := 0
     
     For index, socket in Clients {
+        ; Skip the excluded socket (original sender)
+        If (excludeSocket != "" && socket = excludeSocket)
+            Continue
         ; Get pointer to message variable
-        VarSetCapacity(msgBuffer, StrLen(message), 0)
-        StrPut(message, &msgBuffer, "CP0")
-        result := AHKsock_ForceSend(socket, &msgBuffer, StrLen(message))
-        If (result > 0)
+        VarSetCapacity(msgBuffer, bufferSize)
+        bytesWritten := StrPut(message, &msgBuffer, "CP0")
+        ; Try regular Send first (async), if that fails try ForceSend
+        result := AHKsock_Send(socket, &msgBuffer, bufferSize - 1)
+        AddLog("[DEBUG] Buffer size: " bufferSize ", Bytes written: " bytesWritten ", Sending: " (bufferSize - 1) " bytes")
+        ; AHKsock_Send returns bytes queued (>=0) on success, negative on error
+        If (result >= 0) {
             sent++
-        Else
+            AddLog("[DEBUG] Sent to socket " socket " successfully")
+        } Else {
             failed++
+            AddLog("[DEBUG] Failed to send to socket " socket " (result: " result ", ErrorLevel: " ErrorLevel ")")
+        }
     }
     
     If (sent > 0)
         AddLog("Sent '" command "' to " sent " client(s)")
+    If (failed > 0)
+        AddLog("Failed to send to " failed " client(s)")
+}
+
+SendCommandToSelected(command) {
+    Global Clients, ClientSocket, TargetWin1, TargetWin2, TargetWin3, TargetWin4, TargetWin5, TargetWin6, TargetWin7, TargetWin8
+    Global SequentialCommandQueue, SequentialCommandIndex, WaitingForAck
+    
+    ; Get the checkbox states
+    Gui, Submit, NoHide
+    
+    ; If we're connected as a client, send to the server
+    ; The server will handle which clients to target based on the command format
+    If (ClientSocket != "" && ClientSocket != -1) {
+        ; Build target list based on checkboxes
+        targetList := ""
+        If (TargetWin2)
+            targetList .= "2,"
+        If (TargetWin3)
+            targetList .= "3,"
+        If (TargetWin4)
+            targetList .= "4,"
+        If (TargetWin5)
+            targetList .= "5,"
+        If (TargetWin6)
+            targetList .= "6,"
+        If (TargetWin7)
+            targetList .= "7,"
+        If (TargetWin8)
+            targetList .= "8,"
+        
+        ; Remove trailing comma
+        If (StrLen(targetList) > 0)
+            targetList := SubStr(targetList, 1, StrLen(targetList) - 1)
+        
+        ; Send with target list: SELECTIVE:targets|command
+        message := "SELECTIVE:" . targetList . "|" . command . "`n"
+        bufferSize := StrPut(message, "CP0")
+        VarSetCapacity(msgBuffer, bufferSize)
+        bytesWritten := StrPut(message, &msgBuffer, "CP0")
+        result := AHKsock_ForceSend(ClientSocket, &msgBuffer, bufferSize - 1)
+        If (result = "" || result >= 0)
+            AddLog("Sent selective command '" command "' to server for clients: " targetList)
+        Else
+            AddLog("Failed to send selective command to server (result: " result ")")
+        Return
+    }
+    
+    ; Otherwise, we're the server - queue clients for sequential execution
+    If (Clients.MaxIndex() = "" || Clients.MaxIndex() = 0) {
+        AddLog("No clients connected")
+        Return
+    }
+    
+    ; Build array of which client indices are selected (Win2=index 1, Win3=index 2, etc.)
+    SequentialCommandQueue := []
+    If (TargetWin2)
+        SequentialCommandQueue.Push({index: 1, name: "Win2", command: command})
+    If (TargetWin3)
+        SequentialCommandQueue.Push({index: 2, name: "Win3", command: command})
+    If (TargetWin4)
+        SequentialCommandQueue.Push({index: 3, name: "Win4", command: command})
+    If (TargetWin5)
+        SequentialCommandQueue.Push({index: 4, name: "Win5", command: command})
+    If (TargetWin6)
+        SequentialCommandQueue.Push({index: 5, name: "Win6", command: command})
+    If (TargetWin7)
+        SequentialCommandQueue.Push({index: 6, name: "Win7", command: command})
+    If (TargetWin8)
+        SequentialCommandQueue.Push({index: 7, name: "Win8", command: command})
+    
+    If (SequentialCommandQueue.MaxIndex() = "" || SequentialCommandQueue.MaxIndex() = 0) {
+        AddLog("No target clients selected")
+        Return
+    }
+    
+    AddLog("Queued command '" command "' for " SequentialCommandQueue.MaxIndex() " client(s) - executing sequentially")
+    
+    ; Start sequential execution
+    SequentialCommandIndex := 1
+    WaitingForAck := false
+    SendNextQueuedCommand()
+}
+
+SendNextQueuedCommand() {
+    Global SequentialCommandQueue, SequentialCommandIndex, WaitingForAck, Clients
+    
+    ; Check if we're done
+    If (SequentialCommandIndex > SequentialCommandQueue.MaxIndex()) {
+        AddLog("Sequential command execution complete")
+        SequentialCommandQueue := []
+        SequentialCommandIndex := 0
+        WaitingForAck := false
+        Return
+    }
+    
+    ; Get current command to send
+    currentTask := SequentialCommandQueue[SequentialCommandIndex]
+    targetIndex := currentTask.index
+    targetName := currentTask.name
+    command := currentTask.command
+    
+    ; Check if this client is connected
+    If (Clients.MaxIndex() < targetIndex) {
+        AddLog("[Sequential] " targetName " not connected - skipping")
+        SequentialCommandIndex++
+        SendNextQueuedCommand()
+        Return
+    }
+    
+    socket := Clients[targetIndex]
+    message := command . "`n"
+    bufferSize := StrPut(message, "CP0")
+    VarSetCapacity(msgBuffer, bufferSize)
+    bytesWritten := StrPut(message, &msgBuffer, "CP0")
+    
+    AddLog("[Sequential] Sending '" command "' to " targetName " (socket " socket ")")
+    result := AHKsock_Send(socket, &msgBuffer, bufferSize - 1)
+    
+    If (result >= 0) {
+        WaitingForAck := true
+        ; Set a timer to wait for ACK or timeout after 5 seconds
+        SetTimer, CheckSequentialTimeout, -5000
+    } Else {
+        AddLog("[Sequential] Failed to send to " targetName " - skipping")
+        SequentialCommandIndex++
+        SendNextQueuedCommand()
+    }
+}
+
+CheckSequentialTimeout:
+    Global WaitingForAck, SequentialCommandQueue, SequentialCommandIndex
+    
+    If (WaitingForAck) {
+        currentTask := SequentialCommandQueue[SequentialCommandIndex]
+        AddLog("[Sequential] Timeout waiting for " currentTask.name " - moving to next")
+        WaitingForAck := false
+        SequentialCommandIndex++
+        SendNextQueuedCommand()
+    }
+Return
+
+SendCommandToSelectedSimultaneous(command) {
+    Global Clients, ClientSocket, TargetWin2, TargetWin3, TargetWin4, TargetWin5, TargetWin6, TargetWin7, TargetWin8
+    
+    ; Get the checkbox states
+    Gui, Submit, NoHide
+    
+    ; If we're connected as a client, send to the server
+    If (ClientSocket != "" && ClientSocket != -1) {
+        ; Build target list based on checkboxes
+        targetList := ""
+        If (TargetWin2)
+            targetList .= "2,"
+        If (TargetWin3)
+            targetList .= "3,"
+        If (TargetWin4)
+            targetList .= "4,"
+        If (TargetWin5)
+            targetList .= "5,"
+        If (TargetWin6)
+            targetList .= "6,"
+        If (TargetWin7)
+            targetList .= "7,"
+        If (TargetWin8)
+            targetList .= "8,"
+        
+        ; Remove trailing comma
+        If (StrLen(targetList) > 0)
+            targetList := SubStr(targetList, 1, StrLen(targetList) - 1)
+        
+        ; Send with target list: SELECTIVE:targets|command
+        message := "SELECTIVE:" . targetList . "|" . command . "`n"
+        bufferSize := StrPut(message, "CP0")
+        VarSetCapacity(msgBuffer, bufferSize)
+        bytesWritten := StrPut(message, &msgBuffer, "CP0")
+        result := AHKsock_ForceSend(ClientSocket, &msgBuffer, bufferSize - 1)
+        If (result = "" || result >= 0)
+            AddLog("Sent selective command '" command "' to server for clients: " targetList)
+        Else
+            AddLog("Failed to send selective command to server (result: " result ")")
+        Return
+    }
+    
+    ; Otherwise, we're the server - send to all selected clients simultaneously
+    If (Clients.MaxIndex() = "" || Clients.MaxIndex() = 0) {
+        AddLog("No clients connected")
+        Return
+    }
+    
+    message := command . "`n"
+    bufferSize := StrPut(message, "CP0")
+    sent := 0
+    failed := 0
+    
+    ; Send to all selected clients at once (Win2=index 1, Win3=index 2, etc.)
+    If (TargetWin2 && Clients.MaxIndex() >= 1) {
+        socket := Clients[1]
+        VarSetCapacity(msgBuffer, bufferSize)
+        StrPut(message, &msgBuffer, "CP0")
+        result := AHKsock_Send(socket, &msgBuffer, bufferSize - 1)
+        If (result >= 0) {
+            sent++
+            AddLog("[Simultaneous] Sent '" command "' to Win2")
+        } Else {
+            failed++
+        }
+    }
+    If (TargetWin3 && Clients.MaxIndex() >= 2) {
+        socket := Clients[2]
+        VarSetCapacity(msgBuffer, bufferSize)
+        StrPut(message, &msgBuffer, "CP0")
+        result := AHKsock_Send(socket, &msgBuffer, bufferSize - 1)
+        If (result >= 0) {
+            sent++
+            AddLog("[Simultaneous] Sent '" command "' to Win3")
+        } Else {
+            failed++
+        }
+    }
+    If (TargetWin4 && Clients.MaxIndex() >= 3) {
+        socket := Clients[3]
+        VarSetCapacity(msgBuffer, bufferSize)
+        StrPut(message, &msgBuffer, "CP0")
+        result := AHKsock_Send(socket, &msgBuffer, bufferSize - 1)
+        If (result >= 0) {
+            sent++
+            AddLog("[Simultaneous] Sent '" command "' to Win4")
+        } Else {
+            failed++
+        }
+    }
+    If (TargetWin5 && Clients.MaxIndex() >= 4) {
+        socket := Clients[4]
+        VarSetCapacity(msgBuffer, bufferSize)
+        StrPut(message, &msgBuffer, "CP0")
+        result := AHKsock_Send(socket, &msgBuffer, bufferSize - 1)
+        If (result >= 0) {
+            sent++
+            AddLog("[Simultaneous] Sent '" command "' to Win5")
+        } Else {
+            failed++
+        }
+    }
+    If (TargetWin6 && Clients.MaxIndex() >= 5) {
+        socket := Clients[5]
+        VarSetCapacity(msgBuffer, bufferSize)
+        StrPut(message, &msgBuffer, "CP0")
+        result := AHKsock_Send(socket, &msgBuffer, bufferSize - 1)
+        If (result >= 0) {
+            sent++
+            AddLog("[Simultaneous] Sent '" command "' to Win6")
+        } Else {
+            failed++
+        }
+    }
+    If (TargetWin7 && Clients.MaxIndex() >= 6) {
+        socket := Clients[6]
+        VarSetCapacity(msgBuffer, bufferSize)
+        StrPut(message, &msgBuffer, "CP0")
+        result := AHKsock_Send(socket, &msgBuffer, bufferSize - 1)
+        If (result >= 0) {
+            sent++
+            AddLog("[Simultaneous] Sent '" command "' to Win7")
+        } Else {
+            failed++
+        }
+    }
+    If (TargetWin8 && Clients.MaxIndex() >= 7) {
+        socket := Clients[7]
+        VarSetCapacity(msgBuffer, bufferSize)
+        StrPut(message, &msgBuffer, "CP0")
+        result := AHKsock_Send(socket, &msgBuffer, bufferSize - 1)
+        If (result >= 0) {
+            sent++
+            AddLog("[Simultaneous] Sent '" command "' to Win8")
+        } Else {
+            failed++
+        }
+    }
+    
+    If (sent > 0)
+        AddLog("Sent '" command "' simultaneously to " sent " client(s)")
     If (failed > 0)
         AddLog("Failed to send to " failed " client(s)")
 }
@@ -23921,8 +24675,12 @@ ServerEvents(sEvent, iSocket = 0, sName = 0, sAddr = 0, sPort = 0, ByRef bData =
             AddLog("DEBUG: Socket " iSocket " already in array, not adding")
         }
         
+    } Else If (sEvent = "SEND") {
+        ; SEND event - socket completed a send operation
+        ; Not used for tracking - sockets can receive anytime after ACCEPTED
+        
     } Else If (sEvent = "DISCONNECTED") {
-        ; Client disconnected - find and remove from array
+        ; Client disconnected - find and remove from arrays
         removed := False
         For index, socket in Clients {
             If (socket = iSocket) {
@@ -23934,14 +24692,56 @@ ServerEvents(sEvent, iSocket = 0, sName = 0, sAddr = 0, sPort = 0, ByRef bData =
                 Break
             }
         }
+
         If (!removed) {
             AddLog("DEBUG: DISCONNECTED event for socket " iSocket " but not found in array (current count: " Clients.Length() ")")
         }
         
     } Else If (sEvent = "RECEIVED") {
-        ; Received data from client (optional - for client responses)
+        ; Received data from client - process it and relay to all other clients
+        Global WaitingForAck, SequentialCommandIndex
         data := StrGet(&bData, iLength, "CP0")
-        AddLog("Received from client " iSocket ": " data)
+        
+        ; Remove newline delimiters
+        data := StrReplace(data, "`n", "")
+        data := StrReplace(data, "`r", "")
+        
+        If (data != "") {
+            AddLog("Received from client " iSocket ": " data)
+            
+            ; Handle command completion acknowledgment for sequential execution
+            If (data = "CMDCOMPLETE") {
+                If (WaitingForAck) {
+                    AddLog("[Sequential] Command completed, proceeding to next")
+                    WaitingForAck := false
+                    SetTimer, CheckSequentialTimeout, Off
+                    SequentialCommandIndex++
+                    SendNextQueuedCommand()
+                }
+                Return
+            }
+            
+            ; Filter out ACK messages - don't process or broadcast them
+            If (SubStr(data, 1, 4) = "ACK:") {
+                AddLog("[DEBUG] Acknowledgment received, not broadcasting")
+                Return
+            }
+            
+            ; Filter out ERROR messages - don't broadcast them
+            If (SubStr(data, 1, 6) = "ERROR:") {
+                AddLog("[DEBUG] Error message received, not broadcasting")
+                Return
+            }
+            
+            ; Process the command on this server instance
+            ProcessCommand(data)
+            
+            ; Small delay to ensure sockets are stable before relaying
+            Sleep, 10
+            
+            ; Broadcast to all connected clients EXCEPT the sender
+            SendCommandToAll(data, iSocket)
+        }
     }
 }
 
@@ -25479,33 +26279,83 @@ across multiple RECEIVED events. This would also demonstrate your application's 
         } Else If (sEvent = "RECEIVED") {
             ; Received data from server - append to buffer
             receivedData := StrGet(&bData, iLength, "CP0")
+            AddLog("[DEBUG] RECEIVED event: iLength=" iLength ", receivedData='" receivedData "'")
             buffer .= receivedData
+            AddLog("[DEBUG] Buffer now: '" buffer "'")
 
             ; Process all complete commands (ending with newline)
             While (InStr(buffer, "`n")) {
                 pos := InStr(buffer, "`n")
                 command := SubStr(buffer, 1, pos - 1)
                 buffer := SubStr(buffer, pos + 1)
+                
+                AddLog("[DEBUG] Extracted command: '" command "'")
 
                 If (command != "") {
                     AddLog("Received command: " command)
                     ProcessCommand(command)
+                } Else {
+                    AddLog("[DEBUG] Empty command, skipping")
                 }
             }
         }
     }
 
     ProcessCommand(command) {
+        AddLog("[DEBUG] ProcessCommand called with: '" command "' (length: " StrLen(command) ")")
+        
+        ; Handle SELECTIVE command for targeting specific clients
+        ; Format: SELECTIVE:2,3,5|ACTUALCOMMAND
+        If (SubStr(command, 1, 10) = "SELECTIVE:") {
+            Global Clients
+            rest := SubStr(command, 11)
+            delimPos := InStr(rest, "|")
+            
+            If (delimPos > 0) {
+                targetList := SubStr(rest, 1, delimPos - 1)  ; e.g., "2,3,5"
+                actualCommand := SubStr(rest, delimPos + 1)  ; The actual command to execute
+                
+                AddLog("[SELECTIVE] Received selective command for clients: " targetList " | Command: " actualCommand)
+                
+                ; Parse target list
+                targets := StrSplit(targetList, ",")
+                message := actualCommand . "`n"
+                bufferSize := StrPut(message, "CP0")
+                sent := 0
+                
+                For _, winNum in targets {
+                    clientIndex := winNum - 1  ; Win2 = index 1, Win3 = index 2, etc.
+                    If (clientIndex >= 1 && Clients.MaxIndex() >= clientIndex) {
+                        socket := Clients[clientIndex]
+                        VarSetCapacity(msgBuffer, bufferSize)
+                        bytesWritten := StrPut(message, &msgBuffer, "CP0")
+                        result := AHKsock_Send(socket, &msgBuffer, bufferSize - 1)
+                        
+                        If (result >= 0) {
+                            sent++
+                            AddLog("[SELECTIVE] Sent to Win" . winNum . " (socket " socket ")")
+                        }
+                    }
+                }
+                
+                AddLog("[SELECTIVE] Sent '" actualCommand "' to " sent " selected client(s)")
+                Return
+            }
+        }
+        
         ; Parse and execute commands
         If (SubStr(command, 1, 6) = "PRESS:") {
+            global TargetGameWindow
             key := SubStr(command, 7)
-            AddLog("Pressing key: " key)
-            Send, {%key%}
-
-            ; Optional: Send acknowledgment back to server
-            ack := "ACK:Pressed " key
-            If (ClientSocket != -1)
-                AHKsock_Send(ClientSocket, &ack, StrLen(ack))
+            AddLog("Pressing key: " key " to game window")
+            
+            ; Use ControlSend to send to the game window
+            If (TargetGameWindow != "") {
+                ControlSend,, {%key%}, ahk_id %TargetGameWindow%
+            } Else {
+                ; Fallback to regular Send if no target window
+                Send, {%key%}
+            }
 
         } Else If (SubStr(command, 1, 9) = "CTRLSEND:") {
             ; Format: CTRLSEND:windowtitle:|:key
@@ -25566,6 +26416,153 @@ across multiple RECEIVED events. This would also demonstrate your application's 
                     AddClientLog("[CC Sync] AoE stun used by another client - " . Round(stunDuration/1000, 1) . "s cooldown")
                 }
             }
+
+        } Else If (command = "AUTOFOLLOW") {
+            ; Toggle autofollow from network command
+            global autofolloww
+            AddLog("[DEBUG] Processing AUTOFOLLOW command, current state: " autofolloww)
+            if (autofolloww) {
+                autofolloww := false
+                GuiControl,, StatusText, Status: Autofollow Disabled (Network)
+                AddLog("[Network] Autofollow disabled")
+            } else {
+                autofolloww := true
+                GuiControl,, StatusText, Status: Autofollow Enabled (Network)
+                AddLog("[Network] Autofollow enabled")
+            }
+            ; Trigger follow action on this client
+            AddLog("[DEBUG] Calling ReturnToMainCharacter()")
+            ReturnToMainCharacter()
+
+        } Else If (command = "CHARSELECT") {
+            ; Character selection sequence
+            AddLog("[Network] Processing CHARSELECT command")
+            Gosub, charselectaction
+
+        } Else If (command = "GETCOORDS") {
+            ; Get coordinates by sending /info command
+            global TargetGameWindow
+            AddLog("[Network] Processing GETCOORDS command")
+            
+            If (TargetGameWindow != "") {
+                WinActivate, ahk_id %TargetGameWindow%
+                Sleep, 150
+                Clipboard := "/info"
+                Send, {Enter}
+                Sleep, 80
+                Send, ^v
+                Sleep, 80
+                Send, {Enter}
+                Sleep, 300
+                AddLog("Sent /info command to game window")
+            } Else {
+                AddLog("No game window selected")
+            }
+
+        } Else If (command = "STARTHEALING") {
+            ; Start healing timer
+            global healCheckInterval
+            AddLog("[Network] Starting healing")
+            SetTimer, CheckHealth, %healCheckInterval%
+
+        } Else If (command = "STOPHEALING") {
+            ; Stop healing timer
+            AddLog("[Network] Stopping healing")
+            SetTimer, CheckHealth, Off
+
+        } Else If (command = "STARTDPS") {
+            ; Start DPS timer
+            AddLog("[Network] Starting DPS")
+            if (healanddps) {
+                SetTimer, DynamicHealthCheck, Off
+            }
+            isDpsRunning := true
+            SetTimer, DPSLoop, 50
+
+        } Else If (command = "STOPDPS") {
+            ; Stop DPS timer
+            AddLog("[Network] Stopping DPS")
+            isDpsRunning := false
+            SetTimer, DPSLoop, Off
+
+        } Else If (SubStr(command, 1, 12) = "SETUPDPSNAV:") {
+            ; Setup DPS Navigation - Format: SETUPDPSNAV:radius
+            global dpsNavEnabled, dpsNavTargetX, dpsNavTargetY, dpsNavRadius, currentX, currentY
+            radius := SubStr(command, 13)
+            AddLog("[Network] Setting up DPS Navigation with radius: " radius)
+            
+            ; Get current coordinates from screen
+            GetCurrentCoordinates(currentX, currentY)
+            Sleep, 10
+            GetCurrentCoordinates(tempX, tempY)
+            
+            If (currentX != "" && currentY != "" && currentX == tempX && currentY == tempY) {
+                ; Set target coordinates and radius
+                dpsNavTargetX := currentX
+                dpsNavTargetY := currentY
+                dpsNavRadius := radius
+                
+                ; Update GUI controls first
+                GuiControl,, dpsNavTargetXEdit, %currentX%
+                GuiControl,, dpsNavTargetYEdit, %currentY%
+                GuiControl,, dpsNavRadiusEdit, %radius%
+                GuiControl,, dpsNavEnabled, 1
+                
+                ; Sync variable with GUI state
+                GuiControlGet, dpsNavEnabled
+                
+                ; Enable navigation and start timer
+                dpsNavEnabled := true
+                SetTimer, UpdateNavCoordinatesDisplay, 500
+                
+                AddLog("[Network] DPS Navigation enabled at X:" currentX " Y:" currentY " Radius:" radius)
+            } Else {
+                AddLog("[Network] ERROR: Could not retrieve current coordinates from screen")
+            }
+
+        } Else If (command = "STARTTRAVEL") {
+            ; Start navigation travel
+            global SelectedRouteFile, Waypoints, IsTraveling, SingleWaypointMode, CurrentWaypoint
+            AddLog("[Network] Starting travel")
+            
+            if (SelectedRouteFile = "") {
+                AddLog("[Network] ERROR: No route file selected")
+                return
+            }
+            waypointCount := Waypoints.Length()
+            if (waypointCount = 0) {
+                AddLog("[Network] ERROR: No waypoints loaded")
+                return
+            }
+            
+            ; Reset navigation state to fix reverse direction bug
+            IsTraveling := false
+            SetTimer, TravelLoop, Off
+            SetTimer, UpdateCoordinatesDisplay, Off
+            Sleep, 100
+            
+            ; Now start fresh
+            IsTraveling := true
+            SingleWaypointMode := false
+            CurrentWaypoint := 1
+            GuiControl, Disable, StartBtn
+            GuiControl, Enable, StopBtn
+            SetTimer, UpdateCoordinatesDisplay, 50
+            SetTimer, TravelLoop, 50
+            AddLog("[Network] Travel started - " waypointCount " waypoints")
+
+        } Else If (command = "STOPTRAVEL") {
+            ; Stop navigation travel
+            global IsTraveling
+            AddLog("[Network] Stopping travel")
+            IsTraveling := false
+            SetTimer, UpdateCoordinatesDisplay, off
+            SetTimer, TravelLoop, Off
+            ReleaseAllWASDKeys()
+            GuiControl, Enable, StartBtn
+            GuiControl, Disable, StopBtn
+            GuiControl,, RouteStatus, Travel stopped
+            AddLog("[Network] Travel stopped")
 
         } Else If (SubStr(command, 1, 5) = "CALL:") {
             ; Format: CALL:FunctionName OR CALL:FunctionName(param1,param2)
@@ -25641,6 +26638,7 @@ across multiple RECEIVED events. This would also demonstrate your application's 
 
             } Else {
                 AddLog("Unknown command: " command)
+                AddLog("[DEBUG] No matching command handler for: '" command "'")
             }
         }
 
