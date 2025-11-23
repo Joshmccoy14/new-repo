@@ -4302,20 +4302,12 @@ SelectWindow:
 
     selectedCameraFile := ""
 
-    ; Prioritize navigation camera file, then main camera file
+    ; Auto-use navigation camera file, then main camera file (no prompts)
     if (savedNavCameraFile != "ERROR" && FileExist(savedNavCameraFile)) {
-        MsgBox, 4,, Use previous navigation camera file?`n%savedNavCameraFile%
-        IfMsgBox Yes
-        {
-            selectedCameraFile := savedNavCameraFile
-        }
+        selectedCameraFile := savedNavCameraFile
     }
     else if (savedMainCameraFile != "ERROR" && FileExist(savedMainCameraFile)) {
-        MsgBox, 4,, Use previous camera file?`n%savedMainCameraFile%
-        IfMsgBox Yes
-        {
-            selectedCameraFile := savedMainCameraFile
-        }
+        selectedCameraFile := savedMainCameraFile
     }
 
     ; If no saved file or user declined, ask for new file
@@ -11426,19 +11418,15 @@ AssignHealKeys:
                                                                         if (savedPID != "ERROR" && savedCameraFile != "ERROR") {
                                                                             WinGet, winID, ID, ahk_pid %savedPID%
                                                                             if (winID) {
-                                                                                WinGetTitle, winTitle, ahk_id %winID%
-                                                                                MsgBox, 4,, Use previous navigation settings?`nWindow: %winTitle% (PID: %savedPID%)`nCamera File: %savedCameraFile%
-                                                                                IfMsgBox Yes
-                                                                                {
-                                                                                    NavTargetGameWindow := winID
-                                                                                    NavTargetGamePID := savedPID
-                                                                                    NavCameraFile := savedCameraFile
-                                                                                    FindText().BindWindow(winID)
-                                                                                    LoadNavCameraSettings(savedCameraFile)
-                                                                                    GuiControl,, NavRadiusEdit, %NavCameraRadius%
-                                                                                    GuiControl,, NavCameraFile, Camera: %savedCameraFile%
-                                                                                    usePreviousSettings := true
-                                                                                }
+                                                                                ; Auto-accept previous settings (no message box)
+                                                                                NavTargetGameWindow := winID
+                                                                                NavTargetGamePID := savedPID
+                                                                                NavCameraFile := savedCameraFile
+                                                                                FindText().BindWindow(winID)
+                                                                                LoadNavCameraSettings(savedCameraFile)
+                                                                                GuiControl,, NavRadiusEdit, %NavCameraRadius%
+                                                                                GuiControl,, NavCameraFile, Camera: %savedCameraFile%
+                                                                                usePreviousSettings := true
                                                                             }
                                                                         }
                                                                     }
@@ -11502,24 +11490,10 @@ AssignHealKeys:
                                                                             cameraFileSource := "Main"
                                                                         }
 
-                                                                        ; If we have a camera file to offer, prompt user
+                                                                        ; If we have a camera file to offer, auto-accept it (no prompt)
                                                                         if (cameraFileToOffer != "") {
-                                                                            SplitPath, cameraFileToOffer, fileName
-                                                                            MsgBox, 3, Camera File Setup, Previous %cameraFileSource% camera file found:`n%fileName%`n`nYes = Use this file`nNo = Select different file`nCancel = No camera file
-                                                                            IfMsgBox Yes
-                                                                            {
-                                                                                ; Use the saved camera file
-                                                                                LoadSavedCameraFile(cameraFileToOffer)
-                                                                            }
-                                                                            else IfMsgBox No
-                                                                            {
-                                                                                ; Let user select a different camera file
-                                                                                FileSelectFile, newCameraFile, 1,, Select Camera File, TXT Files (*.txt)
-                                                                                if (newCameraFile != "") {
-                                                                                    LoadSavedCameraFile(newCameraFile)
-                                                                                }
-                                                                            }
-                                                                            ; Cancel = do nothing, no camera file loaded
+                                                                            ; Auto-use the saved camera file
+                                                                            LoadSavedCameraFile(cameraFileToOffer)
                                                                         }
                                                                         ; If no saved camera files found, don't prompt (user can set up later)
                                                                     }
@@ -16703,59 +16677,28 @@ AssignHealKeys:
                                                         cameraSource := "Main"
                                                     }
 
-                                                    ; If we have either window or camera file, offer to use previous settings
+                                                    ; If we have either window or camera file, auto-use previous settings (no prompt)
                                                     if (bestWinID != "" || bestCameraFile != "") {
-                                                        promptText := "Use previous settings?"
+                                                        ; Auto-use all previous settings
                                                         if (bestWinID != "") {
-                                                            promptText .= "`nWindow: " . bestTitle . " (PID: " . bestPID . ")"
+                                                            TargetGameWindow := bestWinID
+                                                            TargetGamePID := bestPID
+                                                            win1 := bestWinID
+                                                            NavTargetGameWindow := bestWinID
+                                                            NavTargetGamePID := bestPID
+                                                            FindText().BindWindow(bestWinID)
                                                         }
+
                                                         if (bestCameraFile != "") {
-                                                            SplitPath, bestCameraFile, fileName
-                                                            promptText .= "`n" . cameraSource . " Camera File: " . fileName
+                                                            LoadSavedCameraFile(bestCameraFile)
                                                         }
 
-                                                        MsgBox, 3, Previous Settings Found, %promptText%`n`nYes = Use previous settings`nNo = Set up fresh`nCancel = Camera only (if available)
-                                                            IfMsgBox Yes
-                                                        {
-                                                            ; Use all previous settings
-                                                            if (bestWinID != "") {
-                                                                TargetGameWindow := bestWinID
-                                                                TargetGamePID := bestPID
-                                                                win1 := bestWinID
-                                                                NavTargetGameWindow := bestWinID
-                                                                NavTargetGamePID := bestPID
-                                                                FindText().BindWindow(bestWinID)
-
-                                                                ; Get window position on startup
-                                                                WinGetPos, winX, winY,,, ahk_id %bestWinID%
-                                                                if (winX != "" && winY != "") {
-                                                                    ToolTip, Window auto-loaded at position: %winX%`, %winY%, 0, 0
-                                                                    SetTimer, RemoveWindowPosTooltip, -2000
-                                                                }
-                                                            }
-
-                                                            if (bestCameraFile != "") {
-                                                                LoadSavedCameraFile(bestCameraFile)
-                                                            }
-
-                                                            ; Load win2 if it was saved
-                                                            if (savedWin2PID != "ERROR") {
-                                                                WinGet, win2ID, ID, ahk_pid %savedWin2PID%
-                                                                if (win2ID) {
-                                                                    win2 := win2ID
-                                                                    win2PID := savedWin2PID
-                                                                }
-                                                            }
-                                                        }
-                                                        else IfMsgBox No
-                                                        {
-                                                            ; Start fresh - let user select window/camera through normal flow
-                                                        }
-                                                        else ; Cancel
-                                                        {
-                                                            ; Load camera file only if available
-                                                            if (bestCameraFile != "") {
-                                                                LoadSavedCameraFile(bestCameraFile)
+                                                        ; Load win2 if it was saved
+                                                        if (savedWin2PID != "ERROR") {
+                                                            WinGet, win2ID, ID, ahk_pid %savedWin2PID%
+                                                            if (win2ID) {
+                                                                win2 := win2ID
+                                                                win2PID := savedWin2PID
                                                             }
                                                         }
                                                     }
@@ -16855,14 +16798,19 @@ AssignHealKeys:
                                                     MsgBox, BD5 camera settings applied!`nRadius: 900`nXAngle: 1.510000`nZAngle: 3.129320`n`nFile: %CameraFile%
                                                 }
 
-                                                PerformCharacterSelect() {
-                                                    global TargetGameWindow, navCameraFile, CameraRadius
-                                                    
-                                                    ; Send z key
-                                                    ControlSend,, z, ahk_id %TargetGameWindow%
-                                                    Sleep, 250
-                                                    
-                                                    ; Define search patterns
+PerformCharacterSelect() {
+    global TargetGameWindow, navCameraFile, CameraRadius
+    
+    AddLog("[CharSelect] TargetGameWindow: " TargetGameWindow)
+    
+    if (!TargetGameWindow || TargetGameWindow = "") {
+        AddLog("[CharSelect] ERROR: No game window selected! Go to Setup tab and select a game window first.")
+        return
+    }
+    
+    ; Send z key
+    ControlSend,, z, ahk_id %TargetGameWindow%
+    Sleep, 250                                                    ; Define search patterns
                                                     charselect := "|<>FFFFFF-0.90$68.0E000000000II00008000U610000200201UKB+oItGUU+E4E+0c8WU84I102U82080M10E8cW0U2000M40+0U80U0E4102U+288011CECcuQNu0QDM"
                                                     charselect .= "|<>FFFFFF-0.90$71.200000000020I00008004U4080000E00E080KB+oItGUU+GUW1E514I1UWcV02U82080M102154E40E002040+0U80U0E4080I1EF1008+6ECcuQNu0wDHs"
                                                     
@@ -16915,12 +16863,12 @@ AssignHealKeys:
                     confirm2 := "|<>FFFFFF-0.90$40.00010014000008001000U+/7JKM14WFF4E02154F0084IF600UFF4E4G154FC+84IF6"
                     confirm2 .= "|<>FFFFFF-0.90$40.0001001400E008001000U+/bJKM14WFF4E02154FU084IF600UFF4I4G154FC+84IF6"
                     
-                    ; Loop search until confirm2 is found
+                    ; Loop search until confirm2 is found (2 minutes max)
                     AddLog("[CharSelect] Searching for final confirm button...")
                     foundConfirm2 := false
                     confirm2X := 0
                     confirm2Y := 0
-                    Loop, 50 {
+                    Loop, 1200 {  ; 2 minutes = 120 seconds = 1200 iterations at 100ms
                         if (FindText(X, Y, 0, 0, A_ScreenWidth, A_ScreenHeight, 0, 0, confirm2)) {
                             foundConfirm2 := true
                             confirm2X := X
@@ -16932,7 +16880,7 @@ AssignHealKeys:
                     }
                     
                     if (!foundConfirm2) {
-                        AddLog("[CharSelect] Final confirm button not found after 50 attempts")
+                        AddLog("[CharSelect] Final confirm button not found after 2 minutes")
                         return
                     }
                     
@@ -26312,7 +26260,6 @@ across multiple RECEIVED events. This would also demonstrate your application's 
         ; Handle SELECTIVE command for targeting specific clients
         ; Format: SELECTIVE:2,3,5|ACTUALCOMMAND
         If (SubStr(command, 1, 10) = "SELECTIVE:") {
-            Global Clients
             rest := SubStr(command, 11)
             delimPos := InStr(rest, "|")
             
@@ -26322,28 +26269,48 @@ across multiple RECEIVED events. This would also demonstrate your application's 
                 
                 AddLog("[SELECTIVE] Received selective command for clients: " targetList " | Command: " actualCommand)
                 
-                ; Parse target list
-                targets := StrSplit(targetList, ",")
-                message := actualCommand . "`n"
-                bufferSize := StrPut(message, "CP0")
-                sent := 0
+                ; Determine which window this client is (win1, win2, etc.)
+                ; Extract from script path: e.g., "E:\Rappelz_Gambit\Launcher\win2\..."
+                scriptPath := A_ScriptDir
+                If (InStr(scriptPath, "\win1\") || RegExMatch(scriptPath, "\\win1$")) {
+                    myWinNum := 1
+                } Else If (InStr(scriptPath, "\win2\") || RegExMatch(scriptPath, "\\win2$")) {
+                    myWinNum := 2
+                } Else If (InStr(scriptPath, "\win3\") || RegExMatch(scriptPath, "\\win3$")) {
+                    myWinNum := 3
+                } Else If (InStr(scriptPath, "\win4\") || RegExMatch(scriptPath, "\\win4$")) {
+                    myWinNum := 4
+                } Else If (InStr(scriptPath, "\win5\") || RegExMatch(scriptPath, "\\win5$")) {
+                    myWinNum := 5
+                } Else If (InStr(scriptPath, "\win6\") || RegExMatch(scriptPath, "\\win6$")) {
+                    myWinNum := 6
+                } Else If (InStr(scriptPath, "\win7\") || RegExMatch(scriptPath, "\\win7$")) {
+                    myWinNum := 7
+                } Else If (InStr(scriptPath, "\win8\") || RegExMatch(scriptPath, "\\win8$")) {
+                    myWinNum := 8
+                } Else {
+                    myWinNum := 0
+                }
                 
+                AddLog("[SELECTIVE] I am Win" . myWinNum . ", checking if I'm in target list: " targetList)
+                
+                ; Check if this client is in the target list
+                targets := StrSplit(targetList, ",")
+                isTargeted := false
                 For _, winNum in targets {
-                    clientIndex := winNum - 1  ; Win2 = index 1, Win3 = index 2, etc.
-                    If (clientIndex >= 1 && Clients.MaxIndex() >= clientIndex) {
-                        socket := Clients[clientIndex]
-                        VarSetCapacity(msgBuffer, bufferSize)
-                        bytesWritten := StrPut(message, &msgBuffer, "CP0")
-                        result := AHKsock_Send(socket, &msgBuffer, bufferSize - 1)
-                        
-                        If (result >= 0) {
-                            sent++
-                            AddLog("[SELECTIVE] Sent to Win" . winNum . " (socket " socket ")")
-                        }
+                    If (winNum = myWinNum) {
+                        isTargeted := true
+                        break
                     }
                 }
                 
-                AddLog("[SELECTIVE] Sent '" actualCommand "' to " sent " selected client(s)")
+                If (isTargeted) {
+                    AddLog("[SELECTIVE] I am targeted! Executing command: " actualCommand)
+                    ; Recursively call ProcessCommand with the actual command
+                    ProcessCommand(actualCommand)
+                } Else {
+                    AddLog("[SELECTIVE] Not targeted for this command, ignoring")
+                }
                 Return
             }
         }
@@ -26424,8 +26391,9 @@ across multiple RECEIVED events. This would also demonstrate your application's 
 
         } Else If (command = "AUTOFOLLOW") {
             ; Toggle autofollow from network command
-            global autofolloww
+            global autofolloww, TargetGameWindow
             AddLog("[DEBUG] Processing AUTOFOLLOW command, current state: " autofolloww)
+            AddLog("[DEBUG] TargetGameWindow: " TargetGameWindow)
             if (autofolloww) {
                 autofolloww := false
                 GuiControl,, StatusText, Status: Autofollow Disabled (Network)

@@ -368,8 +368,11 @@ ExecuteCommand:
         command := "AUTOFOLLOW"
     Else If (CommandDropdown = "Character Select RD5")
         command := "CHARSELECT"
-    Else If (CommandDropdown = "Get Coords")
-        command := "GETCOORDS"
+    Else If (CommandDropdown = "Get Coords") {
+        ; Get Coords needs to be done sequentially, one window at a time
+        ExecuteGetCoordsSequential()
+        return
+    }
     Else If (CommandDropdown = "Load Path for All Clients") {
         ; Prompt user to select a path file
         FileSelectFile, selectedPath, 3, , Select a path file to load on all clients, INI Files (*.ini)
@@ -419,8 +422,11 @@ SendNetworkCommand(command) {
             targets.Push(A_Index)
     }
     
+    ; Debug: Show what was detected
+    targetCount := targets.Length()
+    
     ; If no targets selected, don't send anything
-    If (targets.Length() = 0) {
+    If (targetCount = 0) {
         MsgBox, Please select at least one window target (W1-W8)
         return
     }
@@ -433,8 +439,37 @@ SendNetworkCommand(command) {
             targetList .= ","
     }
     selectiveCmd := "SELECTIVE:" targetList "|" command
+    
     SendCommandToAll(selectiveCmd)
     ; MsgBox, Sent to Win%targetList%: %command%
+}
+
+ExecuteGetCoordsSequential() {
+    Gui, TopBar:Submit, NoHide
+    
+    ; Check which windows are targeted
+    targets := []
+    Loop, 8 {
+        GuiControlGet, checked,, NetWin%A_Index%
+        If (checked)
+            targets.Push(A_Index)
+    }
+    
+    ; If no targets selected, don't send anything
+    If (targets.Length() = 0) {
+        MsgBox, Please select at least one window target (W1-W8)
+        return
+    }
+    
+    ; Send GETCOORDS to each window sequentially
+    For index, winNum in targets {
+        ; Send to just this one window
+        selectiveCmd := "SELECTIVE:" winNum "|GETCOORDS"
+        SendCommandToAll(selectiveCmd)
+        
+        ; Wait between commands to allow each window to process
+        Sleep, 500
+    }
 }
 
 ; ==========================================
