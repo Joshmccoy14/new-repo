@@ -87,7 +87,7 @@ ShowMainGui() {
     global Pass1, Pass2, Pass3, Pass4, Pass5, Pass6, Pass7, Pass8
     global Auto1, Auto2, Auto3, Auto4, Auto5, Auto6, Auto7, Auto8
     
-    Gui, Main:New
+    Gui, Main:New, +AlwaysOnTop
     Gui, Main:Font, s10 Bold
     Gui, Add, Text, x20 y15, Rappelz Multi-Client Launcher
     Gui, Main:Font
@@ -309,48 +309,56 @@ Loop, %selectedCount% {
     if (accountNum = 1) {
         WinSetTitle, ahk_id %win1%, , win1
         WinMove, ahk_id %win1%, , 0, 0
+        WinActivate, ahk_id %win1%
         Loop, 3
             ControlSend, , {Escape}, ahk_id %win1%
     }
     else if (accountNum = 2) {
         WinSetTitle, ahk_id %win2%, , win2
         WinMove, ahk_id %win2%, , 0, 0
+        WinActivate, ahk_id %win2%
         Loop, 3
             ControlSend, , {Escape}, ahk_id %win2%
     }
     else if (accountNum = 3) {
         WinSetTitle, ahk_id %win3%, , win3
         WinMove, ahk_id %win3%, , 0, 0
+        WinActivate, ahk_id %win3%
         Loop, 3
             ControlSend, , {Escape}, ahk_id %win3%
     }
     else if (accountNum = 4) {
         WinSetTitle, ahk_id %win4%, , win4
         WinMove, ahk_id %win4%, , 0, 0
+        WinActivate, ahk_id %win4%
         Loop, 3
             ControlSend, , {Escape}, ahk_id %win4%
     }
     else if (accountNum = 5) {
         WinSetTitle, ahk_id %win5%, , win5
         WinMove, ahk_id %win5%, , 0, 0
+        WinActivate, ahk_id %win5%
         Loop, 3
             ControlSend, , {Escape}, ahk_id %win5%
     }
     else if (accountNum = 6) {
         WinSetTitle, ahk_id %win6%, , win6
         WinMove, ahk_id %win6%, , 0, 0
+        WinActivate, ahk_id %win6%
         Loop, 3
             ControlSend, , {Escape}, ahk_id %win6%
     }
     else if (accountNum = 7) {
         WinSetTitle, ahk_id %win7%, , win7
         WinMove, ahk_id %win7%, , 0, 0
+        WinActivate, ahk_id %win7%
         Loop, 3
             ControlSend, , {Escape}, ahk_id %win7%
     }
     else if (accountNum = 8) {
         WinSetTitle, ahk_id %win8%, , win8
         WinMove, ahk_id %win8%, , 0, 0
+        WinActivate, ahk_id %win8%
         Loop, 3
             ControlSend, , {Escape}, ahk_id %win8%
     }
