@@ -13,6 +13,7 @@ BaseDir := A_ScriptDir
 LoadAccounts()
 DetectExistingClients()
 ShowMainGui()
+Run %A_ScriptDir%\launcher\TopBarController_NetworkHost.ahk
 Return
 
 DetectExistingClients() {
@@ -243,11 +244,15 @@ Loop {
             newClients.Push(winID)
     }
     
-    if (newClients.MaxIndex() >= selectedCount)
+    currentFound := newClients.MaxIndex()
+    if (!currentFound)
+        currentFound := 0
+    
+    if (currentFound >= selectedCount)
         break
     
     if (A_TickCount - timeoutStart > 180000) {
-        foundCount := newClients.MaxIndex()
+        foundCount := currentFound
         MsgBox, Timeout! Only found %foundCount% of %selectedCount% new clients
         ShowMainGui()
         Return
@@ -536,19 +541,35 @@ Loop {
     Sleep, 250
 }
 
-MsgBox, 0, , Done! Launched %selectedCount% clients, 1
+; MsgBox, 0, , Done! Launched %selectedCount% clients, 1
 
 Loop, %selectedCount% {
     accountNum := selectedAccounts[A_Index]
     if (AccountData[accountNum].AutoScript) {
         scriptPath := A_ScriptDir . "\launcher\win" . accountNum . "\Rappelz Automation Nexus.ahk"
         if (FileExist(scriptPath)) {
-            Run, "%scriptPath%"
+            Run, %scriptPath%
         }
     }
 }
 
-ShowMainGui()
+; Wait for all Nexus scripts to fully launch, then hide them all
+Sleep, 3000
+DetectHiddenWindows, On
+WinGet, nexusWindows, List, Rappelz Automation Nexus ahk_class AutoHotkeyGUI
+Loop, %nexusWindows% {
+    nexusID := nexusWindows%A_Index%
+    WinHide, ahk_id %nexusID%
+}
+DetectHiddenWindows, Off
+
+; Prompt user if they want to use thumbnail view instead of showing main GUI
+MsgBox, 4, Multi-Client Launcher, Launched %selectedCount% clients.`n`nWould you like to open Thumbnail View?
+IfMsgBox Yes
+{
+    Gosub, ShowThumbnailView
+}
+; Keep launcher hidden (don't call ShowMainGui)
 Return
 
 ShowThumbnailView:
