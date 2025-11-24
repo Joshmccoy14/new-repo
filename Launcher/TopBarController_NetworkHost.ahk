@@ -21,6 +21,13 @@ global UtilityScriptDropdown
 global ThumbnailData := []
 global thumbnailsVisible := false
 global actBarGuiHandle := 0
+global actBarLocked := true
+global lastMemoryCheck := {}
+global RAMStatusText
+global RAMClearingEnabled := true
+global MaxRAMValue := 500
+global SettingsGuiVisible := false
+global ServerListening := false
 
 ; Screen dimensions for GUI positioning
 SysGet, ScreenWidth, 78
@@ -29,13 +36,46 @@ SysGet, ScreenHeight, 79
 ; ==========================================
 ; AUTO-EXECUTE
 ; ==========================================
+LoadSettings()
 CreateTopBarGUI()
 CreateActivationBar()
 SetTimer, AutoRefreshPIDs, 500
 SetTimer, UpdateActivationBar, 1000
 ; Auto-start network server
 SetTimer, AutoStartServer, -1000
+SetTimer, MonitorAndClearRAM, 5000
 return
+
+; ==========================================
+; SETTINGS PERSISTENCE
+; ==========================================
+LoadSettings() {
+    global RAMClearingEnabled, MaxRAMValue, ServerPort
+    
+    settingsFile := A_ScriptDir "\Settings.ini"
+    
+    ; Load RAM Clearing Enabled (default: true/1)
+    IniRead, ramEnabled, %settingsFile%, Settings, RAMClearingEnabled, 1
+    RAMClearingEnabled := ramEnabled
+    
+    ; Load Max RAM Value (default: 500)
+    IniRead, maxRAM, %settingsFile%, Settings, MaxRAMValue, 500
+    MaxRAMValue := maxRAM
+    
+    ; Load Server Port (default: 12345)
+    IniRead, port, %settingsFile%, Settings, ServerPort, 12345
+    ServerPort := port
+}
+
+SaveSettingsToFile() {
+    global RAMClearingEnabled, MaxRAMValue, ServerPort
+    
+    settingsFile := A_ScriptDir "\Settings.ini"
+    
+    IniWrite, %RAMClearingEnabled%, %settingsFile%, Settings, RAMClearingEnabled
+    IniWrite, %MaxRAMValue%, %settingsFile%, Settings, MaxRAMValue
+    IniWrite, %ServerPort%, %settingsFile%, Settings, ServerPort
+}
 
 ; ==========================================
 ; GUI CREATION
@@ -53,7 +93,7 @@ CreateTopBarGUI() {
     
     ; 2. Rappelz Nexus Master Bar
     Gui, TopBar:Font, s11 cRed Bold, Segoe UI
-    Gui, TopBar:Add, Text, x65 y4 w180 h22, Rappelz Nexus Master Bar
+    Gui, TopBar:Add, Text, x75 y4 w180 h22, Rappelz Nexus Master
     Gui, TopBar:Font, s8 cDefault, Segoe UI
     
     ; 3. Win Dropdown
@@ -75,7 +115,7 @@ CreateTopBarGUI() {
     Gui, TopBar:Add, Button, x720 y3 w60 h24 gLaunchUtilityScript, Launch
     
     ; 9. Commands Dropdown
-    Gui, TopBar:Add, DropDownList, x785 y3 w165 h200 vCommandDropdown gOnCommandSelect, AutoFollow Toggle|Character Select RD5|Get Coords|Load Path for All Clients|Start Healing|Stop Healing|Start DPS|Stop DPS|Setup DPS Navigation|Start Travel|Stop Travel
+    Gui, TopBar:Add, DropDownList, x785 y3 w165 h200 vCommandDropdown gOnCommandSelect, AutoFollow Toggle|Character Select BD5|Get Coords|Load Path for All Clients|Start Healing|Stop Healing|Start DPS|Stop DPS|Setup DPS Navigation|Start Travel|Stop Travel
     
     ; 10. Execute
     Gui, TopBar:Add, Button, x955 y3 w60 h24 gExecuteCommand, Execute
@@ -94,21 +134,16 @@ CreateTopBarGUI() {
     Gui, TopBar:Add, Checkbox, x1328 y6 w38 h18 vNetWin7, W7
     Gui, TopBar:Add, Checkbox, x1366 y6 w38 h18 vNetWin8, W8
     
-    ; 13. Port:
+    ; Server Status
     Gui, TopBar:Font, s8 cWhite, Segoe UI
-    Gui, TopBar:Add, Text, x1409 y7 w28 h16, Port:
+    Gui, TopBar:Add, Text, x1409 y7 w90 h16 vServerStatus, Listening: Off
     
-    ; 14. Port Input
-    Gui, TopBar:Font, s8 cBlack, Segoe UI
-    Gui, TopBar:Add, Edit, x1442 y3 w45 h24 vServerPort, %ServerPort%
+    ; Client Count
+    Gui, TopBar:Add, Text, x1504 y7 w65 h16 vClientCount, 0 Clients
     
-    ; 15. Server Listening Status
-    Gui, TopBar:Font, s8 cWhite, Segoe UI
-    Gui, TopBar:Add, Button, x1492 y3 w65 h24 gToggleServer vBtnServerToggle, Start Svr
-    Gui, TopBar:Add, Text, x1562 y7 w90 h16 vServerStatus, Listening: Off
-    
-    ; 16. Client Count
-    Gui, TopBar:Add, Text, x1657 y7 w65 h16 vClientCount, 0 Clients
+    ; 17. RAM Status indicator (initially empty)
+    Gui, TopBar:Font, s8 cLime Bold, Segoe UI
+    Gui, TopBar:Add, Text, x1730 y7 w200 h16 vRAMStatusText,
     
     ; Show the GUI
     Gui, TopBar:Show, x0 y0 w%ScreenWidth% h30,Rappelz Network Controller
@@ -120,54 +155,73 @@ CreateTopBarGUI() {
 CreateActivationBar() {
     global
     ; Create activation bar at bottom of screen
-    Gui, ActBar:New, +ToolWindow -Caption
+    Gui, ActBar:New, +AlwaysOnTop +ToolWindow -Caption
     Gui, ActBar:Color, 0x1E1E1E
     Gui, ActBar:Font, s8, Segoe UI
     
     ; Hide Bar button
     Gui, ActBar:Add, Button, x0 y3 w55 h24 gToggleActBarVisibility, Hide Bar
     
-    ; "Activate Window" label
-    Gui, ActBar:Font, s9 cRed Bold, Segoe UI
-    Gui, ActBar:Add, Text, x65 y5 w120 h20, Activate Window
+    ; Lock/Unlock button
+    Gui, ActBar:Font, s7 cWhite, Segoe UI
+    Gui, ActBar:Add, Button, x60 y3 w50 h24 gToggleActBarLock vBtnActBarLock, Locked
+    
+    ; Settings button
+    Gui, ActBar:Font, s8 cWhite, Segoe UI
+    Gui, ActBar:Add, Button, x115 y3 w60 h24 gOpenSettings, Settings
     
     ; Window activation buttons (initially hidden)
     Gui, ActBar:Font, s8 cWhite, Segoe UI
-    Gui, ActBar:Add, Button, x195 y3 w60 h24 gActivateWin1 vActBtn1 Hidden, Win1
-    Gui, ActBar:Add, Button, x260 y3 w60 h24 gActivateWin2 vActBtn2 Hidden, Win2
-    Gui, ActBar:Add, Button, x325 y3 w60 h24 gActivateWin3 vActBtn3 Hidden, Win3
-    Gui, ActBar:Add, Button, x390 y3 w60 h24 gActivateWin4 vActBtn4 Hidden, Win4
-    Gui, ActBar:Add, Button, x455 y3 w60 h24 gActivateWin5 vActBtn5 Hidden, Win5
-    Gui, ActBar:Add, Button, x520 y3 w60 h24 gActivateWin6 vActBtn6 Hidden, Win6
-    Gui, ActBar:Add, Button, x585 y3 w60 h24 gActivateWin7 vActBtn7 Hidden, Win7
-    Gui, ActBar:Add, Button, x650 y3 w60 h24 gActivateWin8 vActBtn8 Hidden, Win8
+    Gui, ActBar:Add, Button, x180 y3 w60 h24 gActivateWin1 vActBtn1 Hidden, Win1
+    Gui, ActBar:Add, Button, x245 y3 w60 h24 gActivateWin2 vActBtn2 Hidden, Win2
+    Gui, ActBar:Add, Button, x310 y3 w60 h24 gActivateWin3 vActBtn3 Hidden, Win3
+    Gui, ActBar:Add, Button, x375 y3 w60 h24 gActivateWin4 vActBtn4 Hidden, Win4
+    Gui, ActBar:Add, Button, x440 y3 w60 h24 gActivateWin5 vActBtn5 Hidden, Win5
+    Gui, ActBar:Add, Button, x505 y3 w60 h24 gActivateWin6 vActBtn6 Hidden, Win6
+    Gui, ActBar:Add, Button, x570 y3 w60 h24 gActivateWin7 vActBtn7 Hidden, Win7
+    Gui, ActBar:Add, Button, x635 y3 w60 h24 gActivateWin8 vActBtn8 Hidden, Win8
     
     ; Show Thumbnails button
-    Gui, ActBar:Add, Button, x720 y3 w110 h24 gToggleThumbnails vBtnThumbnails, Show Thumbnails
+    Gui, ActBar:Add, Button, x705 y3 w110 h24 gToggleThumbnails vBtnThumbnails, Show Thumbnails
+    
+    ; Reset Position button
+    Gui, ActBar:Add, Button, x820 y3 w70 h24 gResetActBarPosition, Reset Pos
+    
+    ; Logo/placeholder in remaining space
+    logoPath := A_ScriptDir "\logo.png"
+    if (FileExist(logoPath)) {
+        Gui, ActBar:Add, Picture, x962 y0 w60 h30 +0xE, %logoPath%
+    } else {
+        ; Show placeholder text if logo not found
+        Gui, ActBar:Font, s7 cGray, Segoe UI
+        Gui, ActBar:Add, Text, x955 y7 w73 h16 Center, LOGO
+    }
     
     ; Show at y=794
     Gui, ActBar:Show, x0 y794 w1028 h30, Window Activator
     Gui, ActBar:+LastFound
     actBarGuiHandle := WinExist()
+    
+    ; Enable dragging when unlocked
+    OnMessage(0x201, "ActBarWM_LBUTTONDOWN")
 }
 
 UpdateActivationBar:
-    ; Check which windows are available and show/hide buttons accordingly
+    ; Check which game client windows are available and show/hide buttons accordingly
     DetectRunningNexusScripts()
     
-    ; Check if any Nexus window is active and bring ActBar to front if so
+    ; Check if any game client window is active and bring ActBar to front if so
     Loop, 8 {
         winNum := A_Index
         winName := "win" . winNum
         btnControl := "ActBtn" . winNum
         
-        ; Check if this window's Nexus script is running
-        if (NexusPIDs[winName] != "") {
+        ; Check if this game client window exists
+        if WinExist(winName) {
             GuiControl, ActBar:Show, %btnControl%
             
             ; Check if this window is currently active
-            pid := NexusPIDs[winName]
-            if WinActive("ahk_pid " pid) {
+            if WinActive(winName) {
                 Gui, ActBar:Show, NoActivate
             }
         } else {
@@ -212,17 +266,12 @@ return
 ActivateNexusWindow(winName) {
     global NexusPIDs
     
-    ; First activate and show the Nexus manager
-    pid := NexusPIDs[winName]
-    if (pid != "") {
-        WinActivate, ahk_pid %pid%
-        WinShow, ahk_pid %pid%
-    }
-    
-    ; Then immediately activate the game client window on top
+    ; Activate the game client window only
     SetTitleMatchMode, 3  ; Exact match
     WinGet, gameWinID, ID, %winName%
     if (gameWinID) {
+        ; Disable AlwaysOnTop on game window
+        WinSet, AlwaysOnTop, Off, ahk_id %gameWinID%
         WinActivate, ahk_id %gameWinID%
     }
 }
@@ -244,6 +293,57 @@ ToggleActBarVisibility:
         Gui, ActBar:Show, x0 y794 w1028 h30
         GuiControl, ActBar:, Button1, Hide Bar
         GuiControl, ActBar:Move, Button1, x0 y3 w55 h24
+    }
+return
+
+ToggleActBarLock:
+    global actBarLocked
+    actBarLocked := !actBarLocked
+    if (actBarLocked) {
+        GuiControl, ActBar:, BtnActBarLock, Locked
+    } else {
+        GuiControl, ActBar:, BtnActBarLock, Unlocked
+    }
+return
+
+ActBarWM_LBUTTONDOWN() {
+    global actBarLocked
+    ; Only allow dragging if unlocked
+    if (!actBarLocked) {
+        PostMessage, 0xA1, 2  ; WM_NCLBUTTONDOWN, HTCAPTION
+    }
+}
+
+ResetActBarPosition:
+    global thumbnailsVisible
+    
+    ; Move all game windows to 0,0
+    SetTitleMatchMode, 3  ; Exact match
+    Loop, 8 {
+        winName := "win" . A_Index
+        WinGet, gameWinID, ID, %winName%
+        if (gameWinID) {
+            WinMove, ahk_id %gameWinID%, , 0, 0
+        }
+    }
+    
+    ; Calculate current height based on thumbnail visibility
+    if (thumbnailsVisible) {
+        ; Get current thumbnail count to calculate proper height
+        global ThumbnailData
+        activeCount := ThumbnailData.Length()
+        if (activeCount > 0) {
+            rows := Ceil(activeCount / 4.0)
+            totalHeight := 35 + (rows * (150 + 20 + 5))
+            maxHeight := 234
+            if (totalHeight > maxHeight)
+                totalHeight := maxHeight
+            Gui, ActBar:Show, x0 y794 w1028 h%totalHeight%
+        } else {
+            Gui, ActBar:Show, x0 y794 w1028 h30
+        }
+    } else {
+        Gui, ActBar:Show, x0 y794 w1028 h30
     }
 return
 
@@ -289,6 +389,11 @@ ShowThumbnails:
     
     ; Calculate total height needed
     totalHeight := startY + (rows * (thumbHeight + 20 + spacing))
+    
+    ; Cap at y1028 (794 + 234 = 1028)
+    maxHeight := 234
+    if (totalHeight > maxHeight)
+        totalHeight := maxHeight
     
     ; Expand bar downward from y794
     Gui, ActBar:Show, x0 y794 w1028 h%totalHeight%
@@ -470,11 +575,13 @@ return
 ; AUTO-START SERVER
 ; ==========================================
 AutoStartServer:
-    global ServerPort
+    global ServerPort, ServerListening
     If (i := AHKsock_Listen(ServerPort, "ServerEvents")) {
         MsgBox, ERROR: Auto-start server failed with code %i%`nErrorLevel: %ErrorLevel%
     } Else {
+        ServerListening := true
         GuiControl, TopBar:, BtnServerToggle, Stop Svr
+        GuiControl, Settings:, BtnServerToggle, Stop Server
         GuiControl, TopBar:, ServerStatus, Listening: On
     }
 return
@@ -505,20 +612,20 @@ return
 
 ToggleSelectAll:
     Gui, TopBar:Submit, NoHide
-    GuiControlGet, btnText,, Button6
+    GuiControlGet, btnText,, Button7
     
     If (InStr(btnText, "Select All")) {
         ; Check all windows
         Loop, 8 {
             GuiControl, TopBar:, NetWin%A_Index%, 1
         }
-        GuiControl, TopBar:, Button6, Select None
+        GuiControl, TopBar:, Button7, Select None
     } Else {
         ; Uncheck all windows
         Loop, 8 {
             GuiControl, TopBar:, NetWin%A_Index%, 0
         }
-        GuiControl, TopBar:, Button6, Select All
+        GuiControl, TopBar:, Button7, Select All
     }
 return
 
@@ -664,7 +771,9 @@ ToggleLauncherGui:
 return
 
 ToggleServer:
+    global ServerListening
     Gui, TopBar:Submit, NoHide
+    Gui, Settings:Submit, NoHide
     GuiControlGet, btnText,, BtnServerToggle
     
     If (InStr(btnText, "Start")) {
@@ -672,13 +781,17 @@ ToggleServer:
         If (i := AHKsock_Listen(ServerPort, "ServerEvents")) {
             MsgBox, ERROR: Failed to start server (code %i%)
         } Else {
+            ServerListening := true
             GuiControl, TopBar:, BtnServerToggle, Stop Svr
+            GuiControl, Settings:, BtnServerToggle, Stop Server
             GuiControl, TopBar:, ServerStatus, Listening: On
         }
     } Else {
         ; Stop listening
         AHKsock_Listen(ServerPort, False)
+        ServerListening := false
         GuiControl, TopBar:, BtnServerToggle, Start Svr
+        GuiControl, Settings:, BtnServerToggle, Start Server
         GuiControl, TopBar:, ServerStatus, Listening: Off
     }
 return
@@ -2761,3 +2874,177 @@ through the Internet. You may change the probability of failure by changing the 
 If your application can still work after uncommenting the block, then it is a sign that it is properly handling frames split
 across multiple RECEIVED events. This would also demonstrate your application's ability to cope with partially sent data.
                 */
+
+; ==========================================
+; RAM MONITORING FUNCTIONS
+; ==========================================
+MonitorAndClearRAM:
+Loop, 8
+{
+    windowName := "win" . A_Index
+    CheckAndClearMemory(windowName)
+}
+return
+
+CheckAndClearMemory(windowName)
+{
+    global lastMemoryCheck, RAMClearingEnabled, MaxRAMValue
+    
+    if (!RAMClearingEnabled)
+        return
+    
+    WinGet, pid, PID, %windowName%
+    if (!pid)
+        return
+    
+    currentMem := GetProcessMemoryMB(pid)
+    if (currentMem >= MaxRAMValue)
+    {
+        ClearProcessMemory(pid, windowName, currentMem)
+        lastMemoryCheck[windowName] := A_TickCount
+    }
+}
+
+GetProcessMemoryMB(pid)
+{
+    for proc in ComObjGet("winmgmts:").ExecQuery("SELECT WorkingSetSize FROM Win32_Process WHERE ProcessId=" . pid)
+        return Round(proc.WorkingSetSize / 1024 / 1024, 2)
+    return 0
+}
+
+ClearProcessMemory(pid, windowName, memBefore)
+{
+    hProcess := DllCall("OpenProcess", "UInt", 0x0400 | 0x0100, "Int", 0, "UInt", pid, "Ptr")
+    if (hProcess)
+    {
+        DllCall("kernel32\SetProcessWorkingSetSize", "Ptr", hProcess, "Ptr", -1, "Ptr", -1)
+        DllCall("CloseHandle", "Ptr", hProcess)
+        
+        Sleep, 100
+        memAfter := GetProcessMemoryMB(pid)
+        memFreed := memBefore - memAfter
+        
+        ; Update GUI text in green
+        GuiControl, TopBar:Font, RAMStatusText
+        Gui, TopBar:Font, s8 cLime Bold, Segoe UI
+        GuiControl, TopBar:Font, RAMStatusText
+        GuiControl, TopBar:, RAMStatusText, % "RAM Cleared: " . windowName . " (" . Round(memFreed, 1) . " MB)"
+        
+        SetTimer, ResetRAMStatusColor, -5000
+    }
+}
+
+ResetRAMStatusColor:
+Gui, TopBar:Font, s8 c0x2D2D30, Segoe UI
+GuiControl, TopBar:Font, RAMStatusText
+GuiControl, TopBar:, RAMStatusText,
+return
+
+; ==========================================
+; SETTINGS GUI
+; ==========================================
+OpenSettings:
+    global SettingsGuiVisible, RAMClearingEnabled, MaxRAMValue, ServerPort, ServerListening
+    
+    if (SettingsGuiVisible) {
+        Gui, Settings:Destroy
+        SettingsGuiVisible := false
+        return
+    }
+    
+    ; Create Settings GUI
+    Gui, Settings:New, +AlwaysOnTop +ToolWindow
+    Gui, Settings:Color, 0x1E1E1E
+    Gui, Settings:Font, s9 cWhite, Segoe UI
+    
+    ; RAM Clearing Toggle - ensure numeric value for Checked parameter
+    If RAMClearingEnabled
+        Gui, Settings:Add, Checkbox, x10 y10 w200 h20 vRAMClearingEnabled gToggleRAMClearing Checked, Enable RAM Clearing
+    Else
+        Gui, Settings:Add, Checkbox, x10 y10 w200 h20 vRAMClearingEnabled gToggleRAMClearing, Enable RAM Clearing
+    
+    ; Max RAM (MB):
+    Gui, Settings:Font, s9 cWhite, Segoe UI
+    Gui, Settings:Add, Text, x10 y40 w90 h20, Max RAM (MB):
+    Gui, Settings:Font, s9 cBlack, Segoe UI
+    Gui, Settings:Add, Edit, x105 y37 w88 h22 vMaxRAMValue, %MaxRAMValue%
+    Gui, Settings:Add, Button, x195 y37 w10 h11 gIncreaseRAM, ▲
+    Gui, Settings:Add, Button, x195 y48 w10 h11 gDecreaseRAM, ▼
+    
+    ; Server Port:
+    Gui, Settings:Font, s9 cWhite, Segoe UI
+    Gui, Settings:Add, Text, x10 y70 w90 h20, Server Port:
+    Gui, Settings:Font, s9 cBlack, Segoe UI
+    Gui, Settings:Add, Edit, x105 y67 w105 h22 vServerPort, %ServerPort%
+    
+    ; Server Toggle Button
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    If ServerListening
+        Gui, Settings:Add, Button, x10 y95 w200 h24 gToggleServer vBtnServerToggle, Stop Server
+    Else
+        Gui, Settings:Add, Button, x10 y95 w200 h24 gToggleServer vBtnServerToggle, Start Server
+    
+    ; Show GUI centered on screen
+    Gui, Settings:Show, x0 y664 w220 h130, Settings
+    SettingsGuiVisible := true
+return
+
+SettingsGuiClose:
+SettingsGuiEscape:
+    global SettingsGuiVisible, MaxRAMValue, ServerPort
+    Gui, Settings:Submit, NoHide
+    ; Validate and save settings when closing
+    if (MaxRAMValue < 100)
+        MaxRAMValue := 100
+    if (MaxRAMValue > 10000)
+        MaxRAMValue := 10000
+    SaveSettingsToFile()
+    Gui, Settings:Destroy
+    SettingsGuiVisible := false
+return
+
+ToggleRAMClearing:
+    global RAMClearingEnabled
+    Gui, Settings:Submit, NoHide
+    SaveSettingsToFile()
+return
+
+IncreaseRAM:
+    global MaxRAMValue
+    Gui, Settings:Submit, NoHide
+    MaxRAMValue += 50
+    if (MaxRAMValue > 10000)
+        MaxRAMValue := 10000
+    GuiControl, Settings:, MaxRAMValue, %MaxRAMValue%
+    SaveSettingsToFile()
+return
+
+DecreaseRAM:
+    global MaxRAMValue
+    Gui, Settings:Submit, NoHide
+    MaxRAMValue -= 50
+    if (MaxRAMValue < 100)
+        MaxRAMValue := 100
+    GuiControl, Settings:, MaxRAMValue, %MaxRAMValue%
+    SaveSettingsToFile()
+return
+
+SaveMaxRAM:
+    global MaxRAMValue
+    Gui, Settings:Submit, NoHide
+    ; Ensure it's a valid number
+    if (MaxRAMValue < 100)
+        MaxRAMValue := 100
+    if (MaxRAMValue > 10000)
+        MaxRAMValue := 10000
+    GuiControl, Settings:, MaxRAMValue, %MaxRAMValue%
+    SaveSettingsToFile()
+return
+
+SaveServerPort:
+    global ServerPort
+    Gui, Settings:Submit, NoHide
+    ; Update the global port variable
+    GuiControl, TopBar:, ServerPort, %ServerPort%
+    SaveSettingsToFile()
+return
