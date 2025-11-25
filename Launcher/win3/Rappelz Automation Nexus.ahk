@@ -224,6 +224,7 @@ global invclosed := false
 global autoDuraEnabled := false
 global autoDuraInterval := 30 ; 30 minutes default
 global repairPattern := "|<>**23$14.007ztzyFWYqdMeQ6aX9pOKvYvNzyTzU02"
+repairPattern .="|<>*56$14.007ztzyTXbktsCQ7a3tlSSvbzNzyTzU02"
 global DPSHoldHotkey := "" ; saved hotkey string (e.g. F1)
 global DPSHotkeyTimerInterval := 200 ; ms
 global DPSToggleHotkey := "Insert" ; Default hotkey for start/stop DPS
@@ -1120,7 +1121,7 @@ CreateCombinedGUI:
     ; Show GUI
     Gui, Show, x1024 y30 w540 h680, Rappelz Automation Nexus
     gui, +AlwaysOnTop
-    
+    UpdateWindowStatusDisplay()
     ; Auto-connect to server after 1 second
     SetTimer, AutoConnectToServer, -1000
     ;SetTimer, CheckWindowActivity, 500
@@ -1166,87 +1167,95 @@ CreateCombinedGUI:
     ;InitializeNavigation()
 return
 LoadGameWindowSettings() {
-    global TargetGameWindow, TargetGameTitle, TargetGamePID, iniFile, win1, NavTargetGameWindow, NavTargetGamePID
+    global TargetGameWindow, TargetGameTitle, TargetGamePID, iniFile, win1, NavTargetGameWindow, NavTargetGamePID, selectedWindow
 
     ; Auto-detect window based on script folder name
     SplitPath, A_ScriptDir, folderName
     expectedWindowTitle := folderName ; win1, win2, win3, etc.
-    
+
     ; Check if window with expected title exists
     WinGet, win1ID, ID, %expectedWindowTitle%
     if (win1ID) {
-        TargetGameWindow := win1ID
         win1 := win1ID
-        TargetGameTitle := expectedWindowTitle
+        selectedWindow := win1ID
+        ; Get the actual window title (not just folder name)
+        WinGetTitle, actualTitle, ahk_id %win1ID%
+        TargetGameTitle := actualTitle
         WinGet, win1PID, PID, ahk_id %win1ID%
         TargetGamePID := win1PID
         NavTargetGameWindow := win1ID
         NavTargetGamePID := win1PID
+        TargetGameWindow := win1ID
+
         FindText().BindWindow(win1ID)
+       ;ToolTip, Selected window: %actualTitle% (ID: %win1ID%)
+       ; SetTimer, RemoveToolTip, -2000
         SetTimer, UpdateWindowDisplayDelayed, -200
-        MsgBox, 0, Auto-Selected, Window "%expectedWindowTitle%" automatically selected!, 2
-        return
+        UpdateWindowStatusDisplay()
+        sleep 500
+        ;MsgBox, 0, Auto-Selected, Window "%expectedWindowTitle%" automatically selected!, 2
     }
 
     IniRead, loadedWindowID, %iniFile%, GameWindow, WindowID, 
     IniRead, loadedWindowTitle, %iniFile%, GameWindow, WindowTitle, 
     IniRead, loadedPID, %iniFile%, GameWindow, WindowPID,
+    IniRead, savedNavCameraFile, navpathingsettings.ini, Settings, CameraFile, ERROR
+    IniRead, savedMainCameraFile, pathingsettings.ini, Settings, CameraFile, ERROR
 
     ; Check if we have a saved PID
     if (loadedPID != "" && loadedPID != "ERROR") {
         ; Try to find the window by PID
         WinGet, winIDFromPID, ID, ahk_pid %loadedPID%
         if (winIDFromPID) {
-            ; Window with this PID still exists
-            TargetGameWindow := winIDFromPID
-            win1 := winIDFromPID
-            TargetGamePID := loadedPID
-            NavTargetGameWindow := winIDFromPID
-            NavTargetGamePID := loadedPID
-
-            ; Get current window title (may have changed)
-            WinGetTitle, currentTitle, ahk_id %winIDFromPID%
-            TargetGameTitle := currentTitle
-
-            ; Bind the window
+            WinMove, ahk_id %winIDFromPID%, , 0, 0
+            ; Set up for healing system
             FindText().BindWindow(winIDFromPID)
+            global TargetGameWindow := winIDFromPID
+            global TargetGameTitle := loadedWindowTitle
+            global TargetGamePID := loadedPID
+            global windowWasClosed := false
+            global win1 := winIDFromPID
+            ; Set up for navigation system
+            global NavTargetGameWindow := winIDFromPID
+            global NavTargetGamePID := loadedPID
 
-            ; Show success message
-            MsgBox, Previous client found and window has been re-selected!`nWindow: %currentTitle%
+            ; Handle camera file selection for both systems
+            selectedCameraFile := ""
+            if (savedNavCameraFile != "ERROR" && FileExist(savedNavCameraFile)) {
+                selectedCameraFile := savedNavCameraFile
+            }
+            else if (savedMainCameraFile != "ERROR" && FileExist(savedMainCameraFile)) {
+                selectedCameraFile := savedMainCameraFile
+            }
 
-            ; Update display
-            SetTimer, UpdateWindowDisplayDelayed, -200
-            return
+            ; If no saved file or user declined, ask for new file
+            if (selectedCameraFile = "") {
+                FileSelectFile, selectedCameraFile, 1,, Select Camera File, TXT Files (*.txt)
+            }
+
+            ; Apply camera file to both systems if selected
+            if (selectedCameraFile != "") {
+                ; Set up navigation camera
+                NavCameraFile := selectedCameraFile
+                LoadNavCameraSettings(NavCameraFile)
+                GuiControl,, NavCameraFile, Camera: %NavCameraFile%
+                GuiControl,, NavRadiusEdit, %NavCameraRadius%
+
+                ; Set up main camera
+                CameraFile := selectedCameraFile
+                LoadCameraSettings(CameraFile)
+
+                MsgBox, Camera file loaded for both systems: %selectedCameraFile%
+                SaveNavSettings()
+                SaveSettings()
+            }
+            ; Move the selected window to 0,0 (top-left corner of the screen)
+            UpdateHealerStatus("Selected window: " . loadedWindowTitle)
+            SaveGameWindowSettings()
+            UpdateWindowStatusDisplay()
+            sleep, 500
         }
     }
-
-    ; Fallback: Try to use old WindowID method if PID not found
-    if (loadedWindowID != "" && loadedWindowID != "ERROR") {
-        TargetGameWindow := loadedWindowID
-        win1 := loadedWindowID
-        NavTargetGameWindow := loadedWindowID
-        if (loadedWindowTitle != "" && loadedWindowTitle != "ERROR") {
-            TargetGameTitle := loadedWindowTitle
-        }
-        ; Verify window still exists
-        WinGet, testPID, PID, ahk_id %TargetGameWindow%
-        if (ErrorLevel) {
-            ; Window doesn't exist anymore, clear settings
-            TargetGameWindow := ""
-            TargetGameTitle := ""
-            TargetGamePID := ""
-            win1 := ""
-            NavTargetGameWindow := ""
-            NavTargetGamePID := ""
-        } else {
-            ; Window exists, bind it
-            NavTargetGamePID := testPID
-            FindText().BindWindow(TargetGameWindow)
-        }
-    }
-
-    ; Update display after loading
-    SetTimer, UpdateWindowDisplayDelayed, -200
 }
 templardpsing:
     if (templardps)
@@ -10876,15 +10885,23 @@ AssignHealKeys:
                                                                     return
 
                                                                     UpdateWindowStatusDisplay() {
-                                                                        global TargetGameTitle
+                                                                                global TargetGameTitle, actualtitle
 
-                                                                        if (TargetGameTitle != "" && TargetGameTitle != "ERROR") {
-                                                                            statusText := "Window: " . TargetGameTitle
-                                                                            GuiControl,, WindowStatus, %statusText%
-                                                                        } else {
-                                                                            GuiControl,, WindowStatus, No window selected
-                                                                        }
-                                                                    }
+                                                                                if (TargetGameTitle != "" && TargetGameTitle != "ERROR") {
+                                                                                    statusText := "Window: " . TargetGameTitle
+                                                                                    ;ToolTip, [UpdateWindowStatusDisplay] Setting WindowStatus to: %statusText%
+                                                                                    GuiControl,, WindowStatus, %statusText%
+                                                                                    ;Sleep, 1000
+                                                                                    ;ToolTip
+                                                                                    Gui, Show
+                                                                                } else {
+                                                                                    ;ToolTip, [UpdateWindowStatusDisplay] Setting WindowStatus to: No window selected
+                                                                                    GuiControl,, WindowStatus, No window selected
+                                                                                    ;Sleep, 1000
+                                                                                    ;ToolTip
+                                                                                    Gui, Show
+                                                                                }
+                                                                            }
 
                                                                     ; ========= PROFILE MANAGEMENT FUNCTIONS =========
                                                                     SaveProfile() {
