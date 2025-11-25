@@ -857,7 +857,7 @@ ExecuteCommand:
     ; Map dropdown selection to network command
     If (CommandDropdown = "AutoFollow Toggle")
         command := "AUTOFOLLOW"
-    Else If (CommandDropdown = "Character Select RD5")
+    Else If (CommandDropdown = "Character Select BD5")
         command := "CHARSELECT"
     Else If (CommandDropdown = "Get Coords") {
         ; Get Coords needs to be done sequentially, one window at a time
