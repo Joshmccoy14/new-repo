@@ -224,8 +224,7 @@ global invclosed := false
 global autoDuraEnabled := false
 global autoDuraInterval := 30 ; 30 minutes default
 global repairPattern := "|<>**23$14.007ztzyFWYqdMeQ6aX9pOKvYvNzyTzU02"
-repairPattern .="|<>*56$14.007ztzyTXbktsCQ7a3tlSSvbzNzyTzU02"
-global DPSHoldHotkey := "" ; saved hotkey string (e.g. F1)
+repairPattern .="|<>*56$14.007ztzyTXbktsCQ7a3tlSSvbzNzyTzU02"global DPSHoldHotkey := "" ; saved hotkey string (e.g. F1)
 global DPSHotkeyTimerInterval := 200 ; ms
 global DPSToggleHotkey := "Insert" ; Default hotkey for start/stop DPS
 global autofollowhotkeydefault := "F10"
@@ -1119,7 +1118,7 @@ CreateCombinedGUI:
     GuiControl,, AutoFollowHotkey, %autofollowhotkeydefault%
 
     ; Show GUI
-    Gui, Show, x1024 y30 w540 h680, Rappelz Automation Nexus
+    Gui, Show, x1024 y30 w540 h680, Rappelz Automation Nexus WIN8
     gui, +AlwaysOnTop
     UpdateWindowStatusDisplay()
     ; Auto-connect to server after 1 second
@@ -3175,7 +3174,7 @@ DestroyskyPotionstimer:
         }
 
         destroypotions := true
-        SetTimer, DestroyskyPotions, 2000
+        SetTimer, DestroyskyPotions, 1200000 ; 20 minutes in milliseconds
         DestroySkyPotions()
     }
     else
@@ -16287,6 +16286,7 @@ AssignHealKeys:
                                                             ; Reset flag when commands are done executing
                                                             IsExecutingCommand := false
                                                         }
+                                                        
 
                                                         ExecuteScriptBlock(scriptCode) {
                                                             ; Get current coordinates for use in scripts
@@ -26509,12 +26509,12 @@ across multiple RECEIVED events. This would also demonstrate your application's 
             ; Start healing timer
             global healCheckInterval
             AddLog("[Network] Starting healing")
-            SetTimer, CheckHealth, %healCheckInterval%
+            SetTimer, DynamicHealthCheck, %healCheckInterval%
 
         } Else If (command = "STOPHEALING") {
             ; Stop healing timer
             AddLog("[Network] Stopping healing")
-            SetTimer, CheckHealth, Off
+            SetTimer, DynamicHealthCheck, Off
 
         } Else If (command = "STARTDPS") {
             ; Start DPS timer

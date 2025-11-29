@@ -1119,7 +1119,7 @@ CreateCombinedGUI:
     GuiControl,, AutoFollowHotkey, %autofollowhotkeydefault%
 
     ; Show GUI
-    Gui, Show, x1024 y30 w540 h680, Rappelz Automation Nexus
+    Gui, Show, x1024 y30 w540 h680, Rappelz Automation Nexus WIN3
     gui, +AlwaysOnTop
     UpdateWindowStatusDisplay()
     ; Auto-connect to server after 1 second
@@ -3175,7 +3175,7 @@ DestroyskyPotionstimer:
         }
 
         destroypotions := true
-        SetTimer, DestroyskyPotions, 2000
+        SetTimer, DestroyskyPotions, 1200000
         DestroySkyPotions()
     }
     else
@@ -10341,7 +10341,7 @@ AssignHealKeys:
                                                                         }
                                                                         sleep, 150
                                                                     return
-                                                                    sellitems:
+                                                                   sellitems:
 
                                                                                 sellscroll:="|<>#47@0.83$7.2DcYG8YD1FUE8h7E"
                                                                                 sellscroll.="|<>*133$27.zzzzzzzzzzzzs7zzsDzzkzzzkq0zkE07ss01w800oM01z0M0AQDk00290I0F018280E0D0010w0003M000N00M34062N008/M070Q070107L007uw"
@@ -10885,15 +10885,23 @@ AssignHealKeys:
                                                                     return
 
                                                                     UpdateWindowStatusDisplay() {
-                                                                        global TargetGameTitle
+                                                                                global TargetGameTitle, actualtitle
 
-                                                                        if (TargetGameTitle != "" && TargetGameTitle != "ERROR") {
-                                                                            statusText := "Window: " . TargetGameTitle
-                                                                            GuiControl,, WindowStatus, %statusText%
-                                                                        } else {
-                                                                            GuiControl,, WindowStatus, No window selected
-                                                                        }
-                                                                    }
+                                                                                if (TargetGameTitle != "" && TargetGameTitle != "ERROR") {
+                                                                                    statusText := "Window: " . TargetGameTitle
+                                                                                    ;ToolTip, [UpdateWindowStatusDisplay] Setting WindowStatus to: %statusText%
+                                                                                    GuiControl,, WindowStatus, %statusText%
+                                                                                    ;Sleep, 1000
+                                                                                    ;ToolTip
+                                                                                    Gui, Show
+                                                                                } else {
+                                                                                    ;ToolTip, [UpdateWindowStatusDisplay] Setting WindowStatus to: No window selected
+                                                                                    GuiControl,, WindowStatus, No window selected
+                                                                                    ;Sleep, 1000
+                                                                                    ;ToolTip
+                                                                                    Gui, Show
+                                                                                }
+                                                                            }
 
                                                                     ; ========= PROFILE MANAGEMENT FUNCTIONS =========
                                                                     SaveProfile() {
@@ -26509,12 +26517,12 @@ across multiple RECEIVED events. This would also demonstrate your application's 
             ; Start healing timer
             global healCheckInterval
             AddLog("[Network] Starting healing")
-            SetTimer, CheckHealth, %healCheckInterval%
+            SetTimer, DynamicHealthCheck, %healCheckInterval%
 
         } Else If (command = "STOPHEALING") {
             ; Stop healing timer
             AddLog("[Network] Stopping healing")
-            SetTimer, CheckHealth, Off
+            SetTimer, DynamicHealthCheck, Off
 
         } Else If (command = "STARTDPS") {
             ; Start DPS timer

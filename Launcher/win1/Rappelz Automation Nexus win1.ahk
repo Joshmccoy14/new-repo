@@ -1120,7 +1120,7 @@ CreateCombinedGUI:
     GuiControl,, AutoFollowHotkey, %autofollowhotkeydefault%
 
     ; Show GUI
-    Gui, Show, x1024 y30 w540 h680, Rappelz Automation Nexus
+    Gui, Show, x1024 y30 w540 h680, Rappelz Automation Nexus WIN1
     gui, +AlwaysOnTop
     UpdateWindowStatusDisplay()
 
@@ -3177,7 +3177,7 @@ DestroyskyPotionstimer:
         }
 
         destroypotions := true
-        SetTimer, DestroyskyPotions, 2000
+        SetTimer, DestroyskyPotions, 1200000
         DestroySkyPotions()
     }
     else
@@ -26519,12 +26519,12 @@ across multiple RECEIVED events. This would also demonstrate your application's 
                 ; Start healing timer
                 global healCheckInterval
                 AddLog("[Network] Starting healing")
-                SetTimer, CheckHealth, %healCheckInterval%
+                SetTimer, DynamicHealthCheck, %healCheckInterval%
 
             } Else If (command = "STOPHEALING") {
                 ; Stop healing timer
                 AddLog("[Network] Stopping healing")
-                SetTimer, CheckHealth, Off
+                SetTimer, DynamicHealthCheck, Off
 
             } Else If (command = "STARTDPS") {
                 ; Start DPS timer

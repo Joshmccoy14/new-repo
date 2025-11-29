@@ -88,6 +88,7 @@ ShowMainGui() {
     global Auto1, Auto2, Auto3, Auto4, Auto5, Auto6, Auto7, Auto8
     
     Gui, Main:New, +AlwaysOnTop
+    Gui, Main:Color, Default
     Gui, Main:Font, s10 Bold
     Gui, Add, Text, x20 y15, Rappelz Multi-Client Launcher
     Gui, Main:Font
@@ -113,7 +114,9 @@ ShowMainGui() {
         autoChecked := AccountData[A_Index].AutoScript ? "Checked" : ""
         winLabel := "win" . A_Index
         Gui, Add, Checkbox, x30 y%yPos% vCheck%A_Index% %checked%
+        Gui, Main:Font, s8 cRed
         Gui, Add, Text, x80 y%yPos% w40, %winLabel%
+        Gui, Main:Font
         Gui, Add, Edit, x130 y%yPos% w120 vUser%A_Index%, % AccountData[A_Index].Username
         Gui, Add, Edit, x260 y%yPos% w120 vPass%A_Index% Password, % AccountData[A_Index].Password
         Gui, Add, Checkbox, x405 y%yPos% vAuto%A_Index% %autoChecked%
