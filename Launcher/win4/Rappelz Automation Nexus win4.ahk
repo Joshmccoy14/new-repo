@@ -604,13 +604,16 @@ CreateCombinedGUI:
     gui, add, checkbox, x340 y200 w180 vdestroyskypotionstimer gdestroyskypotionstimer, Destroy Potions (5 mins)
     gui, add, checkbox, x340 y220 w130 vinfinitemouse ginfinitemouse, Infinite Mouse
     Gui, Add, Checkbox, x30 y240 w140 h20 vrefreshscrollEnabled grefreshscrollToggle, Enable refresh scroll (1 Hr)
-    Gui, Add, Text, x240 y240 w150 h20 vrefreshScrollTimer, Time left: --:--:--
+    Gui, Add, Text, x240 y240 w90 h20 vrefreshScrollTimer, Time left: --:--:--
     Gui, Add, Edit, x180 y240 w50 h20 vrefreshKey grefreshKeyChanged
     GuiControl, Hide, refreshKeyLabel
     GuiControl, Hide, refreshKey
-    ; Keyboard Layout Section
-    ;Gui, Add, GroupBox, x20 y240 w200 h30, Keyboard Layout
-    ;gui, add, checkbox, x30 y255 w150 vqwertzmode gqwertzmode, QWERTZ-Keys
+    ; === Chat Buffs Checkbox ===
+    Gui, Add, Checkbox, x340 y240 w110 vchatbuff gChatBuffToggle, Enable Chat Buffs
+    Gui, Add, Text, x340 y265 w45 h20, Chat Buff 
+    Gui, Add, Text, x400 y265 w40 h20 vchatBuffTimeLeft, --:--:--
+    Gui, Add, Edit, x450 y240 w40 h20 vchatBuffTimerEdit, 63
+    Gui, Add, Button, x450 y265 w40 h20 gSaveChatBuffTimer, Save
 
     ; Auto-Resurrection Section
     Gui, Add, GroupBox, x20 y280 w470 h70, Auto-Resurrection
@@ -6160,6 +6163,68 @@ AssignHealKeys:
                                         }
                                     return
 
+                                    
+                                    ChatBuffToggle:
+                                        Gui, Submit, NoHide
+                                        if (chatbuff) {
+                                            IniRead, chatBuffCommandGlobal, %SettingsFile%, Settings, chatBuffCommand, /info
+                                            InputBox, chatBuffCommandGlobal, Chat Buff Command, Enter chat command:, , 300, 120, , , , , %chatBuffCommandGlobal%
+                                            if (!ErrorLevel && chatBuffCommandGlobal != "") {
+                                                IniWrite, %chatBuffCommandGlobal%, %SettingsFile%, Settings, chatBuffCommand
+                                                if (win1 != "") {
+                                                    gosub, SendChatBuffCommand
+                                                    SetTimer, SendChatBuffCommand, % (chatBuffTimerEdit * 60 * 1000)
+                                                    SetTimer, UpdateChatBuffTimeLeft, 1000
+                                                    chatBuffStartTime := A_TickCount
+                                                }
+                                            } else {
+                                                GuiControl,, chatbuff, 0
+                                                chatbuff := false
+                                            }
+                                        } else {
+                                            SetTimer, SendChatBuffCommand, Off
+                                            SetTimer, UpdateChatBuffTimeLeft, Off
+                                            GuiControl,, chatBuffTimeLeft, --:--:--
+                                        }
+                                        IniWrite, %chatbuff%, %SettingsFile%, Settings, chatbuff
+                                    return
+
+                                    SendChatBuffCommand:
+                                        if (win1 != "" && chatBuffCommandGlobal != "") {
+                                            WinActivate, ahk_id %win1%
+                                            Sleep, 150
+                                            Clipboard := chatBuffCommandGlobal
+                                            Send, {Enter}
+                                            Sleep, 80
+                                            Send, ^v
+                                            Sleep, 80
+                                            Send, {Enter}
+                                            chatBuffStartTime := A_TickCount
+                                        }
+                                    return
+
+                                    UpdateChatBuffTimeLeft:
+                                        global chatBuffStartTime, chatBuffTimerEdit
+                                        if (!chatBuffStartTime)
+                                            chatBuffStartTime := A_TickCount
+                                        interval := chatBuffTimerEdit ? chatBuffTimerEdit : 63
+                                        intervalMs := interval * 60 * 1000
+                                        elapsed := A_TickCount - chatBuffStartTime
+                                        remaining := intervalMs - elapsed
+                                        if (remaining < 0)
+                                            remaining := 0
+                                        minutes := Floor(remaining / 60000)
+                                        seconds := Floor(Mod(remaining, 60000) / 1000)
+                                        GuiControl,, chatBuffTimeLeft, % Format("{:02}:{:02}", minutes, seconds)
+                                    return
+
+                                    savechatbufftimer:
+                                        Gui, Submit, NoHide
+                                        ; Save the chat buff timer interval to INI
+                                        IniWrite, %chatBuffTimerEdit%, %SettingsFile%, ChatBuff, TimerInterval
+                                        ToolTip, Chat buff timer interval saved!, 10, 10, 4
+                                        SetTimer, RemoveStartAllTooltip, -1500
+                                    return
                                     StartAllTimers:
                                         Gui, Submit, NoHide
 
@@ -6185,6 +6250,40 @@ AssignHealKeys:
                                             MsgBox, 48, Error, Please configure at least one key sequence!
                                             return
                                         }
+                                        ; Ask if user wants to use chat buffs
+                                        MsgBox, 4, Chat Buffs, Do you want to activate a chat buff (e.g. /info or custom command)?
+                                        IfMsgBox Yes
+                                        {
+                                            ; Load last used chat command from INI
+                                            IniRead, lastChatBuff, %SettingsFile%, ChatBuff, Command, /info
+                                            ; Show input box with last used command pre-filled
+                                            InputBox, chatBuffCommand, Enter Chat Buff Command, Enter the chat command to use (more power):, , 400, 120, , , , , %lastChatBuff%
+                                            if (!ErrorLevel && chatBuffCommand != "")
+                                            {
+                                                ; Save to INI for next time
+                                                IniWrite, %chatBuffCommand%, %SettingsFile%, ChatBuff, Command
+                                                ; If /info, send it to the game window
+                                                if (TargetGameWindow != "")
+                                                {
+                                                    WinActivate, ahk_id %TargetGameWindow%
+                                                    Sleep, 150
+                                                    Clipboard := chatBuffCommand
+                                                    Send, {Enter}
+                                                    Sleep, 80
+                                                    Send, ^v
+                                                    Sleep, 80
+                                                    Send, {Enter}
+                                                    Sleep, 300
+                                                    ; Set timer to send chat buff at the correct interval (minutes)
+                                                    global chatBuffCommandGlobal := chatBuffCommand
+                                                    interval := chatBuffTimerEdit ? chatBuffTimerEdit : 63
+                                                    intervalMs := interval * 60 * 1000
+                                                    SetTimer, SendChatBuffCommand, %intervalMs%
+                                                }
+                                            }
+                                        }
+
+                                        
 
                                         ; Ask about pet buffs
                                         MsgBox, 4, Pet Buffs, Do you want to activate both pet buffs (DT and Gnoll)?
@@ -6196,7 +6295,7 @@ AssignHealKeys:
                                         {
                                             activatePetBuffs := false
                                         }
-
+                                         
                                         ; Activate Death Tyrant buff BEFORE Sequence 1 if requested
                                         if (activatePetBuffs && !dtbuff) {
                                             dtbuff := true
@@ -6297,6 +6396,7 @@ AssignHealKeys:
                                         ToolTip, All configured timers started!, 10, 10, 4
                                         SetTimer, RemoveStartAllTooltip, -2000
                                     return
+
 
                                     RemoveStartAllTooltip:
                                         ToolTip,,,,4
@@ -26510,6 +26610,11 @@ across multiple RECEIVED events. This would also demonstrate your application's 
             global healCheckInterval
             AddLog("[Network] Starting healing")
             SetTimer, DynamicHealthCheck, %healCheckInterval%
+
+        } Else If (command = "Buff") {
+                ; Start buff cycle
+                AddLog("[Network] Starting Buff Cycle")
+                gosub, StartAllTimers
 
         } Else If (command = "STOPHEALING") {
             ; Stop healing timer

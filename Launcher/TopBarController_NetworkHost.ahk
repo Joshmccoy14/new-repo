@@ -138,7 +138,7 @@ CreateTopBarGUI() {
 
     ; 4. Commands Dropdown (was at X:410, now shift left to X:235)
     Gui, TopBar:Font, s8, Segoe UI
-    Gui, TopBar:Add, DropDownList, x235 y3 w160 h200 vCommandDropdown gOnCommandSelect, Party Commands||AutoFollow Toggle|Start Healing|Stop Healing|Start DPS|Stop DPS|Character Select BD5|Get Coords|Load Path for All Clients|Setup DPS Navigation|Start Travel|Stop Travel
+    Gui, TopBar:Add, DropDownList, x235 y3 w160 h200 vCommandDropdown gOnCommandSelect, Buff All||AutoFollow Toggle|Start Healing|Stop Healing|Start DPS|Stop DPS|Character Select BD5|Get Coords|Load Path for All Clients|Setup DPS Navigation|Start Travel|Stop Travel
 
     ; 5. Execute (was at X:575, now shift left to X:400)
     New HButton( { Owner: TopBarHwnd , X: 400 , Y: 3 , W: 70 , H: 24 , Text: "Execute" , Label: "ExecuteCommand" } )
@@ -943,6 +943,16 @@ ExecuteCommand:
         ExecuteGetCoordsSequential()
         return
     }
+    Else If (CommandDropdown = "Get Coords") {
+        ; Get Coords needs to be done sequentially, one window at a time
+        ExecuteGetCoordsSequential()
+        return
+    }
+    Else If (CommandDropdown = "Buff All") {
+        ; Buff All needs to be done sequentially, one window at a time
+        ExecuteBuffSequential()
+        return
+    }
     Else If (CommandDropdown = "Load Path for All Clients") {
         ; Prompt user to select a path file
         FileSelectFile, selectedPath, 3, , Select a path file to load on all clients, INI Files (*.ini)
@@ -975,8 +985,9 @@ ExecuteCommand:
         command := "STARTTRAVEL"
     Else If (CommandDropdown = "Stop Travel")
         command := "STOPTRAVEL"
-    Else
-        return
+    Else 
+        return ; Unknown command
+
 
     SendNetworkCommand(command)
 return
@@ -1014,6 +1025,33 @@ SendNetworkCommand(command) {
     ; MsgBox, Sent to Win%targetList%: %command%
 }
 
+ExecuteBuffSequential() {
+    Gui, TopBar:Submit, NoHide
+
+    ; Check which windows are targeted
+    targets := []
+    Loop, 8 {
+        GuiControlGet, checked,, NetWin%A_Index%
+        If (checked)
+            targets.Push(A_Index)
+    }
+
+    ; If no targets selected, don't send anything
+    If (targets.Length() = 0) {
+        MsgBox, Please select at least one window target (W1-W8)
+        return
+    }
+
+    ; Send GETCOORDS to each window sequentially
+    For index, winNum in targets {
+        ; Send to just this one window
+        selectiveCmd := "SELECTIVE:" winNum "|BUFF"
+        SendCommandToAll(selectiveCmd)
+
+        ; Wait between commands to allow each window to process
+        Sleep,60000
+    }
+}
 ExecuteGetCoordsSequential() {
     Gui, TopBar:Submit, NoHide
 
@@ -1038,7 +1076,7 @@ ExecuteGetCoordsSequential() {
         SendCommandToAll(selectiveCmd)
 
         ; Wait between commands to allow each window to process
-        Sleep, 500
+        Sleep, 1000
     }
 }
 
