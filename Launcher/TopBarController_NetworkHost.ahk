@@ -80,19 +80,19 @@ LoadSettings() {
     ; Load Server Port (default: 12345)
     IniRead, port, %settingsFile%, Settings, ServerPort, 12345
     ServerPort := port
-    
+
     ; Load Button Text Color (default: green)
     IniRead, btnColor, %settingsFile%, Settings, ButtonTextColor, 0xFF00FF00
     ButtonTextColor := btnColor
-    
+
     ; Load Logo Text Color (default: Gray)
     IniRead, logoColor, %settingsFile%, Settings, LogoTextColor, Gray
     LogoTextColor := logoColor
-    
+
     ; Load Checkbox Text Color (default: Lime)
     IniRead, checkboxColor, %settingsFile%, Settings, CheckboxTextColor, Lime
     CheckboxTextColor := checkboxColor
-    
+
     ; Load Bar Background Color (default: 0x1E1E1E)
     IniRead, barBgColor, %settingsFile%, Settings, BarBackgroundColor, 0x1E1E1E
     BarBackgroundColor := barBgColor
@@ -192,7 +192,7 @@ CreateActivationBar() {
     Gui, ActBar:New, +AlwaysOnTop +ToolWindow -Caption
     Gui, ActBar:Color, %BarBackgroundColor%
     Gui, ActBar:+HwndActBarHwnd
-    
+
     ; Setup custom button theme
     Theme1 := HBCustomButton()
     GuiButtonType1.SetSessionDefaults( Theme1.All , Theme1.Default , Theme1.Hover , Theme1.Pressed )
@@ -215,7 +215,7 @@ CreateActivationBar() {
     ActBtn6 := New HButton( { Owner: ActBarHwnd , X: 540 , Y: 3 , W: 60 , H: 24 , Text: "Win6" , Label: "ActivateWin6" } )
     ActBtn7 := New HButton( { Owner: ActBarHwnd , X: 600 , Y: 3 , W: 60 , H: 24 , Text: "Win7" , Label: "ActivateWin7" } )
     ActBtn8 := New HButton( { Owner: ActBarHwnd , X: 660 , Y: 3 , W: 60 , H: 24 , Text: "Win8" , Label: "ActivateWin8" } )
-    
+
     ; Hide all buttons initially
     Loop, 8 {
         GuiControl, ActBar:Hide, % ActBtn%A_Index%
@@ -248,37 +248,37 @@ CreateActivationBar() {
     OnMessage(0x201, "ActBarWM_LBUTTONDOWN")
 }
 HBCustomButton(){
-	global ButtonTextColor, BarBackgroundColor
+    global ButtonTextColor, BarBackgroundColor
     ; (Removed: local MyButtonDesign)
-	MyButtonDesign := {}
-	MyButtonDesign.All := {}
-	MyButtonDesign.Default := {}
-	MyButtonDesign.Hover := {}
-	MyButtonDesign.Pressed := {}
-	;********************************
-	;All
-	bgColor := "0xFF" . SubStr(BarBackgroundColor, 3)
-	MyButtonDesign.All.W := 60 , MyButtonDesign.All.H := 24 , MyButtonDesign.All.Text := "Nexus" , MyButtonDesign.All.BackgroundColor := bgColor
-	;********************************
-	;Default
-	MyButtonDesign.Default.W := 60 , MyButtonDesign.Default.H := 24 , MyButtonDesign.Default.Text := "Nexus" , MyButtonDesign.Default.Font := "Arial" , MyButtonDesign.Default.FontOptions := " Bold Center vCenter " , MyButtonDesign.Default.FontSize := "12" , MyButtonDesign.Default.H := "0x0002112F" , MyButtonDesign.Default.TextBottomColor2 := "0x0002112F" , MyButtonDesign.Default.TextTopColor1 := ButtonTextColor , MyButtonDesign.Default.TextTopColor2 := "0xFFFFFFFF" , MyButtonDesign.Default.TextOffsetX := "0" , MyButtonDesign.Default.TextOffsetY := "0" , MyButtonDesign.Default.TextOffsetW := "0" , MyButtonDesign.Default.TextOffsetH := "0" , MyButtonDesign.Default.BackgroundColor := bgColor , MyButtonDesign.Default.ButtonOuterBorderColor := "0xFF161B1F" , MyButtonDesign.Default.ButtonCenterBorderColor := "0xFF262B2F" , MyButtonDesign.Default.ButtonInnerBorderColor1 := "0xFF3F444A" , MyButtonDesign.Default.ButtonInnerBorderColor2 := "0xFF24292D" , MyButtonDesign.Default.ButtonMainColor1 := "0xFF272C32" , MyButtonDesign.Default.ButtonMainColor2 := "0xFF272C32" , MyButtonDesign.Default.ButtonAddGlossy := "1" , MyButtonDesign.Default.GlossTopColor := "0x11FFFFFF" , MyButtonDesign.Default.GlossTopAccentColor := "05FFFFFF" , MyButtonDesign.Default.GlossBottomColor := "33000000"
-	;********************************
-	;Hover
-	MyButtonDesign.Hover.W := 60 , MyButtonDesign.Hover.H := 24 , MyButtonDesign.Hover.Text := "Nexus" , MyButtonDesign.Hover.Font := "Arial" , MyButtonDesign.Hover.FontOptions := " Bold Center vCenter " , MyButtonDesign.Hover.FontSize := "12" , MyButtonDesign.Hover.H := "0x0002112F" , MyButtonDesign.Hover.TextBottomColor2 := "0x0002112F" , MyButtonDesign.Hover.TextTopColor1 := ButtonTextColor , MyButtonDesign.Hover.TextTopColor2 := "0xFFFFFFFF" , MyButtonDesign.Hover.TextOffsetX := "0" , MyButtonDesign.Hover.TextOffsetY := "0" , MyButtonDesign.Hover.TextOffsetW := "0" , MyButtonDesign.Hover.TextOffsetH := "0" , MyButtonDesign.Hover.BackgroundColor := bgColor , MyButtonDesign.Hover.ButtonOuterBorderColor := "0xFF161B1F" , MyButtonDesign.Hover.ButtonCenterBorderColor := "0xFF262B2F" , MyButtonDesign.Hover.ButtonInnerBorderColor1 := "0xFF3F444A" , MyButtonDesign.Hover.ButtonInnerBorderColor2 := "0xFF24292D" , MyButtonDesign.Hover.ButtonMainColor1 := "0xFF373C42" , MyButtonDesign.Hover.ButtonMainColor2 := "0xFF373C42" , MyButtonDesign.Hover.ButtonAddGlossy := "1" , MyButtonDesign.Hover.GlossTopColor := "0x11FFFFFF" , MyButtonDesign.Hover.GlossTopAccentColor := "05FFFFFF" , MyButtonDesign.Hover.GlossBottomColor := "33000000"
-	;********************************
-	;Pressed
-	MyButtonDesign.Pressed.W := 60 , MyButtonDesign.Pressed.H := 24 , MyButtonDesign.Pressed.Text := "Nexus" , MyButtonDesign.Pressed.Font := "Arial" , MyButtonDesign.Pressed.FontOptions := " Bold Center vCenter " , MyButtonDesign.Pressed.FontSize := "12" , MyButtonDesign.Pressed.H := "0x0002112F" , MyButtonDesign.Pressed.TextBottomColor2 := "0x0002112F" , MyButtonDesign.Pressed.TextTopColor1 := ButtonTextColor , MyButtonDesign.Pressed.TextTopColor2 := "0xFFFFFFFF" , MyButtonDesign.Pressed.TextOffsetX := "0" , MyButtonDesign.Pressed.TextOffsetY := "0" , MyButtonDesign.Pressed.TextOffsetW := "0" , MyButtonDesign.Pressed.TextOffsetH := "0" , MyButtonDesign.Pressed.BackgroundColor := bgColor , MyButtonDesign.Pressed.ButtonOuterBorderColor := "0xFF62666a" , MyButtonDesign.Pressed.ButtonCenterBorderColor := "0xFF262B2F" , MyButtonDesign.Pressed.ButtonInnerBorderColor1 := "0xFF151A20" , MyButtonDesign.Pressed.ButtonInnerBorderColor2 := "0xFF151A20" , MyButtonDesign.Pressed.ButtonMainColor1 := "0xFF12161a" , MyButtonDesign.Pressed.ButtonMainColor2 := "0xFF33383E" , MyButtonDesign.Pressed.ButtonAddGlossy := "0" , MyButtonDesign.Pressed.GlossTopColor := "0x11FFFFFF" , MyButtonDesign.Pressed.GlossTopAccentColor := "05FFFFFF" , MyButtonDesign.Pressed.GlossBottomColor := "33000000"
-	;********************************
-	
-	return MyButtonDesign
+    MyButtonDesign := {}
+    MyButtonDesign.All := {}
+    MyButtonDesign.Default := {}
+    MyButtonDesign.Hover := {}
+    MyButtonDesign.Pressed := {}
+    ;********************************
+    ;All
+    bgColor := "0xFF" . SubStr(BarBackgroundColor, 3)
+    MyButtonDesign.All.W := 60 , MyButtonDesign.All.H := 24 , MyButtonDesign.All.Text := "Nexus" , MyButtonDesign.All.BackgroundColor := bgColor
+    ;********************************
+    ;Default
+    MyButtonDesign.Default.W := 60 , MyButtonDesign.Default.H := 24 , MyButtonDesign.Default.Text := "Nexus" , MyButtonDesign.Default.Font := "Arial" , MyButtonDesign.Default.FontOptions := " Bold Center vCenter " , MyButtonDesign.Default.FontSize := "12" , MyButtonDesign.Default.H := "0x0002112F" , MyButtonDesign.Default.TextBottomColor2 := "0x0002112F" , MyButtonDesign.Default.TextTopColor1 := ButtonTextColor , MyButtonDesign.Default.TextTopColor2 := "0xFFFFFFFF" , MyButtonDesign.Default.TextOffsetX := "0" , MyButtonDesign.Default.TextOffsetY := "0" , MyButtonDesign.Default.TextOffsetW := "0" , MyButtonDesign.Default.TextOffsetH := "0" , MyButtonDesign.Default.BackgroundColor := bgColor , MyButtonDesign.Default.ButtonOuterBorderColor := "0xFF161B1F" , MyButtonDesign.Default.ButtonCenterBorderColor := "0xFF262B2F" , MyButtonDesign.Default.ButtonInnerBorderColor1 := "0xFF3F444A" , MyButtonDesign.Default.ButtonInnerBorderColor2 := "0xFF24292D" , MyButtonDesign.Default.ButtonMainColor1 := "0xFF272C32" , MyButtonDesign.Default.ButtonMainColor2 := "0xFF272C32" , MyButtonDesign.Default.ButtonAddGlossy := "1" , MyButtonDesign.Default.GlossTopColor := "0x11FFFFFF" , MyButtonDesign.Default.GlossTopAccentColor := "05FFFFFF" , MyButtonDesign.Default.GlossBottomColor := "33000000"
+    ;********************************
+    ;Hover
+    MyButtonDesign.Hover.W := 60 , MyButtonDesign.Hover.H := 24 , MyButtonDesign.Hover.Text := "Nexus" , MyButtonDesign.Hover.Font := "Arial" , MyButtonDesign.Hover.FontOptions := " Bold Center vCenter " , MyButtonDesign.Hover.FontSize := "12" , MyButtonDesign.Hover.H := "0x0002112F" , MyButtonDesign.Hover.TextBottomColor2 := "0x0002112F" , MyButtonDesign.Hover.TextTopColor1 := ButtonTextColor , MyButtonDesign.Hover.TextTopColor2 := "0xFFFFFFFF" , MyButtonDesign.Hover.TextOffsetX := "0" , MyButtonDesign.Hover.TextOffsetY := "0" , MyButtonDesign.Hover.TextOffsetW := "0" , MyButtonDesign.Hover.TextOffsetH := "0" , MyButtonDesign.Hover.BackgroundColor := bgColor , MyButtonDesign.Hover.ButtonOuterBorderColor := "0xFF161B1F" , MyButtonDesign.Hover.ButtonCenterBorderColor := "0xFF262B2F" , MyButtonDesign.Hover.ButtonInnerBorderColor1 := "0xFF3F444A" , MyButtonDesign.Hover.ButtonInnerBorderColor2 := "0xFF24292D" , MyButtonDesign.Hover.ButtonMainColor1 := "0xFF373C42" , MyButtonDesign.Hover.ButtonMainColor2 := "0xFF373C42" , MyButtonDesign.Hover.ButtonAddGlossy := "1" , MyButtonDesign.Hover.GlossTopColor := "0x11FFFFFF" , MyButtonDesign.Hover.GlossTopAccentColor := "05FFFFFF" , MyButtonDesign.Hover.GlossBottomColor := "33000000"
+    ;********************************
+    ;Pressed
+    MyButtonDesign.Pressed.W := 60 , MyButtonDesign.Pressed.H := 24 , MyButtonDesign.Pressed.Text := "Nexus" , MyButtonDesign.Pressed.Font := "Arial" , MyButtonDesign.Pressed.FontOptions := " Bold Center vCenter " , MyButtonDesign.Pressed.FontSize := "12" , MyButtonDesign.Pressed.H := "0x0002112F" , MyButtonDesign.Pressed.TextBottomColor2 := "0x0002112F" , MyButtonDesign.Pressed.TextTopColor1 := ButtonTextColor , MyButtonDesign.Pressed.TextTopColor2 := "0xFFFFFFFF" , MyButtonDesign.Pressed.TextOffsetX := "0" , MyButtonDesign.Pressed.TextOffsetY := "0" , MyButtonDesign.Pressed.TextOffsetW := "0" , MyButtonDesign.Pressed.TextOffsetH := "0" , MyButtonDesign.Pressed.BackgroundColor := bgColor , MyButtonDesign.Pressed.ButtonOuterBorderColor := "0xFF62666a" , MyButtonDesign.Pressed.ButtonCenterBorderColor := "0xFF262B2F" , MyButtonDesign.Pressed.ButtonInnerBorderColor1 := "0xFF151A20" , MyButtonDesign.Pressed.ButtonInnerBorderColor2 := "0xFF151A20" , MyButtonDesign.Pressed.ButtonMainColor1 := "0xFF12161a" , MyButtonDesign.Pressed.ButtonMainColor2 := "0xFF33383E" , MyButtonDesign.Pressed.ButtonAddGlossy := "0" , MyButtonDesign.Pressed.GlossTopColor := "0x11FFFFFF" , MyButtonDesign.Pressed.GlossTopAccentColor := "05FFFFFF" , MyButtonDesign.Pressed.GlossBottomColor := "33000000"
+    ;********************************
+
+    return MyButtonDesign
 }
 UpdateActivationBar:
     global ActBtn1, ActBtn2, ActBtn3, ActBtn4, ActBtn5, ActBtn6, ActBtn7, ActBtn8
-    
+
     Loop, 8 {
         winName := "win" . A_Index
         btnHwnd := ActBtn%A_Index%
-        
+
         if WinExist(winName) {
             GuiControl, ActBar:Show, % btnHwnd
             if WinActive(winName) {
@@ -338,7 +338,7 @@ ActivateNexusWindow(winName) {
 
 ToggleActBarVisibility:
     global SettingsGuiVisible, ActBarVisible, thumbnailsVisible, ActBarHwnd, ActBarHideBtn, ActBarMinBtn
-    
+
     if (SettingsGuiVisible) {
         Gui, Settings:Destroy
         SettingsGuiVisible := false
@@ -662,7 +662,7 @@ return
 ; ==========================================
 ToggleBarVisibility:
     global NexusWindowSelectorVisible, TopBarVisible, TopBarHwnd, TopBarHideBtn, MinBtn
-    
+
     TopBarVisible := !TopBarVisible
     If (TopBarVisible) {
         Gui, TopBar:Show, x0 y0 w1027 h27
@@ -696,7 +696,7 @@ ToggleSelectAll:
     global SelectAllState
     Gui, TopBar:Submit, NoHide
     SelectAllState := !SelectAllState
-    
+
     Loop, 8 {
         GuiControl, TopBar:, NetWin%A_Index%, % SelectAllState
     }
@@ -987,7 +987,6 @@ ExecuteCommand:
         command := "STOPTRAVEL"
     Else 
         return ; Unknown command
-
 
     SendNetworkCommand(command)
 return
@@ -3090,13 +3089,13 @@ OpenSettings:
     Gui, Settings:Add, Text, x15 y45 w90 h20, Max RAM (MB):
     Gui, Settings:Font, s9 cBlack, Segoe UI
     Gui, Settings:Add, Edit, x110 y42 w78 h22 vMaxRAMValue, %MaxRAMValue%
-    
+
     Theme1 := HBCustomButton()
     GuiButtonType1.SetSessionDefaults( Theme1.All , Theme1.Default , Theme1.Hover , Theme1.Pressed )
-    
+
     New HButton( { Owner: SettingsHwnd , X: 190 , Y: 42 , W: 10 , H: 11 , Text: "▲" , Label: "IncreaseRAM" } )
     New HButton( { Owner: SettingsHwnd , X: 190 , Y: 53 , W: 10 , H: 11 , Text: "▼" , Label: "DecreaseRAM" } )
-    
+
     ; Server Settings GroupBox
     Gui, Settings:Font, s8 cWhite, Segoe UI
     Gui, Settings:Add, GroupBox, x5 y80 w210 h75, Server Settings
@@ -3105,7 +3104,7 @@ OpenSettings:
     Gui, Settings:Add, Text, x10 y100 w90 h20, Server Port:
     Gui, Settings:Font, s9 cBlack, Segoe UI
     Gui, Settings:Add, Edit, x105 y97 w105 h22 vServerPort, %ServerPort%
-    
+
     ; Server Toggle Button
     If ServerListening
         New HButton( { Owner: SettingsHwnd , X: 15 , Y: 125 , W: 190 , H: 24 , Text: "Stop Server" , Label: "ToggleServer" } )
@@ -3124,37 +3123,37 @@ OpenSettings:
         UtilityScriptPaths[script.display] := script.full
     }
     UtilityScriptDropdownList := RTrim(UtilityScriptDropdownList, "|")
-Gui, Settings:Add, DropDownList, x15 y180 w150 h120 vUtilityScriptDropdown, %UtilityScriptDropdownList%||
-New HButton( { Owner: SettingsHwnd , X: 170 , Y: 180 , W: 40 , H: 24 , Text: "Start" , Label: "LaunchUtilityScript" } )
-    
+    Gui, Settings:Add, DropDownList, x15 y180 w150 h120 vUtilityScriptDropdown, %UtilityScriptDropdownList%||
+    New HButton( { Owner: SettingsHwnd , X: 170 , Y: 180 , W: 40 , H: 24 , Text: "Start" , Label: "LaunchUtilityScript" } )
+
     ; Button Color GroupBox
     Gui, Settings:Font, s8 cWhite, Segoe UI
     Gui, Settings:Add, GroupBox, x5 y230 w210 h60, Button Color
     Gui, Settings:Font, s9 cWhite, Segoe UI
     Gui, Settings:Add, DropDownList, x15 y250 w120 h100 vButtonColorChoice, Green||Lime|Red|Blue|Yellow|Cyan|Magenta|White|Orange|Purple|Pink|Silver|Aqua|Fuchsia|Navy|Teal|Maroon|Olive|Black|Gray|Crimson|Gold|Indigo|Coral|Salmon|Violet|Turquoise|Khaki|Plum|Orchid|Tan|Chocolate|Peru|Sienna|Tomato|SkyBlue|SteelBlue|SlateBlue|RoyalBlue|DodgerBlue|DeepPink|HotPink|LightPink|PaleGreen|LightGreen|SpringGreen|SeaGreen|ForestGreen|DarkGreen|YellowGreen|OliveDrab|Chartreuse|GreenYellow|LawnGreen|MediumSpringGreen
     New HButton( { Owner: SettingsHwnd , X: 140 , Y: 250 , W: 65 , H: 24 , Text: "Apply" , Label: "ApplyButtonColor" } )
-    
+
     ; Logo Color GroupBox
     Gui, Settings:Font, s8 cWhite, Segoe UI
     Gui, Settings:Add, GroupBox, x5 y295 w210 h60, Logo Color
     Gui, Settings:Font, s9 cWhite, Segoe UI
     Gui, Settings:Add, DropDownList, x15 y315 w120 h100 vLogoColorChoice, Gray||Green|Lime|Red|Blue|Yellow|Cyan|Magenta|White|Orange|Purple|Pink|Silver|Aqua|Fuchsia|Navy|Teal|Maroon|Olive|Black|Crimson|Gold|Indigo|Coral|Salmon|Violet|Turquoise|Khaki|Plum|Orchid|Tan|Chocolate|Peru|Sienna|Tomato|SkyBlue|SteelBlue|SlateBlue|RoyalBlue|DodgerBlue|DeepPink|HotPink|LightPink|PaleGreen|LightGreen|SpringGreen|SeaGreen|ForestGreen|DarkGreen|YellowGreen|OliveDrab|Chartreuse|GreenYellow|LawnGreen|MediumSpringGreen
     New HButton( { Owner: SettingsHwnd , X: 140 , Y: 315 , W: 65 , H: 24 , Text: "Apply" , Label: "ApplyLogoColor" } )
-    
+
     ; Checkbox Color GroupBox
     Gui, Settings:Font, s8 cWhite, Segoe UI
     Gui, Settings:Add, GroupBox, x5 y360 w210 h60, Checkbox Color
     Gui, Settings:Font, s9 cWhite, Segoe UI
     Gui, Settings:Add, DropDownList, x15 y380 w120 h100 vCheckboxColorChoice, Lime||Green|Red|Blue|Yellow|Cyan|Magenta|White|Orange|Purple|Pink|Silver|Aqua|Fuchsia|Navy|Teal|Maroon|Olive|Black|Gray|Crimson|Gold|Indigo|Coral|Salmon|Violet|Turquoise|Khaki|Plum|Orchid|Tan|Chocolate|Peru|Sienna|Tomato|SkyBlue|SteelBlue|SlateBlue|RoyalBlue|DodgerBlue|DeepPink|HotPink|LightPink|PaleGreen|LightGreen|SpringGreen|SeaGreen|ForestGreen|DarkGreen|YellowGreen|OliveDrab|Chartreuse|GreenYellow|LawnGreen|MediumSpringGreen
     New HButton( { Owner: SettingsHwnd , X: 140 , Y: 380 , W: 65 , H: 24 , Text: "Apply" , Label: "ApplyCheckboxColor" } )
-    
+
     ; Bar Color GroupBox
     Gui, Settings:Font, s8 cWhite, Segoe UI
     Gui, Settings:Add, GroupBox, x5 y425 w210 h60, Bar Color
     Gui, Settings:Font, s9 cWhite, Segoe UI
     Gui, Settings:Add, DropDownList, x15 y445 w120 h100 vBarColorChoice, Dark Gray||Black|Charcoal|Slate Gray|Dark Blue|Navy Blue|Midnight Blue|Dark Teal|Dark Cyan|Dark Green|Forest Green|Dark Olive|Dark Red|Maroon|Dark Purple|Indigo|Dark Magenta|Brown|Saddle Brown|Chocolate|Dark Orange|Dark Slate Blue|Dark Slate Gray|Dim Gray|Steel Blue|Dark Sea Green
     New HButton( { Owner: SettingsHwnd , X: 140 , Y: 445 , W: 65 , H: 24 , Text: "Apply" , Label: "ApplyBarColor" } )
-    
+
     ; Show GUI
     global actBarGuiHandle
     WinGetPos, actBarX, actBarY, actBarW, actBarH, ahk_id %actBarGuiHandle%
@@ -3262,7 +3261,7 @@ GetAddonScripts() {
             scripts.Push({display: A_LoopFileName, full: A_LoopFileFullPath})
         }
     }
-    return scripts
+return scripts
 }
 
 ChangeButtonColor:
@@ -3270,7 +3269,7 @@ return
 
 GetColorHex(colorName) {
     colors := {"Green": "0xFF00FF00", "Lime": "0xFF00FF00", "Red": "0xFFFF0000", "Blue": "0xFF0000FF", "Yellow": "0xFFFFFF00", "Cyan": "0xFF00FFFF", "Magenta": "0xFFFF00FF", "White": "0xFFFFFFFF", "Orange": "0xFFFFA500", "Purple": "0xFF800080", "Pink": "0xFFFFC0CB", "Silver": "0xFFC0C0C0", "Aqua": "0xFF00FFFF", "Fuchsia": "0xFFFF00FF", "Navy": "0xFF000080", "Teal": "0xFF008080", "Maroon": "0xFF800000", "Olive": "0xFF808000", "Black": "0xFF000000", "Gray": "0xFF808080", "Crimson": "0xFFDC143C", "Gold": "0xFFFFD700", "Indigo": "0xFF4B0082", "Coral": "0xFFFF7F50", "Salmon": "0xFFFA8072", "Violet": "0xFFEE82EE", "Turquoise": "0xFF40E0D0", "Khaki": "0xFFF0E68C", "Plum": "0xFFDDA0DD", "Orchid": "0xFFDA70D6", "Tan": "0xFFD2B48C", "Chocolate": "0xFFD2691E", "Peru": "0xFFCD853F", "Sienna": "0xFFA0522D", "Tomato": "0xFFFF6347", "SkyBlue": "0xFF87CEEB", "SteelBlue": "0xFF4682B4", "SlateBlue": "0xFF6A5ACD", "RoyalBlue": "0xFF4169E1", "DodgerBlue": "0xFF1E90FF", "DeepPink": "0xFFFF1493", "HotPink": "0xFFFF69B4", "LightPink": "0xFFFFB6C1", "PaleGreen": "0xFF98FB98", "LightGreen": "0xFF90EE90", "SpringGreen": "0xFF00FF7F", "SeaGreen": "0xFF2E8B57", "ForestGreen": "0xFF228B22", "DarkGreen": "0xFF006400", "YellowGreen": "0xFF9ACD32", "OliveDrab": "0xFF6B8E23", "Chartreuse": "0xFF7FFF00", "GreenYellow": "0xFFADFF2F", "LawnGreen": "0xFF7CFC00", "MediumSpringGreen": "0xFF00FA9A"}
-    return colors.HasKey(colorName) ? colors[colorName] : "0xFF00FF00"
+return colors.HasKey(colorName) ? colors[colorName] : "0xFF00FF00"
 }
 
 ApplyButtonColor:
@@ -3286,20 +3285,20 @@ ApplyLogoColor:
     Gui, Settings:Submit, NoHide
     LogoTextColor := LogoColorChoice
     SaveSettingsToFile()
-    
+
     ; Apply color immediately to logo text and Nexus Master text
     colorHex := GetTextColorHex(LogoTextColor)
     Gui, ActBar:Font, s7 c%colorHex%, Segoe UI
     GuiControl, ActBar:Font, LogoText
     Gui, TopBar:Font, s11 c%colorHex% Bold, Segoe UI
     GuiControl, TopBar:Font, NexusMasterText
-    
+
     MsgBox, Logo color changed!
 return
 
 GetTextColorHex(colorName) {
     colors := {"Green": "008000", "Lime": "00FF00", "Red": "FF0000", "Blue": "0000FF", "Yellow": "FFFF00", "Cyan": "00FFFF", "Magenta": "FF00FF", "White": "FFFFFF", "Orange": "FFA500", "Purple": "800080", "Pink": "FFC0CB", "Silver": "C0C0C0", "Aqua": "00FFFF", "Fuchsia": "FF00FF", "Navy": "000080", "Teal": "008080", "Maroon": "800000", "Olive": "808000", "Black": "000000", "Gray": "808080", "Crimson": "DC143C", "Gold": "FFD700", "Indigo": "4B0082", "Coral": "FF7F50", "Salmon": "FA8072", "Violet": "EE82EE", "Turquoise": "40E0D0", "Khaki": "F0E68C", "Plum": "DDA0DD", "Orchid": "DA70D6", "Tan": "D2B48C", "Chocolate": "D2691E", "Peru": "CD853F", "Sienna": "A0522D", "Tomato": "FF6347", "SkyBlue": "87CEEB", "SteelBlue": "4682B4", "SlateBlue": "6A5ACD", "RoyalBlue": "4169E1", "DodgerBlue": "1E90FF", "DeepPink": "FF1493", "HotPink": "FF69B4", "LightPink": "FFB6C1", "PaleGreen": "98FB98", "LightGreen": "90EE90", "SpringGreen": "00FF7F", "SeaGreen": "2E8B57", "ForestGreen": "228B22", "DarkGreen": "006400", "YellowGreen": "9ACD32", "OliveDrab": "6B8E23", "Chartreuse": "7FFF00", "GreenYellow": "ADFF2F", "LawnGreen": "7CFC00", "MediumSpringGreen": "00FA9A"}
-    return colors.HasKey(colorName) ? colors[colorName] : "00FF00"
+return colors.HasKey(colorName) ? colors[colorName] : "00FF00"
 }
 
 ApplyCheckboxColor:
@@ -3307,20 +3306,20 @@ ApplyCheckboxColor:
     Gui, Settings:Submit, NoHide
     CheckboxTextColor := CheckboxColorChoice
     SaveSettingsToFile()
-    
+
     ; Apply color immediately to text labels
     colorHex := GetTextColorHex(CheckboxTextColor)
     Gui, TopBar:Font, s8 c%colorHex%, Segoe UI
     Loop, 8 {
         GuiControl, TopBar:Font, WinLabel%A_Index%
     }
-    
+
     MsgBox, Checkbox text color changed!
 return
 
 GetBarColorHex(colorName) {
     colors := {"Dark Gray": "0x1E1E1E", "Black": "0x000000", "Charcoal": "0x36454F", "Slate Gray": "0x2F4F4F", "Dark Blue": "0x00008B", "Navy Blue": "0x000080", "Midnight Blue": "0x191970", "Dark Teal": "0x008080", "Dark Cyan": "0x008B8B", "Dark Green": "0x006400", "Forest Green": "0x228B22", "Dark Olive": "0x556B2F", "Dark Red": "0x8B0000", "Maroon": "0x800000", "Dark Purple": "0x301934", "Indigo": "0x4B0082", "Dark Magenta": "0x8B008B", "Brown": "0x654321", "Saddle Brown": "0x8B4513", "Chocolate": "0x3E2723", "Dark Orange": "0x8B4000", "Dark Slate Blue": "0x483D8B", "Dark Slate Gray": "0x2F4F4F", "Dim Gray": "0x696969", "Steel Blue": "0x4682B4", "Dark Sea Green": "0x2F4F3F"}
-    return colors.HasKey(colorName) ? colors[colorName] : "0x1E1E1E"
+return colors.HasKey(colorName) ? colors[colorName] : "0x1E1E1E"
 }
 
 ApplyBarColor:
@@ -3395,14 +3394,14 @@ return
 
 UpdateLayeredWindow(hwnd, hdc, x="", y="", w="", h="", Alpha=255)
 {
-	if ((x != "") && (y != ""))
-		VarSetCapacity(pt, 8), NumPut(x, pt, 0), NumPut(y, pt, 4)
+    if ((x != "") && (y != ""))
+        VarSetCapacity(pt, 8), NumPut(x, pt, 0), NumPut(y, pt, 4)
 
-	if (w = "") ||(h = "")
-		WinGetPos,,, w, h, ahk_id %hwnd%
-   
-	return DllCall("UpdateLayeredWindow", "uint", hwnd, "uint", 0, "uint", ((x = "") && (y = "")) ? 0 : &pt
-	, "int64*", w|h<<32, "uint", hdc, "int64*", 0, "uint", 0, "uint*", Alpha<<16|1<<24, "uint", 2)
+    if (w = "") ||(h = "")
+        WinGetPos,,, w, h, ahk_id %hwnd%
+
+return DllCall("UpdateLayeredWindow", "uint", hwnd, "uint", 0, "uint", ((x = "") && (y = "")) ? 0 : &pt
+, "int64*", w|h<<32, "uint", hdc, "int64*", 0, "uint", 0, "uint*", Alpha<<16|1<<24, "uint", 2)
 }
 
 ;#####################################################################################
@@ -3445,8 +3444,8 @@ UpdateLayeredWindow(hwnd, hdc, x="", y="", w="", h="", Alpha=255)
 
 BitBlt(ddc, dx, dy, dw, dh, sdc, sx, sy, Raster="")
 {
-	return DllCall("gdi32\BitBlt", "uint", dDC, "int", dx, "int", dy, "int", dw, "int", dh
-	, "uint", sDC, "int", sx, "int", sy, "uint", Raster ? Raster : 0x00CC0020)
+return DllCall("gdi32\BitBlt", "uint", dDC, "int", dx, "int", dy, "int", dw, "int", dh
+, "uint", sDC, "int", sx, "int", sy, "uint", Raster ? Raster : 0x00CC0020)
 }
 
 ;#####################################################################################
@@ -3474,8 +3473,8 @@ BitBlt(ddc, dx, dy, dw, dh, sdc, sx, sy, Raster="")
 
 StretchBlt(ddc, dx, dy, dw, dh, sdc, sx, sy, sw, sh, Raster="")
 {
-	return DllCall("gdi32\StretchBlt", "uint", ddc, "int", dx, "int", dy, "int", dw, "int", dh
-	, "uint", sdc, "int", sx, "int", sy, "int", sw, "int", sh, "uint", Raster ? Raster : 0x00CC0020)
+return DllCall("gdi32\StretchBlt", "uint", ddc, "int", dx, "int", dy, "int", dw, "int", dh
+, "uint", sdc, "int", sx, "int", sy, "int", sw, "int", sh, "uint", Raster ? Raster : 0x00CC0020)
 }
 
 ;#####################################################################################
@@ -3495,7 +3494,7 @@ StretchBlt(ddc, dx, dy, dw, dh, sdc, sx, sy, sw, sh, Raster="")
 
 SetStretchBltMode(hdc, iStretchMode=4)
 {
-	return DllCall("gdi32\SetStretchBltMode", "uint", hdc, "int", iStretchMode)
+return DllCall("gdi32\SetStretchBltMode", "uint", hdc, "int", iStretchMode)
 }
 
 ;#####################################################################################
@@ -3510,10 +3509,10 @@ SetStretchBltMode(hdc, iStretchMode=4)
 
 SetImage(hwnd, hBitmap)
 {
-	SendMessage, 0x172, 0x0, hBitmap,, ahk_id %hwnd%
-	E := ErrorLevel
-	DeleteObject(E)
-	return E
+    SendMessage, 0x172, 0x0, hBitmap,, ahk_id %hwnd%
+    E := ErrorLevel
+    DeleteObject(E)
+return E
 }
 
 ;#####################################################################################
@@ -3568,16 +3567,16 @@ SetImage(hwnd, hBitmap)
 
 SetSysColorToControl(hwnd, SysColor=15)
 {
-   WinGetPos,,, w, h, ahk_id %hwnd%
-   bc := DllCall("GetSysColor", "Int", SysColor)
-   pBrushClear := Gdip_BrushCreateSolid(0xff000000 | (bc >> 16 | bc & 0xff00 | (bc & 0xff) << 16))
-   pBitmap := Gdip_CreateBitmap(w, h), G := Gdip_GraphicsFromImage(pBitmap)
-   Gdip_FillRectangle(G, pBrushClear, 0, 0, w, h)
-   hBitmap := Gdip_CreateHBITMAPFromBitmap(pBitmap)
-   SetImage(hwnd, hBitmap)
-   Gdip_DeleteBrush(pBrushClear)
-   Gdip_DeleteGraphics(G), Gdip_DisposeImage(pBitmap), DeleteObject(hBitmap)
-   return 0
+    WinGetPos,,, w, h, ahk_id %hwnd%
+    bc := DllCall("GetSysColor", "Int", SysColor)
+    pBrushClear := Gdip_BrushCreateSolid(0xff000000 | (bc >> 16 | bc & 0xff00 | (bc & 0xff) << 16))
+    pBitmap := Gdip_CreateBitmap(w, h), G := Gdip_GraphicsFromImage(pBitmap)
+    Gdip_FillRectangle(G, pBrushClear, 0, 0, w, h)
+    hBitmap := Gdip_CreateHBITMAPFromBitmap(pBitmap)
+    SetImage(hwnd, hBitmap)
+    Gdip_DeleteBrush(pBrushClear)
+    Gdip_DeleteGraphics(G), Gdip_DisposeImage(pBitmap), DeleteObject(hBitmap)
+return 0
 }
 
 ;#####################################################################################
@@ -3597,43 +3596,43 @@ SetSysColorToControl(hwnd, SysColor=15)
 
 Gdip_BitmapFromScreen(Screen=0, Raster="")
 {
-	if (Screen = 0)
-	{
-		Sysget, x, 76
-		Sysget, y, 77	
-		Sysget, w, 78
-		Sysget, h, 79
-	}
-	else if (SubStr(Screen, 1, 5) = "hwnd:")
-	{
-		Screen := SubStr(Screen, 6)
-		if !WinExist( "ahk_id " Screen)
-			return -2
-		WinGetPos,,, w, h, ahk_id %Screen%
-		x := y := 0
-		hhdc := GetDCEx(Screen, 3)
-	}
-	else if (Screen&1 != "")
-	{
-		Sysget, M, Monitor, %Screen%
-		x := MLeft, y := MTop, w := MRight-MLeft, h := MBottom-MTop
-	}
-	else
-	{
-		StringSplit, S, Screen, |
-		x := S1, y := S2, w := S3, h := S4
-	}
+    if (Screen = 0)
+    {
+        Sysget, x, 76
+        Sysget, y, 77	
+        Sysget, w, 78
+        Sysget, h, 79
+    }
+    else if (SubStr(Screen, 1, 5) = "hwnd:")
+    {
+        Screen := SubStr(Screen, 6)
+        if !WinExist( "ahk_id " Screen)
+            return -2
+        WinGetPos,,, w, h, ahk_id %Screen%
+        x := y := 0
+        hhdc := GetDCEx(Screen, 3)
+    }
+    else if (Screen&1 != "")
+    {
+        Sysget, M, Monitor, %Screen%
+        x := MLeft, y := MTop, w := MRight-MLeft, h := MBottom-MTop
+    }
+    else
+    {
+        StringSplit, S, Screen, |
+        x := S1, y := S2, w := S3, h := S4
+    }
 
-	if (x = "") || (y = "") || (w = "") || (h = "")
-		return -1
+    if (x = "") || (y = "") || (w = "") || (h = "")
+        return -1
 
-	chdc := CreateCompatibleDC(), hbm := CreateDIBSection(w, h, chdc), obm := SelectObject(chdc, hbm), hhdc := hhdc ? hhdc : GetDC()
-	BitBlt(chdc, 0, 0, w, h, hhdc, x, y, Raster)
-	ReleaseDC(hhdc)
-	
-	pBitmap := Gdip_CreateBitmapFromHBITMAP(hbm)
-	SelectObject(chdc, obm), DeleteObject(hbm), DeleteDC(hhdc), DeleteDC(chdc)
-	return pBitmap
+    chdc := CreateCompatibleDC(), hbm := CreateDIBSection(w, h, chdc), obm := SelectObject(chdc, hbm), hhdc := hhdc ? hhdc : GetDC()
+    BitBlt(chdc, 0, 0, w, h, hhdc, x, y, Raster)
+    ReleaseDC(hhdc)
+
+    pBitmap := Gdip_CreateBitmapFromHBITMAP(hbm)
+    SelectObject(chdc, obm), DeleteObject(hbm), DeleteDC(hhdc), DeleteDC(chdc)
+return pBitmap
 }
 
 ;#####################################################################################
@@ -3649,12 +3648,12 @@ Gdip_BitmapFromScreen(Screen=0, Raster="")
 
 Gdip_BitmapFromHWND(hwnd)
 {
-	WinGetPos,,, Width, Height, ahk_id %hwnd%
-	hbm := CreateDIBSection(Width, Height), hdc := CreateCompatibleDC(), obm := SelectObject(hdc, hbm)
-	PrintWindow(hwnd, hdc)
-	pBitmap := Gdip_CreateBitmapFromHBITMAP(hbm)
-	SelectObject(hdc, obm), DeleteObject(hbm), DeleteDC(hdc)
-	return pBitmap
+    WinGetPos,,, Width, Height, ahk_id %hwnd%
+    hbm := CreateDIBSection(Width, Height), hdc := CreateCompatibleDC(), obm := SelectObject(hdc, hbm)
+    PrintWindow(hwnd, hdc)
+    pBitmap := Gdip_CreateBitmapFromHBITMAP(hbm)
+    SelectObject(hdc, obm), DeleteObject(hbm), DeleteDC(hdc)
+return pBitmap
 }
 
 ;#####################################################################################
@@ -3672,8 +3671,8 @@ Gdip_BitmapFromHWND(hwnd)
 
 CreateRectF(ByRef RectF, x, y, w, h)
 {
-   VarSetCapacity(RectF, 16)
-   NumPut(x, RectF, 0, "float"), NumPut(y, RectF, 4, "float"), NumPut(w, RectF, 8, "float"), NumPut(h, RectF, 12, "float")
+    VarSetCapacity(RectF, 16)
+    NumPut(x, RectF, 0, "float"), NumPut(y, RectF, 4, "float"), NumPut(w, RectF, 8, "float"), NumPut(h, RectF, 12, "float")
 }
 
 ;#####################################################################################
@@ -3691,8 +3690,8 @@ CreateRectF(ByRef RectF, x, y, w, h)
 
 CreateRect(ByRef Rect, x, y, w, h)
 {
-	VarSetCapacity(Rect, 16)
-	NumPut(x, Rect, 0, "uint"), NumPut(y, Rect, 4, "uint"), NumPut(w, Rect, 8, "uint"), NumPut(h, Rect, 12, "uint")
+    VarSetCapacity(Rect, 16)
+    NumPut(x, Rect, 0, "uint"), NumPut(y, Rect, 4, "uint"), NumPut(w, Rect, 8, "uint"), NumPut(h, Rect, 12, "uint")
 }
 ;#####################################################################################
 
@@ -3707,8 +3706,8 @@ CreateRect(ByRef Rect, x, y, w, h)
 
 CreateSizeF(ByRef SizeF, w, h)
 {
-   VarSetCapacity(SizeF, 8)
-   NumPut(w, SizeF, 0, "float"), NumPut(h, SizeF, 4, "float")     
+    VarSetCapacity(SizeF, 8)
+    NumPut(w, SizeF, 0, "float"), NumPut(h, SizeF, 4, "float") 
 }
 ;#####################################################################################
 
@@ -3723,8 +3722,8 @@ CreateSizeF(ByRef SizeF, w, h)
 
 CreatePointF(ByRef PointF, x, y)
 {
-   VarSetCapacity(PointF, 8)
-   NumPut(x, PointF, 0, "float"), NumPut(y, PointF, 4, "float")     
+    VarSetCapacity(PointF, 8)
+    NumPut(x, PointF, 0, "float"), NumPut(y, PointF, 4, "float") 
 }
 ;#####################################################################################
 
@@ -3743,14 +3742,14 @@ CreatePointF(ByRef PointF, x, y)
 
 CreateDIBSection(w, h, hdc="", bpp=32, ByRef ppvBits=0)
 {
-	hdc2 := hdc ? hdc : GetDC()
-	VarSetCapacity(bi, 40, 0)
-	NumPut(w, bi, 4), NumPut(h, bi, 8), NumPut(40, bi, 0), NumPut(1, bi, 12, "ushort"), NumPut(0, bi, 16), NumPut(bpp, bi, 14, "ushort")
-	hbm := DllCall("CreateDIBSection", "uint" , hdc2, "uint" , &bi, "uint" , 0, "uint*", ppvBits, "uint" , 0, "uint" , 0)
+    hdc2 := hdc ? hdc : GetDC()
+    VarSetCapacity(bi, 40, 0)
+    NumPut(w, bi, 4), NumPut(h, bi, 8), NumPut(40, bi, 0), NumPut(1, bi, 12, "ushort"), NumPut(0, bi, 16), NumPut(bpp, bi, 14, "ushort")
+    hbm := DllCall("CreateDIBSection", "uint" , hdc2, "uint" , &bi, "uint" , 0, "uint*", ppvBits, "uint" , 0, "uint" , 0)
 
-	if !hdc
-		ReleaseDC(hdc2)
-	return hbm
+    if !hdc
+        ReleaseDC(hdc2)
+return hbm
 }
 
 ;#####################################################################################
@@ -3768,7 +3767,7 @@ CreateDIBSection(w, h, hdc="", bpp=32, ByRef ppvBits=0)
 
 PrintWindow(hwnd, hdc, Flags=0)
 {
-	return DllCall("PrintWindow", "uint", hwnd, "uint", hdc, "uint", Flags)
+return DllCall("PrintWindow", "uint", hwnd, "uint", hdc, "uint", Flags)
 }
 
 ;#####################################################################################
@@ -3782,21 +3781,21 @@ PrintWindow(hwnd, hdc, Flags=0)
 
 DestroyIcon(hIcon)
 {
-   return DllCall("DestroyIcon", "uint", hIcon)
+return DllCall("DestroyIcon", "uint", hIcon)
 }
 
 ;#####################################################################################
 
 PaintDesktop(hdc)
 {
-	return DllCall("PaintDesktop", "uint", hdc)
+return DllCall("PaintDesktop", "uint", hdc)
 }
 
 ;#####################################################################################
 
 CreateCompatibleBitmap(hdc, w, h)
 {
-	return DllCall("gdi32\CreateCompatibleBitmap", "uint", hdc, "int", w, "int", h)
+return DllCall("gdi32\CreateCompatibleBitmap", "uint", hdc, "int", w, "int", h)
 }
 
 ;#####################################################################################
@@ -3812,7 +3811,7 @@ CreateCompatibleBitmap(hdc, w, h)
 
 CreateCompatibleDC(hdc=0)
 {
-   return DllCall("CreateCompatibleDC", "uint", hdc)
+return DllCall("CreateCompatibleDC", "uint", hdc)
 }
 
 ;#####################################################################################
@@ -3840,7 +3839,7 @@ CreateCompatibleDC(hdc=0)
 
 SelectObject(hdc, hgdiobj)
 {
-   return DllCall("SelectObject", "uint", hdc, "uint", hgdiobj)
+return DllCall("SelectObject", "uint", hdc, "uint", hgdiobj)
 }
 
 ;#####################################################################################
@@ -3855,7 +3854,7 @@ SelectObject(hdc, hgdiobj)
 
 DeleteObject(hObject)
 {
-   return DllCall("DeleteObject", "uint", hObject)
+return DllCall("DeleteObject", "uint", hObject)
 }
 
 ;#####################################################################################
@@ -3870,7 +3869,7 @@ DeleteObject(hObject)
 
 GetDC(hwnd=0)
 {
-	return DllCall("GetDC", "uint", hwnd)
+return DllCall("GetDC", "uint", hwnd)
 }
 
 ;#####################################################################################
@@ -3891,7 +3890,7 @@ GetDC(hwnd=0)
 
 GetDCEx(hwnd, flags=0, hrgnClip=0)
 {
-    return DllCall("GetDCEx", "uint", hwnd, "uint", hrgnClip, "int", flags)
+return DllCall("GetDCEx", "uint", hwnd, "uint", hrgnClip, "int", flags)
 }
 
 ;#####################################################################################
@@ -3910,7 +3909,7 @@ GetDCEx(hwnd, flags=0, hrgnClip=0)
 
 ReleaseDC(hdc, hwnd=0)
 {
-   return DllCall("ReleaseDC", "uint", hwnd, "uint", hdc)
+return DllCall("ReleaseDC", "uint", hwnd, "uint", hdc)
 }
 
 ;#####################################################################################
@@ -3926,7 +3925,7 @@ ReleaseDC(hdc, hwnd=0)
 
 DeleteDC(hdc)
 {
-   return DllCall("DeleteDC", "uint", hdc)
+return DllCall("DeleteDC", "uint", hdc)
 }
 ;#####################################################################################
 
@@ -3939,7 +3938,7 @@ DeleteDC(hdc)
 
 Gdip_LibraryVersion()
 {
-	return 1.45
+return 1.45
 }
 
 ;#####################################################################################
@@ -3959,39 +3958,39 @@ Gdip_LibraryVersion()
 
 Gdip_BitmapFromBRA(ByRef BRAFromMemIn, File, Alternate=0)
 {
-	if !BRAFromMemIn
-		return -1
-	Loop, Parse, BRAFromMemIn, `n
-	{
-		if (A_Index = 1)
-		{
-			StringSplit, Header, A_LoopField, |
-			if (Header0 != 4 || Header2 != "BRA!")
-				return -2
-		}
-		else if (A_Index = 2)
-		{
-			StringSplit, Info, A_LoopField, |
-			if (Info0 != 3)
-				return -3
-		}
-		else
-			break
-	}
-	if !Alternate
-		StringReplace, File, File, \, \\, All
-	RegExMatch(BRAFromMemIn, "mi`n)^" (Alternate ? File "\|.+?\|(\d+)\|(\d+)" : "\d+\|" File "\|(\d+)\|(\d+)") "$", FileInfo)
-	if !FileInfo
-		return -4
+    if !BRAFromMemIn
+        return -1
+    Loop, Parse, BRAFromMemIn, `n
+    {
+        if (A_Index = 1)
+        {
+            StringSplit, Header, A_LoopField, |
+            if (Header0 != 4 || Header2 != "BRA!")
+                return -2
+        }
+        else if (A_Index = 2)
+        {
+            StringSplit, Info, A_LoopField, |
+            if (Info0 != 3)
+                return -3
+        }
+        else
+            break
+    }
+    if !Alternate
+        StringReplace, File, File, \, \\, All
+    RegExMatch(BRAFromMemIn, "mi`n)^" (Alternate ? File "\|.+?\|(\d+)\|(\d+)" : "\d+\|" File "\|(\d+)\|(\d+)") "$", FileInfo)
+    if !FileInfo
+        return -4
 
-	hData := DllCall("GlobalAlloc", "uint", 2, "uint", FileInfo2)
-	pData := DllCall("GlobalLock", "uint", hData)
-	DllCall("RtlMoveMemory", "uint", pData, "uint", &BRAFromMemIn+Info2+FileInfo1, "uint", FileInfo2)
-	DllCall("GlobalUnlock", "uint", hData)
-	DllCall("ole32\CreateStreamOnHGlobal", "uint", hData, "int", 1, "uint*", pStream)
-	DllCall("gdiplus\GdipCreateBitmapFromStream", "uint", pStream, "uint*", pBitmap)
-	DllCall(NumGet(NumGet(1*pStream)+8), "uint", pStream)
-	return pBitmap
+    hData := DllCall("GlobalAlloc", "uint", 2, "uint", FileInfo2)
+    pData := DllCall("GlobalLock", "uint", hData)
+    DllCall("RtlMoveMemory", "uint", pData, "uint", &BRAFromMemIn+Info2+FileInfo1, "uint", FileInfo2)
+    DllCall("GlobalUnlock", "uint", hData)
+    DllCall("ole32\CreateStreamOnHGlobal", "uint", hData, "int", 1, "uint*", pStream)
+    DllCall("gdiplus\GdipCreateBitmapFromStream", "uint", pStream, "uint*", pBitmap)
+    DllCall(NumGet(NumGet(1*pStream)+8), "uint", pStream)
+return pBitmap
 }
 
 ;#####################################################################################
@@ -4012,7 +4011,7 @@ Gdip_BitmapFromBRA(ByRef BRAFromMemIn, File, Alternate=0)
 
 Gdip_DrawRectangle(pGraphics, pPen, x, y, w, h)
 {
-   return DllCall("gdiplus\GdipDrawRectangle", "uint", pGraphics, "uint", pPen, "float", x, "float", y, "float", w, "float", h)
+return DllCall("gdiplus\GdipDrawRectangle", "uint", pGraphics, "uint", pPen, "float", x, "float", y, "float", w, "float", h)
 }
 
 ;#####################################################################################
@@ -4034,20 +4033,20 @@ Gdip_DrawRectangle(pGraphics, pPen, x, y, w, h)
 
 Gdip_DrawRoundedRectangle(pGraphics, pPen, x, y, w, h, r)
 {
-	Gdip_SetClipRect(pGraphics, x-r, y-r, 2*r, 2*r, 4)
-	Gdip_SetClipRect(pGraphics, x+w-r, y-r, 2*r, 2*r, 4)
-	Gdip_SetClipRect(pGraphics, x-r, y+h-r, 2*r, 2*r, 4)
-	Gdip_SetClipRect(pGraphics, x+w-r, y+h-r, 2*r, 2*r, 4)
-	E := Gdip_DrawRectangle(pGraphics, pPen, x, y, w, h)
-	Gdip_ResetClip(pGraphics)
-	Gdip_SetClipRect(pGraphics, x-(2*r), y+r, w+(4*r), h-(2*r), 4)
-	Gdip_SetClipRect(pGraphics, x+r, y-(2*r), w-(2*r), h+(4*r), 4)
-	Gdip_DrawEllipse(pGraphics, pPen, x, y, 2*r, 2*r)
-	Gdip_DrawEllipse(pGraphics, pPen, x+w-(2*r), y, 2*r, 2*r)
-	Gdip_DrawEllipse(pGraphics, pPen, x, y+h-(2*r), 2*r, 2*r)
-	Gdip_DrawEllipse(pGraphics, pPen, x+w-(2*r), y+h-(2*r), 2*r, 2*r)
-	Gdip_ResetClip(pGraphics)
-	return E
+    Gdip_SetClipRect(pGraphics, x-r, y-r, 2*r, 2*r, 4)
+    Gdip_SetClipRect(pGraphics, x+w-r, y-r, 2*r, 2*r, 4)
+    Gdip_SetClipRect(pGraphics, x-r, y+h-r, 2*r, 2*r, 4)
+    Gdip_SetClipRect(pGraphics, x+w-r, y+h-r, 2*r, 2*r, 4)
+    E := Gdip_DrawRectangle(pGraphics, pPen, x, y, w, h)
+    Gdip_ResetClip(pGraphics)
+    Gdip_SetClipRect(pGraphics, x-(2*r), y+r, w+(4*r), h-(2*r), 4)
+    Gdip_SetClipRect(pGraphics, x+r, y-(2*r), w-(2*r), h+(4*r), 4)
+    Gdip_DrawEllipse(pGraphics, pPen, x, y, 2*r, 2*r)
+    Gdip_DrawEllipse(pGraphics, pPen, x+w-(2*r), y, 2*r, 2*r)
+    Gdip_DrawEllipse(pGraphics, pPen, x, y+h-(2*r), 2*r, 2*r)
+    Gdip_DrawEllipse(pGraphics, pPen, x+w-(2*r), y+h-(2*r), 2*r, 2*r)
+    Gdip_ResetClip(pGraphics)
+return E
 }
 
 ;#####################################################################################
@@ -4068,7 +4067,7 @@ Gdip_DrawRoundedRectangle(pGraphics, pPen, x, y, w, h, r)
 
 Gdip_DrawEllipse(pGraphics, pPen, x, y, w, h)
 {
-   return DllCall("gdiplus\GdipDrawEllipse", "uint", pGraphics, "uint", pPen, "float", x, "float", y, "float", w, "float", h)
+return DllCall("gdiplus\GdipDrawEllipse", "uint", pGraphics, "uint", pPen, "float", x, "float", y, "float", w, "float", h)
 }
 
 ;#####################################################################################
@@ -4093,9 +4092,9 @@ Gdip_DrawEllipse(pGraphics, pPen, x, y, w, h)
 
 Gdip_DrawBezier(pGraphics, pPen, x1, y1, x2, y2, x3, y3, x4, y4)
 {
-   return DllCall("gdiplus\GdipDrawBezier", "uint", pgraphics, "uint", pPen
-   , "float", x1, "float", y1, "float", x2, "float", y2
-   , "float", x3, "float", y3, "float", x4, "float", y4)
+return DllCall("gdiplus\GdipDrawBezier", "uint", pgraphics, "uint", pPen
+, "float", x1, "float", y1, "float", x2, "float", y2
+, "float", x3, "float", y3, "float", x4, "float", y4)
 }
 
 ;#####################################################################################
@@ -4118,8 +4117,8 @@ Gdip_DrawBezier(pGraphics, pPen, x1, y1, x2, y2, x3, y3, x4, y4)
 
 Gdip_DrawArc(pGraphics, pPen, x, y, w, h, StartAngle, SweepAngle)
 {
-   return DllCall("gdiplus\GdipDrawArc", "uint", pGraphics, "uint", pPen, "float", x
-   , "float", y, "float", w, "float", h, "float", StartAngle, "float", SweepAngle)
+return DllCall("gdiplus\GdipDrawArc", "uint", pGraphics, "uint", pPen, "float", x
+, "float", y, "float", w, "float", h, "float", StartAngle, "float", SweepAngle)
 }
 
 ;#####################################################################################
@@ -4142,7 +4141,7 @@ Gdip_DrawArc(pGraphics, pPen, x, y, w, h, StartAngle, SweepAngle)
 
 Gdip_DrawPie(pGraphics, pPen, x, y, w, h, StartAngle, SweepAngle)
 {
-   return DllCall("gdiplus\GdipDrawPie", "uint", pGraphics, "uint", pPen, "float", x, "float", y, "float", w, "float", h, "float", StartAngle, "float", SweepAngle)
+return DllCall("gdiplus\GdipDrawPie", "uint", pGraphics, "uint", pPen, "float", x, "float", y, "float", w, "float", h, "float", StartAngle, "float", SweepAngle)
 }
 
 ;#####################################################################################
@@ -4161,8 +4160,8 @@ Gdip_DrawPie(pGraphics, pPen, x, y, w, h, StartAngle, SweepAngle)
 
 Gdip_DrawLine(pGraphics, pPen, x1, y1, x2, y2)
 {
-   return DllCall("gdiplus\GdipDrawLine", "uint", pGraphics, "uint", pPen
-   , "float", x1, "float", y1, "float", x2, "float", y2)
+return DllCall("gdiplus\GdipDrawLine", "uint", pGraphics, "uint", pPen
+, "float", x1, "float", y1, "float", x2, "float", y2)
 }
 
 ;#####################################################################################
@@ -4178,14 +4177,14 @@ Gdip_DrawLine(pGraphics, pPen, x1, y1, x2, y2)
 
 Gdip_DrawLines(pGraphics, pPen, Points)
 {
-   StringSplit, Points, Points, |
-   VarSetCapacity(PointF, 8*Points0)   
-   Loop, %Points0%
-   {
-      StringSplit, Coord, Points%A_Index%, `,
-      NumPut(Coord1, PointF, 8*(A_Index-1), "float"), NumPut(Coord2, PointF, (8*(A_Index-1))+4, "float")
-   }
-   return DllCall("gdiplus\GdipDrawLines", "uint", pGraphics, "uint", pPen, "uint", &PointF, "int", Points0)
+    StringSplit, Points, Points, |
+    VarSetCapacity(PointF, 8*Points0) 
+    Loop, %Points0%
+    {
+        StringSplit, Coord, Points%A_Index%, `,
+        NumPut(Coord1, PointF, 8*(A_Index-1), "float"), NumPut(Coord2, PointF, (8*(A_Index-1))+4, "float")
+    }
+return DllCall("gdiplus\GdipDrawLines", "uint", pGraphics, "uint", pPen, "uint", &PointF, "int", Points0)
 }
 
 ;#####################################################################################
@@ -4204,8 +4203,8 @@ Gdip_DrawLines(pGraphics, pPen, Points)
 
 Gdip_FillRectangle(pGraphics, pBrush, x, y, w, h)
 {
-   return DllCall("gdiplus\GdipFillRectangle", "uint", pGraphics, "int", pBrush
-   , "float", x, "float", y, "float", w, "float", h)
+return DllCall("gdiplus\GdipFillRectangle", "uint", pGraphics, "int", pBrush
+, "float", x, "float", y, "float", w, "float", h)
 }
 
 ;#####################################################################################
@@ -4225,22 +4224,22 @@ Gdip_FillRectangle(pGraphics, pBrush, x, y, w, h)
 
 Gdip_FillRoundedRectangle(pGraphics, pBrush, x, y, w, h, r)
 {
-	Region := Gdip_GetClipRegion(pGraphics)
-	Gdip_SetClipRect(pGraphics, x-r, y-r, 2*r, 2*r, 4)
-	Gdip_SetClipRect(pGraphics, x+w-r, y-r, 2*r, 2*r, 4)
-	Gdip_SetClipRect(pGraphics, x-r, y+h-r, 2*r, 2*r, 4)
-	Gdip_SetClipRect(pGraphics, x+w-r, y+h-r, 2*r, 2*r, 4)
-	E := Gdip_FillRectangle(pGraphics, pBrush, x, y, w, h)
-	Gdip_SetClipRegion(pGraphics, Region, 0)
-	Gdip_SetClipRect(pGraphics, x-(2*r), y+r, w+(4*r), h-(2*r), 4)
-	Gdip_SetClipRect(pGraphics, x+r, y-(2*r), w-(2*r), h+(4*r), 4)
-	Gdip_FillEllipse(pGraphics, pBrush, x, y, 2*r, 2*r)
-	Gdip_FillEllipse(pGraphics, pBrush, x+w-(2*r), y, 2*r, 2*r)
-	Gdip_FillEllipse(pGraphics, pBrush, x, y+h-(2*r), 2*r, 2*r)
-	Gdip_FillEllipse(pGraphics, pBrush, x+w-(2*r), y+h-(2*r), 2*r, 2*r)
-	Gdip_SetClipRegion(pGraphics, Region, 0)
-	Gdip_DeleteRegion(Region)
-	return E
+    Region := Gdip_GetClipRegion(pGraphics)
+    Gdip_SetClipRect(pGraphics, x-r, y-r, 2*r, 2*r, 4)
+    Gdip_SetClipRect(pGraphics, x+w-r, y-r, 2*r, 2*r, 4)
+    Gdip_SetClipRect(pGraphics, x-r, y+h-r, 2*r, 2*r, 4)
+    Gdip_SetClipRect(pGraphics, x+w-r, y+h-r, 2*r, 2*r, 4)
+    E := Gdip_FillRectangle(pGraphics, pBrush, x, y, w, h)
+    Gdip_SetClipRegion(pGraphics, Region, 0)
+    Gdip_SetClipRect(pGraphics, x-(2*r), y+r, w+(4*r), h-(2*r), 4)
+    Gdip_SetClipRect(pGraphics, x+r, y-(2*r), w-(2*r), h+(4*r), 4)
+    Gdip_FillEllipse(pGraphics, pBrush, x, y, 2*r, 2*r)
+    Gdip_FillEllipse(pGraphics, pBrush, x+w-(2*r), y, 2*r, 2*r)
+    Gdip_FillEllipse(pGraphics, pBrush, x, y+h-(2*r), 2*r, 2*r)
+    Gdip_FillEllipse(pGraphics, pBrush, x+w-(2*r), y+h-(2*r), 2*r, 2*r)
+    Gdip_SetClipRegion(pGraphics, Region, 0)
+    Gdip_DeleteRegion(Region)
+return E
 }
 
 ;#####################################################################################
@@ -4260,14 +4259,14 @@ Gdip_FillRoundedRectangle(pGraphics, pBrush, x, y, w, h, r)
 
 Gdip_FillPolygon(pGraphics, pBrush, Points, FillMode=0)
 {
-   StringSplit, Points, Points, |
-   VarSetCapacity(PointF, 8*Points0)   
-   Loop, %Points0%
-   {
-      StringSplit, Coord, Points%A_Index%, `,
-      NumPut(Coord1, PointF, 8*(A_Index-1), "float"), NumPut(Coord2, PointF, (8*(A_Index-1))+4, "float")
-   }   
-   return DllCall("gdiplus\GdipFillPolygon", "uint", pGraphics, "uint", pBrush, "uint", &PointF, "int", Points0, "int", FillMode)
+    StringSplit, Points, Points, |
+    VarSetCapacity(PointF, 8*Points0) 
+    Loop, %Points0%
+    {
+        StringSplit, Coord, Points%A_Index%, `,
+        NumPut(Coord1, PointF, 8*(A_Index-1), "float"), NumPut(Coord2, PointF, (8*(A_Index-1))+4, "float")
+    } 
+return DllCall("gdiplus\GdipFillPolygon", "uint", pGraphics, "uint", pBrush, "uint", &PointF, "int", Points0, "int", FillMode)
 }
 
 ;#####################################################################################
@@ -4288,8 +4287,8 @@ Gdip_FillPolygon(pGraphics, pBrush, Points, FillMode=0)
 
 Gdip_FillPie(pGraphics, pBrush, x, y, w, h, StartAngle, SweepAngle)
 {
-   return DllCall("gdiplus\GdipFillPie", "uint", pGraphics, "uint", pBrush
-   , "float", x, "float", y, "float", w, "float", h, "float", StartAngle, "float", SweepAngle)
+return DllCall("gdiplus\GdipFillPie", "uint", pGraphics, "uint", pBrush
+, "float", x, "float", y, "float", w, "float", h, "float", StartAngle, "float", SweepAngle)
 }
 
 ;#####################################################################################
@@ -4308,7 +4307,7 @@ Gdip_FillPie(pGraphics, pBrush, x, y, w, h, StartAngle, SweepAngle)
 
 Gdip_FillEllipse(pGraphics, pBrush, x, y, w, h)
 {
-	return DllCall("gdiplus\GdipFillEllipse", "uint", pGraphics, "uint", pBrush, "float", x, "float", y, "float", w, "float", h)
+return DllCall("gdiplus\GdipFillEllipse", "uint", pGraphics, "uint", pBrush, "float", x, "float", y, "float", w, "float", h)
 }
 
 ;#####################################################################################
@@ -4326,7 +4325,7 @@ Gdip_FillEllipse(pGraphics, pBrush, x, y, w, h)
 
 Gdip_FillRegion(pGraphics, pBrush, Region)
 {
-	return DllCall("gdiplus\GdipFillRegion", "uint", pGraphics, "uint", pBrush, "uint", Region)
+return DllCall("gdiplus\GdipFillRegion", "uint", pGraphics, "uint", pBrush, "uint", Region)
 }
 
 ;#####################################################################################
@@ -4342,7 +4341,7 @@ Gdip_FillRegion(pGraphics, pBrush, Region)
 
 Gdip_FillPath(pGraphics, pBrush, Path)
 {
-	return DllCall("gdiplus\GdipFillPath", "uint", pGraphics, "uint", pBrush, "uint", Path)
+return DllCall("gdiplus\GdipFillPath", "uint", pGraphics, "uint", pBrush, "uint", Path)
 }
 
 ;#####################################################################################
@@ -4368,32 +4367,32 @@ Gdip_FillPath(pGraphics, pBrush, Path)
 
 Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx="", sy="", sw="", sh="", Matrix=1)
 {
-	StringSplit, Points, Points, |
-	VarSetCapacity(PointF, 8*Points0)   
-	Loop, %Points0%
-	{
-		StringSplit, Coord, Points%A_Index%, `,
-		NumPut(Coord1, PointF, 8*(A_Index-1), "float"), NumPut(Coord2, PointF, (8*(A_Index-1))+4, "float")
-	}
+    StringSplit, Points, Points, |
+    VarSetCapacity(PointF, 8*Points0) 
+    Loop, %Points0%
+    {
+        StringSplit, Coord, Points%A_Index%, `,
+        NumPut(Coord1, PointF, 8*(A_Index-1), "float"), NumPut(Coord2, PointF, (8*(A_Index-1))+4, "float")
+    }
 
-	if (Matrix&1 = "")
-		ImageAttr := Gdip_SetImageAttributesColorMatrix(Matrix)
-	else if (Matrix != 1)
-		ImageAttr := Gdip_SetImageAttributesColorMatrix("1|0|0|0|0|0|1|0|0|0|0|0|1|0|0|0|0|0|" Matrix "|0|0|0|0|0|1")
-		
-	if (sx = "" && sy = "" && sw = "" && sh = "")
-	{
-		sx := 0, sy := 0
-		sw := Gdip_GetImageWidth(pBitmap)
-		sh := Gdip_GetImageHeight(pBitmap)
-	}
+    if (Matrix&1 = "")
+        ImageAttr := Gdip_SetImageAttributesColorMatrix(Matrix)
+    else if (Matrix != 1)
+        ImageAttr := Gdip_SetImageAttributesColorMatrix("1|0|0|0|0|0|1|0|0|0|0|0|1|0|0|0|0|0|" Matrix "|0|0|0|0|0|1")
 
-	E := DllCall("gdiplus\GdipDrawImagePointsRect", "uint", pGraphics, "uint", pBitmap
-	, "uint", &PointF, "int", Points0, "float", sx, "float", sy, "float", sw, "float", sh
-	, "int", 2, "uint", ImageAttr, "uint", 0, "uint", 0)
-	if ImageAttr
-		Gdip_DisposeImageAttributes(ImageAttr)
-	return E
+    if (sx = "" && sy = "" && sw = "" && sh = "")
+    {
+        sx := 0, sy := 0
+        sw := Gdip_GetImageWidth(pBitmap)
+        sh := Gdip_GetImageHeight(pBitmap)
+    }
+
+    E := DllCall("gdiplus\GdipDrawImagePointsRect", "uint", pGraphics, "uint", pBitmap
+    , "uint", &PointF, "int", Points0, "float", sx, "float", sy, "float", sw, "float", sh
+    , "int", 2, "uint", ImageAttr, "uint", 0, "uint", 0)
+    if ImageAttr
+        Gdip_DisposeImageAttributes(ImageAttr)
+return E
 }
 
 ;#####################################################################################
@@ -4435,34 +4434,34 @@ Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx="", sy="", sw="", sh="",
 
 Gdip_DrawImage(pGraphics, pBitmap, dx="", dy="", dw="", dh="", sx="", sy="", sw="", sh="", Matrix=1)
 {
-	if (Matrix&1 = "")
-		ImageAttr := Gdip_SetImageAttributesColorMatrix(Matrix)
-	else if (Matrix != 1)
-		ImageAttr := Gdip_SetImageAttributesColorMatrix("1|0|0|0|0|0|1|0|0|0|0|0|1|0|0|0|0|0|" Matrix "|0|0|0|0|0|1")
+    if (Matrix&1 = "")
+        ImageAttr := Gdip_SetImageAttributesColorMatrix(Matrix)
+    else if (Matrix != 1)
+        ImageAttr := Gdip_SetImageAttributesColorMatrix("1|0|0|0|0|0|1|0|0|0|0|0|1|0|0|0|0|0|" Matrix "|0|0|0|0|0|1")
 
-	if (sx = "" && sy = "" && sw = "" && sh = "")
-	{
-		if (dx = "" && dy = "" && dw = "" && dh = "")
-		{
-			sx := dx := 0, sy := dy := 0
-			sw := dw := Gdip_GetImageWidth(pBitmap)
-			sh := dh := Gdip_GetImageHeight(pBitmap)
-		}
-		else
-		{
-			sx := sy := 0
-			sw := Gdip_GetImageWidth(pBitmap)
-			sh := Gdip_GetImageHeight(pBitmap)
-		}
-	}
+    if (sx = "" && sy = "" && sw = "" && sh = "")
+    {
+        if (dx = "" && dy = "" && dw = "" && dh = "")
+        {
+            sx := dx := 0, sy := dy := 0
+            sw := dw := Gdip_GetImageWidth(pBitmap)
+            sh := dh := Gdip_GetImageHeight(pBitmap)
+        }
+        else
+        {
+            sx := sy := 0
+            sw := Gdip_GetImageWidth(pBitmap)
+            sh := Gdip_GetImageHeight(pBitmap)
+        }
+    }
 
-	E := DllCall("gdiplus\GdipDrawImageRectRect", "uint", pGraphics, "uint", pBitmap
-	, "float", dx, "float", dy, "float", dw, "float", dh
-	, "float", sx, "float", sy, "float", sw, "float", sh
-	, "int", 2, "uint", ImageAttr, "uint", 0, "uint", 0)
-	if ImageAttr
-		Gdip_DisposeImageAttributes(ImageAttr)
-	return E
+    E := DllCall("gdiplus\GdipDrawImageRectRect", "uint", pGraphics, "uint", pBitmap
+    , "float", dx, "float", dy, "float", dw, "float", dh
+    , "float", sx, "float", sy, "float", sw, "float", sh
+    , "int", 2, "uint", ImageAttr, "uint", 0, "uint", 0)
+    if ImageAttr
+        Gdip_DisposeImageAttributes(ImageAttr)
+return E
 }
 
 ;#####################################################################################
@@ -4481,17 +4480,17 @@ Gdip_DrawImage(pGraphics, pBitmap, dx="", dy="", dw="", dh="", sx="", sy="", sw=
 
 Gdip_SetImageAttributesColorMatrix(Matrix)
 {
-	VarSetCapacity(ColourMatrix, 100, 0)
-	Matrix := RegExReplace(RegExReplace(Matrix, "^[^\d-\.]+([\d\.])", "$1", "", 1), "[^\d-\.]+", "|")
-	StringSplit, Matrix, Matrix, |
-	Loop, 25
-	{
-		Matrix := (Matrix%A_Index% != "") ? Matrix%A_Index% : Mod(A_Index-1, 6) ? 0 : 1
-		NumPut(Matrix, ColourMatrix, (A_Index-1)*4, "float")
-	}
-	DllCall("gdiplus\GdipCreateImageAttributes", "uint*", ImageAttr)
-	DllCall("gdiplus\GdipSetImageAttributesColorMatrix", "uint", ImageAttr, "int", 1, "int", 1, "uint", &ColourMatrix, "int", 0, "int", 0)
-	return ImageAttr
+    VarSetCapacity(ColourMatrix, 100, 0)
+    Matrix := RegExReplace(RegExReplace(Matrix, "^[^\d-\.]+([\d\.])", "$1", "", 1), "[^\d-\.]+", "|")
+    StringSplit, Matrix, Matrix, |
+    Loop, 25
+    {
+        Matrix := (Matrix%A_Index% != "") ? Matrix%A_Index% : Mod(A_Index-1, 6) ? 0 : 1
+        NumPut(Matrix, ColourMatrix, (A_Index-1)*4, "float")
+    }
+    DllCall("gdiplus\GdipCreateImageAttributes", "uint*", ImageAttr)
+    DllCall("gdiplus\GdipSetImageAttributesColorMatrix", "uint", ImageAttr, "int", 1, "int", 1, "uint", &ColourMatrix, "int", 0, "int", 0)
+return ImageAttr
 }
 
 ;#####################################################################################
@@ -4508,7 +4507,7 @@ Gdip_SetImageAttributesColorMatrix(Matrix)
 Gdip_GraphicsFromImage(pBitmap)
 {
     DllCall("gdiplus\GdipGetImageGraphicsContext", "uint", pBitmap, "uint*", pGraphics)
-    return pGraphics
+return pGraphics
 }
 
 ;#####################################################################################
@@ -4525,7 +4524,7 @@ Gdip_GraphicsFromImage(pBitmap)
 Gdip_GraphicsFromHDC(hdc)
 {
     DllCall("gdiplus\GdipCreateFromHDC", "uint", hdc, "uint*", pGraphics)
-    return pGraphics
+return pGraphics
 }
 
 ;#####################################################################################
@@ -4539,8 +4538,8 @@ Gdip_GraphicsFromHDC(hdc)
 
 Gdip_GetDC(pGraphics)
 {
-	DllCall("gdiplus\GdipGetDC", "uint", pGraphics, "uint*", hdc)
-	return hdc
+    DllCall("gdiplus\GdipGetDC", "uint", pGraphics, "uint*", hdc)
+return hdc
 }
 
 ;#####################################################################################
@@ -4555,7 +4554,7 @@ Gdip_GetDC(pGraphics)
 
 Gdip_ReleaseDC(pGraphics, hdc)
 {
-	return DllCall("gdiplus\GdipReleaseDC", "uint", pGraphics, "uint", hdc)
+return DllCall("gdiplus\GdipReleaseDC", "uint", pGraphics, "uint", hdc)
 }
 
 ;#####################################################################################
@@ -4573,7 +4572,7 @@ Gdip_ReleaseDC(pGraphics, hdc)
 
 Gdip_GraphicsClear(pGraphics, ARGB=0x00ffffff)
 {
-    return DllCall("gdiplus\GdipGraphicsClear", "uint", pGraphics, "int", ARGB)
+return DllCall("gdiplus\GdipGraphicsClear", "uint", pGraphics, "int", ARGB)
 }
 
 ;#####################################################################################
@@ -4591,27 +4590,27 @@ Gdip_GraphicsClear(pGraphics, ARGB=0x00ffffff)
 
 Gdip_BlurBitmap(pBitmap, Blur)
 {
-	if (Blur > 100) || (Blur < 1)
-		return -1	
-	
-	sWidth := Gdip_GetImageWidth(pBitmap), sHeight := Gdip_GetImageHeight(pBitmap)
-	dWidth := sWidth//Blur, dHeight := sHeight//Blur
+    if (Blur > 100) || (Blur < 1)
+        return -1	
 
-	pBitmap1 := Gdip_CreateBitmap(dWidth, dHeight)
-	G1 := Gdip_GraphicsFromImage(pBitmap1)
-	Gdip_SetInterpolationMode(G1, 7)
-	Gdip_DrawImage(G1, pBitmap, 0, 0, dWidth, dHeight, 0, 0, sWidth, sHeight)
+    sWidth := Gdip_GetImageWidth(pBitmap), sHeight := Gdip_GetImageHeight(pBitmap)
+    dWidth := sWidth//Blur, dHeight := sHeight//Blur
 
-	Gdip_DeleteGraphics(G1)
+    pBitmap1 := Gdip_CreateBitmap(dWidth, dHeight)
+    G1 := Gdip_GraphicsFromImage(pBitmap1)
+    Gdip_SetInterpolationMode(G1, 7)
+    Gdip_DrawImage(G1, pBitmap, 0, 0, dWidth, dHeight, 0, 0, sWidth, sHeight)
 
-	pBitmap2 := Gdip_CreateBitmap(sWidth, sHeight)
-	G2 := Gdip_GraphicsFromImage(pBitmap2)
-	Gdip_SetInterpolationMode(G2, 7)
-	Gdip_DrawImage(G2, pBitmap1, 0, 0, sWidth, sHeight, 0, 0, dWidth, dHeight)
+    Gdip_DeleteGraphics(G1)
 
-	Gdip_DeleteGraphics(G2)
-	Gdip_DisposeImage(pBitmap1)
-	return pBitmap2
+    pBitmap2 := Gdip_CreateBitmap(sWidth, sHeight)
+    G2 := Gdip_GraphicsFromImage(pBitmap2)
+    Gdip_SetInterpolationMode(G2, 7)
+    Gdip_DrawImage(G2, pBitmap1, 0, 0, sWidth, sHeight, 0, 0, dWidth, dHeight)
+
+    Gdip_DeleteGraphics(G2)
+    Gdip_DisposeImage(pBitmap1)
+return pBitmap2
 }
 
 ;#####################################################################################
@@ -4634,76 +4633,76 @@ Gdip_BlurBitmap(pBitmap, Blur)
 
 Gdip_SaveBitmapToFile(pBitmap, sOutput, Quality=75)
 {
-	SplitPath, sOutput,,, Extension
-	if Extension not in BMP,DIB,RLE,JPG,JPEG,JPE,JFIF,GIF,TIF,TIFF,PNG
-		return -1
-	Extension := "." Extension
+    SplitPath, sOutput,,, Extension
+    if Extension not in BMP,DIB,RLE,JPG,JPEG,JPE,JFIF,GIF,TIF,TIFF,PNG
+        return -1
+    Extension := "." Extension
 
-	DllCall("gdiplus\GdipGetImageEncodersSize", "uint*", nCount, "uint*", nSize)
-	VarSetCapacity(ci, nSize)
-	DllCall("gdiplus\GdipGetImageEncoders", "uint", nCount, "uint", nSize, "uint", &ci)
-	if !(nCount && nSize)
-		return -2
-   
-	Loop, %nCount%
-	{
-		Location := NumGet(ci, 76*(A_Index-1)+44)
-		if !A_IsUnicode
-		{
-			nSize := DllCall("WideCharToMultiByte", "uint", 0, "uint", 0, "uint", Location, "int", -1, "uint", 0, "int",  0, "uint", 0, "uint", 0)
-			VarSetCapacity(sString, nSize)
-			DllCall("WideCharToMultiByte", "uint", 0, "uint", 0, "uint", Location, "int", -1, "str", sString, "int", nSize, "uint", 0, "uint", 0)
-			if !InStr(sString, "*" Extension)
-				continue
-		}
-		else
-		{
-			nSize := DllCall("WideCharToMultiByte", "uint", 0, "uint", 0, "uint", Location, "int", -1, "uint", 0, "int",  0, "uint", 0, "uint", 0)
-			sString := ""
-			Loop, %nSize%
-				sString .= Chr(NumGet(Location+0, 2*(A_Index-1), "char"))
-			if !InStr(sString, "*" Extension)
-				continue
-		}
-		pCodec := &ci+76*(A_Index-1)
-		break
-	}
-	if !pCodec
-		return -3
+    DllCall("gdiplus\GdipGetImageEncodersSize", "uint*", nCount, "uint*", nSize)
+    VarSetCapacity(ci, nSize)
+    DllCall("gdiplus\GdipGetImageEncoders", "uint", nCount, "uint", nSize, "uint", &ci)
+    if !(nCount && nSize)
+        return -2
 
-	if (Quality != 75)
-	{
-		Quality := (Quality < 0) ? 0 : (Quality > 100) ? 100 : Quality
-		if Extension in .JPG,.JPEG,.JPE,.JFIF
-		{
-			DllCall("gdiplus\GdipGetEncoderParameterListSize", "uint", pBitmap, "uint", pCodec, "uint*", nSize)
-			VarSetCapacity(EncoderParameters, nSize, 0)
-			DllCall("gdiplus\GdipGetEncoderParameterList", "uint", pBitmap, "uint", pCodec, "uint", nSize, "uint", &EncoderParameters)
-			Loop, % NumGet(EncoderParameters)      ;%
-			{
-				if (NumGet(EncoderParameters, (28*(A_Index-1))+20) = 1) && (NumGet(EncoderParameters, (28*(A_Index-1))+24) = 6)
-				{
-				   p := (28*(A_Index-1))+&EncoderParameters
-				   NumPut(Quality, NumGet(NumPut(4, NumPut(1, p+0)+20)))
-				   break
-				}
-			}      
-	  }
-	}
+    Loop, %nCount%
+    {
+        Location := NumGet(ci, 76*(A_Index-1)+44)
+        if !A_IsUnicode
+        {
+            nSize := DllCall("WideCharToMultiByte", "uint", 0, "uint", 0, "uint", Location, "int", -1, "uint", 0, "int", 0, "uint", 0, "uint", 0)
+            VarSetCapacity(sString, nSize)
+            DllCall("WideCharToMultiByte", "uint", 0, "uint", 0, "uint", Location, "int", -1, "str", sString, "int", nSize, "uint", 0, "uint", 0)
+            if !InStr(sString, "*" Extension)
+                continue
+        }
+        else
+        {
+            nSize := DllCall("WideCharToMultiByte", "uint", 0, "uint", 0, "uint", Location, "int", -1, "uint", 0, "int", 0, "uint", 0, "uint", 0)
+            sString := ""
+            Loop, %nSize%
+                sString .= Chr(NumGet(Location+0, 2*(A_Index-1), "char"))
+            if !InStr(sString, "*" Extension)
+                continue
+        }
+        pCodec := &ci+76*(A_Index-1)
+        break
+    }
+    if !pCodec
+        return -3
 
-	if !A_IsUnicode
-	{
-		nSize := DllCall("MultiByteToWideChar", "uint", 0, "uint", 0, "uint", &sOutput, "int", -1, "uint", 0, "int", 0)
-		VarSetCapacity(wOutput, nSize*2)
-		DllCall("MultiByteToWideChar", "uint", 0, "uint", 0, "uint", &sOutput, "int", -1, "uint", &wOutput, "int", nSize)
-		VarSetCapacity(wOutput, -1)
-		if !VarSetCapacity(wOutput)
-			return -4
-		E := DllCall("gdiplus\GdipSaveImageToFile", "uint", pBitmap, "uint", &wOutput, "uint", pCodec, "uint", p ? p : 0)
-	}
-	else
-		E := DllCall("gdiplus\GdipSaveImageToFile", "uint", pBitmap, "uint", &sOutput, "uint", pCodec, "uint", p ? p : 0)
-	return E ? -5 : 0
+    if (Quality != 75)
+    {
+        Quality := (Quality < 0) ? 0 : (Quality > 100) ? 100 : Quality
+        if Extension in .JPG,.JPEG,.JPE,.JFIF
+        {
+            DllCall("gdiplus\GdipGetEncoderParameterListSize", "uint", pBitmap, "uint", pCodec, "uint*", nSize)
+            VarSetCapacity(EncoderParameters, nSize, 0)
+            DllCall("gdiplus\GdipGetEncoderParameterList", "uint", pBitmap, "uint", pCodec, "uint", nSize, "uint", &EncoderParameters)
+            Loop, % NumGet(EncoderParameters) ;%
+            {
+                if (NumGet(EncoderParameters, (28*(A_Index-1))+20) = 1) && (NumGet(EncoderParameters, (28*(A_Index-1))+24) = 6)
+                {
+                    p := (28*(A_Index-1))+&EncoderParameters
+                    NumPut(Quality, NumGet(NumPut(4, NumPut(1, p+0)+20)))
+                    break
+                }
+            } 
+        }
+    }
+
+    if !A_IsUnicode
+    {
+        nSize := DllCall("MultiByteToWideChar", "uint", 0, "uint", 0, "uint", &sOutput, "int", -1, "uint", 0, "int", 0)
+        VarSetCapacity(wOutput, nSize*2)
+        DllCall("MultiByteToWideChar", "uint", 0, "uint", 0, "uint", &sOutput, "int", -1, "uint", &wOutput, "int", nSize)
+        VarSetCapacity(wOutput, -1)
+        if !VarSetCapacity(wOutput)
+            return -4
+        E := DllCall("gdiplus\GdipSaveImageToFile", "uint", pBitmap, "uint", &wOutput, "uint", pCodec, "uint", p ? p : 0)
+    }
+    else
+        E := DllCall("gdiplus\GdipSaveImageToFile", "uint", pBitmap, "uint", &sOutput, "uint", pCodec, "uint", p ? p : 0)
+return E ? -5 : 0
 }
 
 ;#####################################################################################
@@ -4719,8 +4718,8 @@ Gdip_SaveBitmapToFile(pBitmap, sOutput, Quality=75)
 
 Gdip_GetPixel(pBitmap, x, y)
 {
-	DllCall("gdiplus\GdipBitmapGetPixel", "uint", pBitmap, "int", x, "int", y, "uint*", ARGB)
-	return ARGB
+    DllCall("gdiplus\GdipBitmapGetPixel", "uint", pBitmap, "int", x, "int", y, "uint*", ARGB)
+return ARGB
 }
 
 ;#####################################################################################
@@ -4736,7 +4735,7 @@ Gdip_GetPixel(pBitmap, x, y)
 
 Gdip_SetPixel(pBitmap, x, y, ARGB)
 {
-   return DllCall("gdiplus\GdipBitmapSetPixel", "uint", pBitmap, "int", x, "int", y, "int", ARGB)
+return DllCall("gdiplus\GdipBitmapSetPixel", "uint", pBitmap, "int", x, "int", y, "int", ARGB)
 }
 
 ;#####################################################################################
@@ -4750,8 +4749,8 @@ Gdip_SetPixel(pBitmap, x, y, ARGB)
 
 Gdip_GetImageWidth(pBitmap)
 {
-   DllCall("gdiplus\GdipGetImageWidth", "uint", pBitmap, "uint*", Width)
-   return Width
+    DllCall("gdiplus\GdipGetImageWidth", "uint", pBitmap, "uint*", Width)
+return Width
 }
 
 ;#####################################################################################
@@ -4765,8 +4764,8 @@ Gdip_GetImageWidth(pBitmap)
 
 Gdip_GetImageHeight(pBitmap)
 {
-   DllCall("gdiplus\GdipGetImageHeight", "uint", pBitmap, "uint*", Height)
-   return Height
+    DllCall("gdiplus\GdipGetImageHeight", "uint", pBitmap, "uint*", Height)
+return Height
 }
 
 ;#####################################################################################
@@ -4783,23 +4782,23 @@ Gdip_GetImageHeight(pBitmap)
 
 Gdip_GetImageDimensions(pBitmap, ByRef Width, ByRef Height)
 {
-	DllCall("gdiplus\GdipGetImageWidth", "uint", pBitmap, "uint*", Width)
-	DllCall("gdiplus\GdipGetImageHeight", "uint", pBitmap, "uint*", Height)
+    DllCall("gdiplus\GdipGetImageWidth", "uint", pBitmap, "uint*", Width)
+    DllCall("gdiplus\GdipGetImageHeight", "uint", pBitmap, "uint*", Height)
 }
 
 ;#####################################################################################
 
 Gdip_GetDimensions(pBitmap, ByRef Width, ByRef Height)
 {
-	Gdip_GetImageDimensions(pBitmap, Width, Height)
+    Gdip_GetImageDimensions(pBitmap, Width, Height)
 }
 
 ;#####################################################################################
 
 Gdip_GetImagePixelFormat(pBitmap)
 {
-	DllCall("gdiplus\GdipGetImagePixelFormat", "uint", pBitmap, "uint*", Format)
-	return Format
+    DllCall("gdiplus\GdipGetImagePixelFormat", "uint", pBitmap, "uint*", Format)
+return Format
 }
 
 ;#####################################################################################
@@ -4816,138 +4815,138 @@ Gdip_GetImagePixelFormat(pBitmap)
 
 Gdip_GetDpiX(pGraphics)
 {
-	DllCall("gdiplus\GdipGetDpiX", "uint", pGraphics, "float*", dpix)
-	return Round(dpix)
+    DllCall("gdiplus\GdipGetDpiX", "uint", pGraphics, "float*", dpix)
+return Round(dpix)
 }
 
 ;#####################################################################################
 
 Gdip_GetDpiY(pGraphics)
 {
-	DllCall("gdiplus\GdipGetDpiY", "uint", pGraphics, "float*", dpiy)
-	return Round(dpiy)
+    DllCall("gdiplus\GdipGetDpiY", "uint", pGraphics, "float*", dpiy)
+return Round(dpiy)
 }
 
 ;#####################################################################################
 
 Gdip_GetImageHorizontalResolution(pBitmap)
 {
-	DllCall("gdiplus\GdipGetImageHorizontalResolution", "uint", pBitmap, "float*", dpix)
-	return Round(dpix)
+    DllCall("gdiplus\GdipGetImageHorizontalResolution", "uint", pBitmap, "float*", dpix)
+return Round(dpix)
 }
 
 ;#####################################################################################
 
 Gdip_GetImageVerticalResolution(pBitmap)
 {
-	DllCall("gdiplus\GdipGetImageVerticalResolution", "uint", pBitmap, "float*", dpiy)
-	return Round(dpiy)
+    DllCall("gdiplus\GdipGetImageVerticalResolution", "uint", pBitmap, "float*", dpiy)
+return Round(dpiy)
 }
 
 ;#####################################################################################
 
 Gdip_BitmapSetResolution(pBitmap, dpix, dpiy)
 {
-	return DllCall("gdiplus\GdipBitmapSetResolution", "uint", pBitmap, "float", dpix, "float", dpiy)
+return DllCall("gdiplus\GdipBitmapSetResolution", "uint", pBitmap, "float", dpix, "float", dpiy)
 }
 
 ;#####################################################################################
 
 Gdip_CreateBitmapFromFile(sFile, IconNumber=1, IconSize="")
 {
-	SplitPath, sFile,,, ext
-	if ext in exe,dll
-	{
-		Sizes := IconSize ? IconSize : 256 "|" 128 "|" 64 "|" 48 "|" 32 "|" 16
-		VarSetCapacity(buf, 40)
-		Loop, Parse, Sizes, |
-		{
-			DllCall("PrivateExtractIcons", "str", sFile, "int", IconNumber-1, "int", A_LoopField, "int", A_LoopField, "uint*", hIcon, "uint*", 0, "uint", 1, "uint", 0)
-			if !hIcon
-				continue
+    SplitPath, sFile,,, ext
+    if ext in exe,dll
+    {
+        Sizes := IconSize ? IconSize : 256 "|" 128 "|" 64 "|" 48 "|" 32 "|" 16
+        VarSetCapacity(buf, 40)
+        Loop, Parse, Sizes, |
+        {
+            DllCall("PrivateExtractIcons", "str", sFile, "int", IconNumber-1, "int", A_LoopField, "int", A_LoopField, "uint*", hIcon, "uint*", 0, "uint", 1, "uint", 0)
+            if !hIcon
+                continue
 
-			if !DllCall("GetIconInfo", "uint", hIcon, "uint", &buf)
-			{
-				DestroyIcon(hIcon)
-				continue
-			}
-			hbmColor := NumGet(buf, 16)
-			hbmMask  := NumGet(buf, 12)
+            if !DllCall("GetIconInfo", "uint", hIcon, "uint", &buf)
+            {
+                DestroyIcon(hIcon)
+                continue
+            }
+            hbmColor := NumGet(buf, 16)
+            hbmMask := NumGet(buf, 12)
 
-			if !(hbmColor && DllCall("GetObject", "uint", hbmColor, "int", 24, "uint", &buf))
-			{
-				DestroyIcon(hIcon)
-				continue
-			}
-			break
-		}
-		if !hIcon
-			return -1
+            if !(hbmColor && DllCall("GetObject", "uint", hbmColor, "int", 24, "uint", &buf))
+            {
+                DestroyIcon(hIcon)
+                continue
+            }
+            break
+        }
+        if !hIcon
+            return -1
 
-		Width := NumGet(buf, 4, "int"),  Height := NumGet(buf, 8, "int")
-		hbm := CreateDIBSection(Width, -Height), hdc := CreateCompatibleDC(), obm := SelectObject(hdc, hbm)
+        Width := NumGet(buf, 4, "int"), Height := NumGet(buf, 8, "int")
+        hbm := CreateDIBSection(Width, -Height), hdc := CreateCompatibleDC(), obm := SelectObject(hdc, hbm)
 
-		if !DllCall("DrawIconEx", "uint", hdc, "int", 0, "int", 0, "uint", hIcon, "uint", Width, "uint", Height, "uint", 0, "uint", 0, "uint", 3)
-		{
-			DestroyIcon(hIcon)
-			return -2
-		}
+        if !DllCall("DrawIconEx", "uint", hdc, "int", 0, "int", 0, "uint", hIcon, "uint", Width, "uint", Height, "uint", 0, "uint", 0, "uint", 3)
+        {
+            DestroyIcon(hIcon)
+            return -2
+        }
 
-		VarSetCapacity(dib, 84)
-		DllCall("GetObject", "uint", hbm, "int", 84, "uint", &dib)
-		Stride := NumGet(dib, 12), Bits := NumGet(dib, 20)
+        VarSetCapacity(dib, 84)
+        DllCall("GetObject", "uint", hbm, "int", 84, "uint", &dib)
+        Stride := NumGet(dib, 12), Bits := NumGet(dib, 20)
 
-		DllCall("gdiplus\GdipCreateBitmapFromScan0", "int", Width, "int", Height, "int", Stride, "int", 0x26200A, "uint", Bits, "uint*", pBitmapOld)
-		pBitmap := Gdip_CreateBitmap(Width, Height), G := Gdip_GraphicsFromImage(pBitmap)
-		Gdip_DrawImage(G, pBitmapOld, 0, 0, Width, Height, 0, 0, Width, Height)
-		SelectObject(hdc, obm), DeleteObject(hbm), DeleteDC(hdc)
-		Gdip_DeleteGraphics(G), Gdip_DisposeImage(pBitmapOld)
-		DestroyIcon(hIcon)
-	}
-	else
-	{
-		if !A_IsUnicode
-		{
-			VarSetCapacity(wFile, 1023)
-			DllCall("kernel32\MultiByteToWideChar", "uint", 0, "uint", 0, "uint", &sFile, "int", -1, "uint", &wFile, "int", 512)
-			DllCall("gdiplus\GdipCreateBitmapFromFile", "uint", &wFile, "uint*", pBitmap)
-		}
-		else
-			DllCall("gdiplus\GdipCreateBitmapFromFile", "uint", &sFile, "uint*", pBitmap)
-	}
-	return pBitmap
+        DllCall("gdiplus\GdipCreateBitmapFromScan0", "int", Width, "int", Height, "int", Stride, "int", 0x26200A, "uint", Bits, "uint*", pBitmapOld)
+        pBitmap := Gdip_CreateBitmap(Width, Height), G := Gdip_GraphicsFromImage(pBitmap)
+        Gdip_DrawImage(G, pBitmapOld, 0, 0, Width, Height, 0, 0, Width, Height)
+        SelectObject(hdc, obm), DeleteObject(hbm), DeleteDC(hdc)
+        Gdip_DeleteGraphics(G), Gdip_DisposeImage(pBitmapOld)
+        DestroyIcon(hIcon)
+    }
+    else
+    {
+        if !A_IsUnicode
+        {
+            VarSetCapacity(wFile, 1023)
+            DllCall("kernel32\MultiByteToWideChar", "uint", 0, "uint", 0, "uint", &sFile, "int", -1, "uint", &wFile, "int", 512)
+            DllCall("gdiplus\GdipCreateBitmapFromFile", "uint", &wFile, "uint*", pBitmap)
+        }
+        else
+            DllCall("gdiplus\GdipCreateBitmapFromFile", "uint", &sFile, "uint*", pBitmap)
+    }
+return pBitmap
 }
 
 ;#####################################################################################
 
 Gdip_CreateBitmapFromHBITMAP(hBitmap, Palette=0)
 {
-	DllCall("gdiplus\GdipCreateBitmapFromHBITMAP", "uint", hBitmap, "uint", Palette, "uint*", pBitmap)
-	return pBitmap
+    DllCall("gdiplus\GdipCreateBitmapFromHBITMAP", "uint", hBitmap, "uint", Palette, "uint*", pBitmap)
+return pBitmap
 }
 
 ;#####################################################################################
 
 Gdip_CreateHBITMAPFromBitmap(pBitmap, Background=0xffffffff)
 {
-	DllCall("gdiplus\GdipCreateHBITMAPFromBitmap", "uint", pBitmap, "uint*", hbm, "int", Background)
-	return hbm
+    DllCall("gdiplus\GdipCreateHBITMAPFromBitmap", "uint", pBitmap, "uint*", hbm, "int", Background)
+return hbm
 }
 
 ;#####################################################################################
 
 Gdip_CreateBitmapFromHICON(hIcon)
 {
-	DllCall("gdiplus\GdipCreateBitmapFromHICON", "uint", hIcon, "uint*", pBitmap)
-	return pBitmap
+    DllCall("gdiplus\GdipCreateBitmapFromHICON", "uint", hIcon, "uint*", pBitmap)
+return pBitmap
 }
 
 ;#####################################################################################
 
 Gdip_CreateHICONFromBitmap(pBitmap)
 {
-	DllCall("gdiplus\GdipCreateHICONFromBitmap", "uint", pBitmap, "uint*", hIcon)
-	return hIcon
+    DllCall("gdiplus\GdipCreateHICONFromBitmap", "uint", pBitmap, "uint*", hIcon)
+return hIcon
 }
 
 ;#####################################################################################
@@ -4955,52 +4954,52 @@ Gdip_CreateHICONFromBitmap(pBitmap)
 Gdip_CreateBitmap(Width, Height, Format=0x26200A)
 {
     DllCall("gdiplus\GdipCreateBitmapFromScan0", "int", Width, "int", Height, "int", 0, "int", Format, "uint", 0, "uint*", pBitmap)
-    Return pBitmap
+Return pBitmap
 }
 
 ;#####################################################################################
 
 Gdip_CreateBitmapFromClipboard()
 {
-	if !DllCall("OpenClipboard", "uint", 0)
-		return -1
-	if !DllCall("IsClipboardFormatAvailable", "uint", 8)
-		return -2
-	if !hBitmap := DllCall("GetClipboardData", "uint", 2)
-		return -3
-	if !pBitmap := Gdip_CreateBitmapFromHBITMAP(hBitmap)
-		return -4
-	if !DllCall("CloseClipboard")
-		return -5
-	DeleteObject(hBitmap)
-	return pBitmap
+    if !DllCall("OpenClipboard", "uint", 0)
+        return -1
+    if !DllCall("IsClipboardFormatAvailable", "uint", 8)
+        return -2
+    if !hBitmap := DllCall("GetClipboardData", "uint", 2)
+        return -3
+    if !pBitmap := Gdip_CreateBitmapFromHBITMAP(hBitmap)
+        return -4
+    if !DllCall("CloseClipboard")
+        return -5
+    DeleteObject(hBitmap)
+return pBitmap
 }
 
 ;#####################################################################################
 
 Gdip_SetBitmapToClipboard(pBitmap)
 {
-	hBitmap := Gdip_CreateHBITMAPFromBitmap(pBitmap)
-	DllCall("GetObject", "uint", hBitmap, "int", VarSetCapacity(oi, 84, 0), "uint", &oi)
-	hdib := DllCall("GlobalAlloc", "uint", 2, "uint", 40+NumGet(oi, 44))
-	pdib := DllCall("GlobalLock", "uint", hdib)
-	DllCall("RtlMoveMemory", "uint", pdib, "uint", &oi+24, "uint", 40)
-	DllCall("RtlMoveMemory", "Uint", pdib+40, "Uint", NumGet(oi, 20), "uint", NumGet(oi, 44))
-	DllCall("GlobalUnlock", "uint", hdib)
-	DllCall("DeleteObject", "uint", hBitmap)
-	DllCall("OpenClipboard", "uint", 0)
-	DllCall("EmptyClipboard")
-	DllCall("SetClipboardData", "uint", 8, "uint", hdib)
-	DllCall("CloseClipboard")
+    hBitmap := Gdip_CreateHBITMAPFromBitmap(pBitmap)
+    DllCall("GetObject", "uint", hBitmap, "int", VarSetCapacity(oi, 84, 0), "uint", &oi)
+    hdib := DllCall("GlobalAlloc", "uint", 2, "uint", 40+NumGet(oi, 44))
+    pdib := DllCall("GlobalLock", "uint", hdib)
+    DllCall("RtlMoveMemory", "uint", pdib, "uint", &oi+24, "uint", 40)
+    DllCall("RtlMoveMemory", "Uint", pdib+40, "Uint", NumGet(oi, 20), "uint", NumGet(oi, 44))
+    DllCall("GlobalUnlock", "uint", hdib)
+    DllCall("DeleteObject", "uint", hBitmap)
+    DllCall("OpenClipboard", "uint", 0)
+    DllCall("EmptyClipboard")
+    DllCall("SetClipboardData", "uint", 8, "uint", hdib)
+    DllCall("CloseClipboard")
 }
 
 ;#####################################################################################
 
 Gdip_CloneBitmapArea(pBitmap, x, y, w, h, Format=0x26200A)
 {
-	DllCall("gdiplus\GdipCloneBitmapArea", "float", x, "float", y, "float", w, "float", h
-	, "int", Format, "uint", pBitmap, "uint*", pBitmapDest)
-	return pBitmapDest
+    DllCall("gdiplus\GdipCloneBitmapArea", "float", x, "float", y, "float", w, "float", h
+    , "int", Format, "uint", pBitmap, "uint*", pBitmapDest)
+return pBitmapDest
 }
 
 ;#####################################################################################
@@ -5009,24 +5008,24 @@ Gdip_CloneBitmapArea(pBitmap, x, y, w, h, Format=0x26200A)
 
 Gdip_CreatePen(ARGB, w)
 {
-   DllCall("gdiplus\GdipCreatePen1", "int", ARGB, "float", w, "int", 2, "uint*", pPen)
-   return pPen
+    DllCall("gdiplus\GdipCreatePen1", "int", ARGB, "float", w, "int", 2, "uint*", pPen)
+return pPen
 }
 
 ;#####################################################################################
 
 Gdip_CreatePenFromBrush(pBrush, w)
 {
-	DllCall("gdiplus\GdipCreatePen2", "uint", pBrush, "float", w, "int", 2, "uint*", pPen)
-	return pPen
+    DllCall("gdiplus\GdipCreatePen2", "uint", pBrush, "float", w, "int", 2, "uint*", pPen)
+return pPen
 }
 
 ;#####################################################################################
 
 Gdip_BrushCreateSolid(ARGB=0xff000000)
 {
-	DllCall("gdiplus\GdipCreateSolidFill", "int", ARGB, "uint*", pBrush)
-	return pBrush
+    DllCall("gdiplus\GdipCreateSolidFill", "int", ARGB, "uint*", pBrush)
+return pBrush
 }
 
 ;#####################################################################################
@@ -5087,19 +5086,19 @@ Gdip_BrushCreateSolid(ARGB=0xff000000)
 ; HatchStyleTotal = 53
 Gdip_BrushCreateHatch(ARGBfront, ARGBback, HatchStyle=0)
 {
-	DllCall("gdiplus\GdipCreateHatchBrush", "int", HatchStyle, "int", ARGBfront, "int", ARGBback, "uint*", pBrush)
-	return pBrush
+    DllCall("gdiplus\GdipCreateHatchBrush", "int", HatchStyle, "int", ARGBfront, "int", ARGBback, "uint*", pBrush)
+return pBrush
 }
 
 ;#####################################################################################
 
 Gdip_CreateTextureBrush(pBitmap, WrapMode=1, x=0, y=0, w="", h="")
 {
-	if !(w && h)
-		DllCall("gdiplus\GdipCreateTexture", "uint", pBitmap, "int", WrapMode, "uint*", pBrush)
-	else
-		DllCall("gdiplus\GdipCreateTexture2", "uint", pBitmap, "int", WrapMode, "float", x, "float", y, "float", w, "float", h, "uint*", pBrush)
-	return pBrush
+    if !(w && h)
+        DllCall("gdiplus\GdipCreateTexture", "uint", pBitmap, "int", WrapMode, "uint*", pBrush)
+    else
+        DllCall("gdiplus\GdipCreateTexture2", "uint", pBitmap, "int", WrapMode, "float", x, "float", y, "float", w, "float", h, "uint*", pBrush)
+return pBrush
 }
 
 ;#####################################################################################
@@ -5111,9 +5110,9 @@ Gdip_CreateTextureBrush(pBitmap, WrapMode=1, x=0, y=0, w="", h="")
 ; WrapModeClamp = 4
 Gdip_CreateLineBrush(x1, y1, x2, y2, ARGB1, ARGB2, WrapMode=1)
 {
-	CreatePointF(PointF1, x1, y1), CreatePointF(PointF2, x2, y2)
-	DllCall("gdiplus\GdipCreateLineBrush", "uint", &PointF1, "uint", &PointF2, "int", ARGB1, "int", ARGB2, "int", WrapMode, "uint*", LGpBrush)
-	return LGpBrush
+    CreatePointF(PointF1, x1, y1), CreatePointF(PointF2, x2, y2)
+    DllCall("gdiplus\GdipCreateLineBrush", "uint", &PointF1, "uint", &PointF2, "int", ARGB1, "int", ARGB2, "int", WrapMode, "uint*", LGpBrush)
+return LGpBrush
 }
 
 ;#####################################################################################
@@ -5124,17 +5123,17 @@ Gdip_CreateLineBrush(x1, y1, x2, y2, ARGB1, ARGB2, WrapMode=1)
 ; LinearGradientModeBackwardDiagonal = 3
 Gdip_CreateLineBrushFromRect(x, y, w, h, ARGB1, ARGB2, LinearGradientMode=1, WrapMode=1)
 {
-	CreateRectF(RectF, x, y, w, h)
-	DllCall("gdiplus\GdipCreateLineBrushFromRect", "uint", &RectF, "int", ARGB1, "int", ARGB2, "int", LinearGradientMode, "int", WrapMode, "uint*", LGpBrush)
-	return LGpBrush
+    CreateRectF(RectF, x, y, w, h)
+    DllCall("gdiplus\GdipCreateLineBrushFromRect", "uint", &RectF, "int", ARGB1, "int", ARGB2, "int", LinearGradientMode, "int", WrapMode, "uint*", LGpBrush)
+return LGpBrush
 }
 
 ;#####################################################################################
 
 Gdip_CloneBrush(pBrush)
 {
-	DllCall("gdiplus\GdipCloneBrush", "uint", pBrush, "uint*", pBrushClone)
-	return pBrushClone
+    DllCall("gdiplus\GdipCloneBrush", "uint", pBrush, "uint*", pBrushClone)
+return pBrushClone
 }
 
 ;#####################################################################################
@@ -5143,63 +5142,63 @@ Gdip_CloneBrush(pBrush)
 
 Gdip_DeletePen(pPen)
 {
-   return DllCall("gdiplus\GdipDeletePen", "uint", pPen)
+return DllCall("gdiplus\GdipDeletePen", "uint", pPen)
 }
 
 ;#####################################################################################
 
 Gdip_DeleteBrush(pBrush)
 {
-   return DllCall("gdiplus\GdipDeleteBrush", "uint", pBrush)
+return DllCall("gdiplus\GdipDeleteBrush", "uint", pBrush)
 }
 
 ;#####################################################################################
 
 Gdip_DisposeImage(pBitmap)
 {
-   return DllCall("gdiplus\GdipDisposeImage", "uint", pBitmap)
+return DllCall("gdiplus\GdipDisposeImage", "uint", pBitmap)
 }
 
 ;#####################################################################################
 
 Gdip_DeleteGraphics(pGraphics)
 {
-   return DllCall("gdiplus\GdipDeleteGraphics", "uint", pGraphics)
+return DllCall("gdiplus\GdipDeleteGraphics", "uint", pGraphics)
 }
 
 ;#####################################################################################
 
 Gdip_DisposeImageAttributes(ImageAttr)
 {
-	return DllCall("gdiplus\GdipDisposeImageAttributes", "uint", ImageAttr)
+return DllCall("gdiplus\GdipDisposeImageAttributes", "uint", ImageAttr)
 }
 
 ;#####################################################################################
 
 Gdip_DeleteFont(hFont)
 {
-   return DllCall("gdiplus\GdipDeleteFont", "uint", hFont)
+return DllCall("gdiplus\GdipDeleteFont", "uint", hFont)
 }
 
 ;#####################################################################################
 
 Gdip_DeleteStringFormat(hFormat)
 {
-   return DllCall("gdiplus\GdipDeleteStringFormat", "uint", hFormat)
+return DllCall("gdiplus\GdipDeleteStringFormat", "uint", hFormat)
 }
 
 ;#####################################################################################
 
 Gdip_DeleteFontFamily(hFamily)
 {
-   return DllCall("gdiplus\GdipDeleteFontFamily", "uint", hFamily)
+return DllCall("gdiplus\GdipDeleteFontFamily", "uint", hFamily)
 }
 
 ;#####################################################################################
 
 Gdip_DeleteMatrix(Matrix)
 {
-   return DllCall("gdiplus\GdipDeleteMatrix", "uint", Matrix)
+return DllCall("gdiplus\GdipDeleteMatrix", "uint", Matrix)
 }
 
 ;#####################################################################################
@@ -5208,124 +5207,124 @@ Gdip_DeleteMatrix(Matrix)
 
 Gdip_TextToGraphics(pGraphics, Text, Options, Font="Arial", Width="", Height="", Measure=0)
 {
-	IWidth := Width, IHeight:= Height
-	
-	RegExMatch(Options, "i)X([\-\d\.]+)(p*)", xpos)
-	RegExMatch(Options, "i)Y([\-\d\.]+)(p*)", ypos)
-	RegExMatch(Options, "i)W([\-\d\.]+)(p*)", Width)
-	RegExMatch(Options, "i)H([\-\d\.]+)(p*)", Height)
-	RegExMatch(Options, "i)C(?!(entre|enter))([a-f\d]+)", Colour)
-	RegExMatch(Options, "i)Top|Up|Bottom|Down|vCentre|vCenter", vPos)
-	RegExMatch(Options, "i)NoWrap", NoWrap)
-	RegExMatch(Options, "i)R(\d)", Rendering)
-	RegExMatch(Options, "i)S(\d+)(p*)", Size)
+    IWidth := Width, IHeight:= Height
 
-	if !Gdip_DeleteBrush(Gdip_CloneBrush(Colour2))
-		PassBrush := 1, pBrush := Colour2
-	
-	if !(IWidth && IHeight) && (xpos2 || ypos2 || Width2 || Height2 || Size2)
-		return -1
+    RegExMatch(Options, "i)X([\-\d\.]+)(p*)", xpos)
+    RegExMatch(Options, "i)Y([\-\d\.]+)(p*)", ypos)
+    RegExMatch(Options, "i)W([\-\d\.]+)(p*)", Width)
+    RegExMatch(Options, "i)H([\-\d\.]+)(p*)", Height)
+    RegExMatch(Options, "i)C(?!(entre|enter))([a-f\d]+)", Colour)
+    RegExMatch(Options, "i)Top|Up|Bottom|Down|vCentre|vCenter", vPos)
+    RegExMatch(Options, "i)NoWrap", NoWrap)
+    RegExMatch(Options, "i)R(\d)", Rendering)
+    RegExMatch(Options, "i)S(\d+)(p*)", Size)
 
-	Style := 0, Styles := "Regular|Bold|Italic|BoldItalic|Underline|Strikeout"
-	Loop, Parse, Styles, |
-	{
-		if RegExMatch(Options, "\b" A_loopField)
-		Style |= (A_LoopField != "StrikeOut") ? (A_Index-1) : 8
-	}
-  
-	Align := 0, Alignments := "Near|Left|Centre|Center|Far|Right"
-	Loop, Parse, Alignments, |
-	{
-		if RegExMatch(Options, "\b" A_loopField)
-			Align |= A_Index//2.1      ; 0|0|1|1|2|2
-	}
+    if !Gdip_DeleteBrush(Gdip_CloneBrush(Colour2))
+        PassBrush := 1, pBrush := Colour2
 
-	xpos := (xpos1 != "") ? xpos2 ? IWidth*(xpos1/100) : xpos1 : 0
-	ypos := (ypos1 != "") ? ypos2 ? IHeight*(ypos1/100) : ypos1 : 0
-	Width := Width1 ? Width2 ? IWidth*(Width1/100) : Width1 : IWidth
-	Height := Height1 ? Height2 ? IHeight*(Height1/100) : Height1 : IHeight
-	if !PassBrush
-		Colour := "0x" (Colour2 ? Colour2 : "ff000000")
-	Rendering := ((Rendering1 >= 0) && (Rendering1 <= 5)) ? Rendering1 : 4
-	Size := (Size1 > 0) ? Size2 ? IHeight*(Size1/100) : Size1 : 12
+    if !(IWidth && IHeight) && (xpos2 || ypos2 || Width2 || Height2 || Size2)
+        return -1
 
-	hFamily := Gdip_FontFamilyCreate(Font)
-	hFont := Gdip_FontCreate(hFamily, Size, Style)
-	FormatStyle := NoWrap ? 0x4000 | 0x1000 : 0x4000
-	hFormat := Gdip_StringFormatCreate(FormatStyle)
-	pBrush := PassBrush ? pBrush : Gdip_BrushCreateSolid(Colour)
-	if !(hFamily && hFont && hFormat && pBrush && pGraphics)
-		return !pGraphics ? -2 : !hFamily ? -3 : !hFont ? -4 : !hFormat ? -5 : !pBrush ? -6 : 0
-   
-	CreateRectF(RC, xpos, ypos, Width, Height)
-	Gdip_SetStringFormatAlign(hFormat, Align)
-	Gdip_SetTextRenderingHint(pGraphics, Rendering)
-	ReturnRC := Gdip_MeasureString(pGraphics, Text, hFont, hFormat, RC)
+    Style := 0, Styles := "Regular|Bold|Italic|BoldItalic|Underline|Strikeout"
+    Loop, Parse, Styles, |
+    {
+        if RegExMatch(Options, "\b" A_loopField)
+            Style |= (A_LoopField != "StrikeOut") ? (A_Index-1) : 8
+    }
 
-	if vPos
-	{
-		StringSplit, ReturnRC, ReturnRC, |
-		
-		if (vPos = "vCentre") || (vPos = "vCenter")
-			ypos += (Height-ReturnRC4)//2
-		else if (vPos = "Top") || (vPos = "Up")
-			ypos := 0
-		else if (vPos = "Bottom") || (vPos = "Down")
-			ypos := Height-ReturnRC4
-		
-		CreateRectF(RC, xpos, ypos, Width, ReturnRC4)
-		ReturnRC := Gdip_MeasureString(pGraphics, Text, hFont, hFormat, RC)
-	}
+    Align := 0, Alignments := "Near|Left|Centre|Center|Far|Right"
+    Loop, Parse, Alignments, |
+    {
+        if RegExMatch(Options, "\b" A_loopField)
+            Align |= A_Index//2.1 ; 0|0|1|1|2|2
+    }
 
-	if !Measure
-		E := Gdip_DrawString(pGraphics, Text, hFont, hFormat, pBrush, RC)
+    xpos := (xpos1 != "") ? xpos2 ? IWidth*(xpos1/100) : xpos1 : 0
+    ypos := (ypos1 != "") ? ypos2 ? IHeight*(ypos1/100) : ypos1 : 0
+    Width := Width1 ? Width2 ? IWidth*(Width1/100) : Width1 : IWidth
+    Height := Height1 ? Height2 ? IHeight*(Height1/100) : Height1 : IHeight
+    if !PassBrush
+        Colour := "0x" (Colour2 ? Colour2 : "ff000000")
+    Rendering := ((Rendering1 >= 0) && (Rendering1 <= 5)) ? Rendering1 : 4
+    Size := (Size1 > 0) ? Size2 ? IHeight*(Size1/100) : Size1 : 12
 
-	if !PassBrush
-		Gdip_DeleteBrush(pBrush)
-	Gdip_DeleteStringFormat(hFormat)   
-	Gdip_DeleteFont(hFont)
-	Gdip_DeleteFontFamily(hFamily)
-	return E ? E : ReturnRC
+    hFamily := Gdip_FontFamilyCreate(Font)
+    hFont := Gdip_FontCreate(hFamily, Size, Style)
+    FormatStyle := NoWrap ? 0x4000 | 0x1000 : 0x4000
+    hFormat := Gdip_StringFormatCreate(FormatStyle)
+    pBrush := PassBrush ? pBrush : Gdip_BrushCreateSolid(Colour)
+    if !(hFamily && hFont && hFormat && pBrush && pGraphics)
+        return !pGraphics ? -2 : !hFamily ? -3 : !hFont ? -4 : !hFormat ? -5 : !pBrush ? -6 : 0
+
+    CreateRectF(RC, xpos, ypos, Width, Height)
+    Gdip_SetStringFormatAlign(hFormat, Align)
+    Gdip_SetTextRenderingHint(pGraphics, Rendering)
+    ReturnRC := Gdip_MeasureString(pGraphics, Text, hFont, hFormat, RC)
+
+    if vPos
+    {
+        StringSplit, ReturnRC, ReturnRC, |
+
+        if (vPos = "vCentre") || (vPos = "vCenter")
+            ypos += (Height-ReturnRC4)//2
+        else if (vPos = "Top") || (vPos = "Up")
+            ypos := 0
+        else if (vPos = "Bottom") || (vPos = "Down")
+            ypos := Height-ReturnRC4
+
+        CreateRectF(RC, xpos, ypos, Width, ReturnRC4)
+        ReturnRC := Gdip_MeasureString(pGraphics, Text, hFont, hFormat, RC)
+    }
+
+    if !Measure
+        E := Gdip_DrawString(pGraphics, Text, hFont, hFormat, pBrush, RC)
+
+    if !PassBrush
+        Gdip_DeleteBrush(pBrush)
+    Gdip_DeleteStringFormat(hFormat) 
+    Gdip_DeleteFont(hFont)
+    Gdip_DeleteFontFamily(hFamily)
+return E ? E : ReturnRC
 }
 
 ;#####################################################################################
 
 Gdip_DrawString(pGraphics, sString, hFont, hFormat, pBrush, ByRef RectF)
 {
-	if !A_IsUnicode
-	{
-		nSize := DllCall("MultiByteToWideChar", "uint", 0, "uint", 0, "uint", &sString, "int", -1, "uint", 0, "int", 0)
-		VarSetCapacity(wString, nSize*2)
-		DllCall("MultiByteToWideChar", "uint", 0, "uint", 0, "uint", &sString, "int", -1, "uint", &wString, "int", nSize)
-		return DllCall("gdiplus\GdipDrawString", "uint", pGraphics
-		, "uint", &wString, "int", -1, "uint", hFont, "uint", &RectF, "uint", hFormat, "uint", pBrush)
-	}
-	else
-	{
-		return DllCall("gdiplus\GdipDrawString", "uint", pGraphics
-		, "uint", &sString, "int", -1, "uint", hFont, "uint", &RectF, "uint", hFormat, "uint", pBrush)
-	}	
+    if !A_IsUnicode
+    {
+        nSize := DllCall("MultiByteToWideChar", "uint", 0, "uint", 0, "uint", &sString, "int", -1, "uint", 0, "int", 0)
+        VarSetCapacity(wString, nSize*2)
+        DllCall("MultiByteToWideChar", "uint", 0, "uint", 0, "uint", &sString, "int", -1, "uint", &wString, "int", nSize)
+        return DllCall("gdiplus\GdipDrawString", "uint", pGraphics
+        , "uint", &wString, "int", -1, "uint", hFont, "uint", &RectF, "uint", hFormat, "uint", pBrush)
+    }
+    else
+    {
+        return DllCall("gdiplus\GdipDrawString", "uint", pGraphics
+        , "uint", &sString, "int", -1, "uint", hFont, "uint", &RectF, "uint", hFormat, "uint", pBrush)
+    }	
 }
 
 ;#####################################################################################
 
 Gdip_MeasureString(pGraphics, sString, hFont, hFormat, ByRef RectF)
 {
-	VarSetCapacity(RC, 16)
-	if !A_IsUnicode
-	{
-		nSize := DllCall("MultiByteToWideChar", "uint", 0, "uint", 0, "uint", &sString, "int", -1, "uint", 0, "int", 0)
-		VarSetCapacity(wString, nSize*2)   
-		DllCall("MultiByteToWideChar", "uint", 0, "uint", 0, "uint", &sString, "int", -1, "uint", &wString, "int", nSize)
-		DllCall("gdiplus\GdipMeasureString", "uint", pGraphics
-		, "uint", &wString, "int", -1, "uint", hFont, "uint", &RectF, "uint", hFormat, "uint", &RC, "uint*", Chars, "uint*", Lines)
-	}
-	else
-	{
-		DllCall("gdiplus\GdipMeasureString", "uint", pGraphics
-		, "uint", &sString, "int", -1, "uint", hFont, "uint", &RectF, "uint", hFormat, "uint", &RC, "uint*", Chars, "uint*", Lines)
-	}
-	return &RC ? NumGet(RC, 0, "float") "|" NumGet(RC, 4, "float") "|" NumGet(RC, 8, "float") "|" NumGet(RC, 12, "float") "|" Chars "|" Lines : 0
+    VarSetCapacity(RC, 16)
+    if !A_IsUnicode
+    {
+        nSize := DllCall("MultiByteToWideChar", "uint", 0, "uint", 0, "uint", &sString, "int", -1, "uint", 0, "int", 0)
+        VarSetCapacity(wString, nSize*2) 
+        DllCall("MultiByteToWideChar", "uint", 0, "uint", 0, "uint", &sString, "int", -1, "uint", &wString, "int", nSize)
+        DllCall("gdiplus\GdipMeasureString", "uint", pGraphics
+        , "uint", &wString, "int", -1, "uint", hFont, "uint", &RectF, "uint", hFormat, "uint", &RC, "uint*", Chars, "uint*", Lines)
+    }
+    else
+    {
+        DllCall("gdiplus\GdipMeasureString", "uint", pGraphics
+        , "uint", &sString, "int", -1, "uint", hFont, "uint", &RectF, "uint", hFormat, "uint", &RC, "uint*", Chars, "uint*", Lines)
+    }
+return &RC ? NumGet(RC, 0, "float") "|" NumGet(RC, 4, "float") "|" NumGet(RC, 8, "float") "|" NumGet(RC, 12, "float") "|" Chars "|" Lines : 0
 }
 
 ; Near = 0
@@ -5333,7 +5332,7 @@ Gdip_MeasureString(pGraphics, sString, hFont, hFormat, ByRef RectF)
 ; Far = 2
 Gdip_SetStringFormatAlign(hFormat, Align)
 {
-   return DllCall("gdiplus\GdipSetStringFormatAlign", "uint", hFormat, "int", Align)
+return DllCall("gdiplus\GdipSetStringFormatAlign", "uint", hFormat, "int", Align)
 }
 
 ; StringFormatFlagsDirectionRightToLeft    = 0x00000001
@@ -5347,8 +5346,8 @@ Gdip_SetStringFormatAlign(hFormat, Align)
 ; StringFormatFlagsNoClip                  = 0x00004000 
 Gdip_StringFormatCreate(Format=0, Lang=0)
 {
-   DllCall("gdiplus\GdipCreateStringFormat", "int", Format, "int", Lang, "uint*", hFormat)
-   return hFormat
+    DllCall("gdiplus\GdipCreateStringFormat", "int", Format, "int", Lang, "uint*", hFormat)
+return hFormat
 }
 
 ; Regular = 0
@@ -5359,22 +5358,22 @@ Gdip_StringFormatCreate(Format=0, Lang=0)
 ; Strikeout = 8
 Gdip_FontCreate(hFamily, Size, Style=0)
 {
-   DllCall("gdiplus\GdipCreateFont", "uint", hFamily, "float", Size, "int", Style, "int", 0, "uint*", hFont)
-   return hFont
+    DllCall("gdiplus\GdipCreateFont", "uint", hFamily, "float", Size, "int", Style, "int", 0, "uint*", hFont)
+return hFont
 }
 
 Gdip_FontFamilyCreate(Font)
 {
-	if !A_IsUnicode
-	{
-		nSize := DllCall("MultiByteToWideChar", "uint", 0, "uint", 0, "uint", &Font, "int", -1, "uint", 0, "int", 0)
-		VarSetCapacity(wFont, nSize*2)
-		DllCall("MultiByteToWideChar", "uint", 0, "uint", 0, "uint", &Font, "int", -1, "uint", &wFont, "int", nSize)
-		DllCall("gdiplus\GdipCreateFontFamilyFromName", "uint", &wFont, "uint", 0, "uint*", hFamily)
-	}
-	else
-		DllCall("gdiplus\GdipCreateFontFamilyFromName", "uint", &Font, "uint", 0, "uint*", hFamily)
-	return hFamily
+    if !A_IsUnicode
+    {
+        nSize := DllCall("MultiByteToWideChar", "uint", 0, "uint", 0, "uint", &Font, "int", -1, "uint", 0, "int", 0)
+        VarSetCapacity(wFont, nSize*2)
+        DllCall("MultiByteToWideChar", "uint", 0, "uint", 0, "uint", &Font, "int", -1, "uint", &wFont, "int", nSize)
+        DllCall("gdiplus\GdipCreateFontFamilyFromName", "uint", &wFont, "uint", 0, "uint*", hFamily)
+    }
+    else
+        DllCall("gdiplus\GdipCreateFontFamilyFromName", "uint", &Font, "uint", 0, "uint*", hFamily)
+return hFamily
 }
 
 ;#####################################################################################
@@ -5383,14 +5382,14 @@ Gdip_FontFamilyCreate(Font)
 
 Gdip_CreateAffineMatrix(m11, m12, m21, m22, x, y)
 {
-   DllCall("gdiplus\GdipCreateMatrix2", "float", m11, "float", m12, "float", m21, "float", m22, "float", x, "float", y, "uint*", Matrix)
-   return Matrix
+    DllCall("gdiplus\GdipCreateMatrix2", "float", m11, "float", m12, "float", m21, "float", m22, "float", x, "float", y, "uint*", Matrix)
+return Matrix
 }
 
 Gdip_CreateMatrix()
 {
-   DllCall("gdiplus\GdipCreateMatrix", "uint*", Matrix)
-   return Matrix
+    DllCall("gdiplus\GdipCreateMatrix", "uint*", Matrix)
+return Matrix
 }
 
 ;#####################################################################################
@@ -5401,31 +5400,31 @@ Gdip_CreateMatrix()
 ; Winding = 1
 Gdip_CreatePath(BrushMode=0)
 {
-	DllCall("gdiplus\GdipCreatePath", "int", BrushMode, "uint*", Path)
-	return Path
+    DllCall("gdiplus\GdipCreatePath", "int", BrushMode, "uint*", Path)
+return Path
 }
 
 Gdip_AddPathEllipse(Path, x, y, w, h)
 {
-	return DllCall("gdiplus\GdipAddPathEllipse", "uint", Path, "float", x, "float", y, "float", w, "float", h)
+return DllCall("gdiplus\GdipAddPathEllipse", "uint", Path, "float", x, "float", y, "float", w, "float", h)
 }
 
 Gdip_AddPathPolygon(Path, Points)
 {
-	StringSplit, Points, Points, |
-	VarSetCapacity(PointF, 8*Points0)   
-	Loop, %Points0%
-	{
-		StringSplit, Coord, Points%A_Index%, `,
-		NumPut(Coord1, PointF, 8*(A_Index-1), "float"), NumPut(Coord2, PointF, (8*(A_Index-1))+4, "float")
-	}   
+    StringSplit, Points, Points, |
+    VarSetCapacity(PointF, 8*Points0) 
+    Loop, %Points0%
+    {
+        StringSplit, Coord, Points%A_Index%, `,
+        NumPut(Coord1, PointF, 8*(A_Index-1), "float"), NumPut(Coord2, PointF, (8*(A_Index-1))+4, "float")
+    } 
 
-	return DllCall("gdiplus\GdipAddPathPolygon", "uint", Path, "uint", &PointF, "int", Points0)
+return DllCall("gdiplus\GdipAddPathPolygon", "uint", Path, "uint", &PointF, "int", Points0)
 }
 
 Gdip_DeletePath(Path)
 {
-	return DllCall("gdiplus\GdipDeletePath", "uint", Path)
+return DllCall("gdiplus\GdipDeletePath", "uint", Path)
 }
 
 ;#####################################################################################
@@ -5439,7 +5438,7 @@ Gdip_DeletePath(Path)
 ; AntiAlias = 4
 Gdip_SetTextRenderingHint(pGraphics, RenderingHint)
 {
-	return DllCall("gdiplus\GdipSetTextRenderingHint", "uint", pGraphics, "int", RenderingHint)
+return DllCall("gdiplus\GdipSetTextRenderingHint", "uint", pGraphics, "int", RenderingHint)
 }
 
 ; Default = 0
@@ -5452,7 +5451,7 @@ Gdip_SetTextRenderingHint(pGraphics, RenderingHint)
 ; HighQualityBicubic = 7
 Gdip_SetInterpolationMode(pGraphics, InterpolationMode)
 {
-   return DllCall("gdiplus\GdipSetInterpolationMode", "uint", pGraphics, "int", InterpolationMode)
+return DllCall("gdiplus\GdipSetInterpolationMode", "uint", pGraphics, "int", InterpolationMode)
 }
 
 ; Default = 0
@@ -5462,14 +5461,14 @@ Gdip_SetInterpolationMode(pGraphics, InterpolationMode)
 ; AntiAlias = 4
 Gdip_SetSmoothingMode(pGraphics, SmoothingMode)
 {
-   return DllCall("gdiplus\GdipSetSmoothingMode", "uint", pGraphics, "int", SmoothingMode)
+return DllCall("gdiplus\GdipSetSmoothingMode", "uint", pGraphics, "int", SmoothingMode)
 }
 
 ; CompositingModeSourceOver = 0 (blended)
 ; CompositingModeSourceCopy = 1 (overwrite)
 Gdip_SetCompositingMode(pGraphics, CompositingMode=0)
 {
-   return DllCall("gdiplus\GdipSetCompositingMode", "uint", pGraphics, "int", CompositingMode)
+return DllCall("gdiplus\GdipSetCompositingMode", "uint", pGraphics, "int", CompositingMode)
 }
 
 ;#####################################################################################
@@ -5478,65 +5477,65 @@ Gdip_SetCompositingMode(pGraphics, CompositingMode=0)
 
 Gdip_Startup()
 {
-	if !DllCall("GetModuleHandle", "str", "gdiplus")
-		DllCall("LoadLibrary", "str", "gdiplus")
-	VarSetCapacity(si, 16, 0), si := Chr(1)
-	DllCall("gdiplus\GdiplusStartup", "uint*", pToken, "uint", &si, "uint", 0)
-	return pToken
+    if !DllCall("GetModuleHandle", "str", "gdiplus")
+        DllCall("LoadLibrary", "str", "gdiplus")
+    VarSetCapacity(si, 16, 0), si := Chr(1)
+    DllCall("gdiplus\GdiplusStartup", "uint*", pToken, "uint", &si, "uint", 0)
+return pToken
 }
 
 Gdip_Shutdown(pToken)
 {
-	DllCall("gdiplus\GdiplusShutdown", "uint", pToken)
-	if hModule := DllCall("GetModuleHandle", "str", "gdiplus")
-		DllCall("FreeLibrary", "uint", hModule)
-	return 0
+    DllCall("gdiplus\GdiplusShutdown", "uint", pToken)
+    if hModule := DllCall("GetModuleHandle", "str", "gdiplus")
+        DllCall("FreeLibrary", "uint", hModule)
+return 0
 }
 
 ; Prepend = 0; The new operation is applied before the old operation.
 ; Append = 1; The new operation is applied after the old operation.
 Gdip_RotateWorldTransform(pGraphics, Angle, MatrixOrder=0)
 {
-	return DllCall("gdiplus\GdipRotateWorldTransform", "uint", pGraphics, "float", Angle, "int", MatrixOrder)
+return DllCall("gdiplus\GdipRotateWorldTransform", "uint", pGraphics, "float", Angle, "int", MatrixOrder)
 }
 
 Gdip_ScaleWorldTransform(pGraphics, x, y, MatrixOrder=0)
 {
-	return DllCall("gdiplus\GdipScaleWorldTransform", "uint", pGraphics, "float", x, "float", y, "int", MatrixOrder)
+return DllCall("gdiplus\GdipScaleWorldTransform", "uint", pGraphics, "float", x, "float", y, "int", MatrixOrder)
 }
 
 Gdip_TranslateWorldTransform(pGraphics, x, y, MatrixOrder=0)
 {
-	return DllCall("gdiplus\GdipTranslateWorldTransform", "uint", pGraphics, "float", x, "float", y, "int", MatrixOrder)
+return DllCall("gdiplus\GdipTranslateWorldTransform", "uint", pGraphics, "float", x, "float", y, "int", MatrixOrder)
 }
 
 Gdip_ResetWorldTransform(pGraphics)
 {
-	return DllCall("gdiplus\GdipResetWorldTransform", "uint", pGraphics)
+return DllCall("gdiplus\GdipResetWorldTransform", "uint", pGraphics)
 }
 
 Gdip_GetRotatedTranslation(Width, Height, Angle, ByRef xTranslation, ByRef yTranslation)
 {
-	pi := 3.14159, TAngle := Angle*(pi/180)	
+    pi := 3.14159, TAngle := Angle*(pi/180)	
 
-	Bound := (Angle >= 0) ? Mod(Angle, 360) : 360-Mod(-Angle, -360)
-	if ((Bound >= 0) && (Bound <= 90))
-		xTranslation := Height*Sin(TAngle), yTranslation := 0
-	else if ((Bound > 90) && (Bound <= 180))
-		xTranslation := (Height*Sin(TAngle))-(Width*Cos(TAngle)), yTranslation := -Height*Cos(TAngle)
-	else if ((Bound > 180) && (Bound <= 270))
-		xTranslation := -(Width*Cos(TAngle)), yTranslation := -(Height*Cos(TAngle))-(Width*Sin(TAngle))
-	else if ((Bound > 270) && (Bound <= 360))
-		xTranslation := 0, yTranslation := -Width*Sin(TAngle)
+    Bound := (Angle >= 0) ? Mod(Angle, 360) : 360-Mod(-Angle, -360)
+    if ((Bound >= 0) && (Bound <= 90))
+        xTranslation := Height*Sin(TAngle), yTranslation := 0
+    else if ((Bound > 90) && (Bound <= 180))
+        xTranslation := (Height*Sin(TAngle))-(Width*Cos(TAngle)), yTranslation := -Height*Cos(TAngle)
+    else if ((Bound > 180) && (Bound <= 270))
+        xTranslation := -(Width*Cos(TAngle)), yTranslation := -(Height*Cos(TAngle))-(Width*Sin(TAngle))
+    else if ((Bound > 270) && (Bound <= 360))
+        xTranslation := 0, yTranslation := -Width*Sin(TAngle)
 }
 
 Gdip_GetRotatedDimensions(Width, Height, Angle, ByRef RWidth, ByRef RHeight)
 {
-	pi := 3.14159, TAngle := Angle*(pi/180)
-	if !(Width && Height)
-		return -1
-	RWidth := Ceil(Abs(Width*Cos(TAngle))+Abs(Height*Sin(TAngle)))
-	RHeight := Ceil(Abs(Width*Sin(TAngle))+Abs(Height*Cos(Tangle)))
+    pi := 3.14159, TAngle := Angle*(pi/180)
+    if !(Width && Height)
+        return -1
+    RWidth := Ceil(Abs(Width*Cos(TAngle))+Abs(Height*Sin(TAngle)))
+    RHeight := Ceil(Abs(Width*Sin(TAngle))+Abs(Height*Cos(Tangle)))
 }
 
 ; RotateNoneFlipNone   = 0
@@ -5558,7 +5557,7 @@ Gdip_GetRotatedDimensions(Width, Height, Angle, ByRef RWidth, ByRef RHeight)
 
 Gdip_ImageRotateFlip(pBitmap, RotateFlipType=1)
 {
-	return DllCall("gdiplus\GdipImageRotateFlip", "uint", pBitmap, "int", RotateFlipType)
+return DllCall("gdiplus\GdipImageRotateFlip", "uint", pBitmap, "int", RotateFlipType)
 }
 
 ; Replace = 0
@@ -5569,40 +5568,40 @@ Gdip_ImageRotateFlip(pBitmap, RotateFlipType=1)
 ; Complement = 5
 Gdip_SetClipRect(pGraphics, x, y, w, h, CombineMode=0)
 {
-   return DllCall("gdiplus\GdipSetClipRect", "uint", pGraphics, "float", x, "float", y, "float", w, "float", h, "int", CombineMode)
+return DllCall("gdiplus\GdipSetClipRect", "uint", pGraphics, "float", x, "float", y, "float", w, "float", h, "int", CombineMode)
 }
 
 Gdip_SetClipPath(pGraphics, Path, CombineMode=0)
 {
-   return DllCall("gdiplus\GdipSetClipPath", "uint", pGraphics, "uint", Path, "int", CombineMode)
+return DllCall("gdiplus\GdipSetClipPath", "uint", pGraphics, "uint", Path, "int", CombineMode)
 }
 
 Gdip_ResetClip(pGraphics)
 {
-   return DllCall("gdiplus\GdipResetClip", "uint", pGraphics)
+return DllCall("gdiplus\GdipResetClip", "uint", pGraphics)
 }
 
 Gdip_GetClipRegion(pGraphics)
 {
-	Region := Gdip_CreateRegion()
-	DllCall("gdiplus\GdipGetClip", "uint" pGraphics, "uint*", Region)
-	return Region
+    Region := Gdip_CreateRegion()
+    DllCall("gdiplus\GdipGetClip", "uint" pGraphics, "uint*", Region)
+return Region
 }
 
 Gdip_SetClipRegion(pGraphics, Region, CombineMode=0)
 {
-	return DllCall("gdiplus\GdipSetClipRegion", "uint", pGraphics, "uint", Region, "int", CombineMode)
+return DllCall("gdiplus\GdipSetClipRegion", "uint", pGraphics, "uint", Region, "int", CombineMode)
 }
 
 Gdip_CreateRegion()
 {
-	DllCall("gdiplus\GdipCreateRegion", "uint*", Region)
-	return Region
+    DllCall("gdiplus\GdipCreateRegion", "uint*", Region)
+return Region
 }
 
 Gdip_DeleteRegion(Region)
 {
-	return DllCall("gdiplus\GdipDeleteRegion", "uint", Region)
+return DllCall("gdiplus\GdipDeleteRegion", "uint", Region)
 }
 
 ;#####################################################################################
@@ -5610,135 +5609,135 @@ Gdip_DeleteRegion(Region)
 ;#####################################################################################
 
 Gdip_LockBits(pBitmap, x, y, w, h, ByRef Stride, ByRef Scan0, ByRef BitmapData, LockMode = 3, PixelFormat = 0x26200a)
-{   
-	CreateRect(Rect, x, y, w, h)
-	VarSetCapacity(BitmapData, 21, 0)
-	E := DllCall("Gdiplus\GdipBitmapLockBits", "uint", pBitmap, "uint", &Rect, "uint", LockMode, "int", PixelFormat, "uint", &BitmapData)
-	Stride := NumGet(BitmapData, 8)
-	Scan0 := NumGet(BitmapData, 16)
-	return E
+{ 
+    CreateRect(Rect, x, y, w, h)
+    VarSetCapacity(BitmapData, 21, 0)
+    E := DllCall("Gdiplus\GdipBitmapLockBits", "uint", pBitmap, "uint", &Rect, "uint", LockMode, "int", PixelFormat, "uint", &BitmapData)
+    Stride := NumGet(BitmapData, 8)
+    Scan0 := NumGet(BitmapData, 16)
+return E
 }
 
 ;#####################################################################################
 
 Gdip_UnlockBits(pBitmap, ByRef BitmapData)
 {
-	return DllCall("Gdiplus\GdipBitmapUnlockBits", "uint", pBitmap, "uint", &BitmapData)
+return DllCall("Gdiplus\GdipBitmapUnlockBits", "uint", pBitmap, "uint", &BitmapData)
 }
 
 ;#####################################################################################
 
 Gdip_SetLockBitPixel(ARGB, Scan0, x, y, Stride)
 {
-	Numput(ARGB, Scan0+0, (x*4)+(y*Stride))
+    Numput(ARGB, Scan0+0, (x*4)+(y*Stride))
 }
 
 ;#####################################################################################
 
 Gdip_GetLockBitPixel(Scan0, x, y, Stride)
 {
-	return NumGet(Scan0+0, (x*4)+(y*Stride))
+return NumGet(Scan0+0, (x*4)+(y*Stride))
 }
 
 ;#####################################################################################
 
 Gdip_PixelateBitmap(pBitmap, ByRef pBitmapOut, BlockSize)
 {
-	static PixelateBitmap
-	if !PixelateBitmap
-	{
-		MCode_PixelateBitmap := "83EC388B4424485355568B74245C99F7FE8B5C244C8B6C2448578BF88BCA894C241C897C243485FF0F8E2E0300008B44245"
-		. "499F7FE897C24448944242833C089542418894424308944242CEB038D490033FF397C2428897C24380F8E750100008BCE0FAFCE894C24408DA4240000"
-		. "000033C03BF08944241089442460894424580F8E8A0000008B5C242C8D4D028BD52BD183C203895424208D3CBB0FAFFE8BD52BD142895424248BD52BD"
-		. "103F9897C24148974243C8BCF8BFE8DA424000000008B5C24200FB61C0B03C30FB619015C24588B5C24240FB61C0B015C24600FB61C11015C241083C1"
-		. "0483EF0175D38B7C2414037C245C836C243C01897C241475B58B7C24388B6C244C8B5C24508B4C244099F7F9894424148B44245899F7F9894424588B4"
-		. "4246099F7F9894424608B44241099F7F98944241085F60F8E820000008D4B028BC32BC18D68038B44242C8D04B80FAFC68BD32BD142895424248BD32B"
-		. "D103C18944243C89742420EB038D49008BC88BFE0FB64424148B5C24248804290FB644245888010FB644246088040B0FB644241088040A83C10483EF0"
-		. "175D58B44243C0344245C836C2420018944243C75BE8B4C24408B5C24508B6C244C8B7C2438473B7C2428897C24380F8C9FFEFFFF8B4C241C33D23954"
-		. "24180F846401000033C03BF2895424108954246089542458895424148944243C0F8E82000000EB0233D2395424187E6F8B4C243003C80FAF4C245C8B4"
-		. "424280FAFC68D550203CA8D0C818BC52BC283C003894424208BC52BC2408BFD2BFA8B54241889442424895424408B4424200FB614080FB60101542414"
-		. "8B542424014424580FB6040A0FB61439014424600154241083C104836C24400175CF8B44243C403BC68944243C7C808B4C24188B4424140FAFCE99F7F"
-		. "9894424148B44245899F7F9894424588B44246099F7F9894424608B44241099F7F98944241033C08944243C85F60F8E7F000000837C2418007E6F8B4C"
-		. "243003C80FAF4C245C8B4424280FAFC68D530203CA8D0C818BC32BC283C003894424208BC32BC2408BFB2BFA8B54241889442424895424400FB644241"
-		. "48B5424208804110FB64424580FB654246088018B4424248814010FB654241088143983C104836C24400175CF8B44243C403BC68944243C7C818B4C24"
-		. "1C8B44245C0144242C01742430836C2444010F85F4FCFFFF8B44245499F7FE895424188944242885C00F8E890100008BF90FAFFE33D2897C243C89542"
-		. "45489442438EB0233D233C03BCA89542410895424608954245889542414894424400F8E840000003BF27E738B4C24340FAFCE03C80FAF4C245C034C24"
-		. "548D55028BC52BC283C003894424208BC52BC2408BFD03CA894424242BFA89742444908B5424200FB6040A0FB611014424148B442424015424580FB61"
-		. "4080FB6040F015424600144241083C104836C24440175CF8B4424408B7C243C8B4C241C33D2403BC1894424400F8C7CFFFFFF8B44241499F7FF894424"
-		. "148B44245899F7FF894424588B44246099F7FF894424608B44241099F7FF8944241033C08944244085C90F8E8000000085F67E738B4C24340FAFCE03C"
-		. "80FAF4C245C034C24548D53028BC32BC283C003894424208BC32BC2408BFB03CA894424242BFA897424448D49000FB65424148B4424208814010FB654"
-		. "24580FB644246088118B5424248804110FB644241088043983C104836C24440175CF8B4424408B7C243C8B4C241C403BC1894424407C808D04B500000"
-		. "00001442454836C2438010F858CFEFFFF33D233C03BCA89542410895424608954245889542414894424440F8E9A000000EB048BFF33D2395424180F8E"
-		. "7D0000008B4C24340FAFCE03C80FAF4C245C8B4424280FAFC68D550203CA8D0C818BC52BC283C003894424208BC52BC240894424248BC52BC28B54241"
-		. "8895424548DA424000000008B5424200FB6140A015424140FB611015424588B5424240FB6140A015424600FB614010154241083C104836C24540175CF"
-		. "8B4424448B4C241C403BC1894424440F8C6AFFFFFF0FAF4C24188B44241499F7F9894424148B44245899F7F9894424588B44246099F7F9894424608B4"
-		. "4241099F7F98944241033C03944241C894424540F8E7B0000008B7C241885FF7E688B4C24340FAFCE03C80FAF4C245C8B4424280FAFC68D530203CA8D"
-		. "0C818BC32BC283C003894424208BC32BC2408BEB894424242BEA0FB65424148B4424208814010FB65424580FB644246088118B5424248804110FB6442"
-		. "41088042983C10483EF0175D18B442454403B44241C894424547C855F5E5D33C05B83C438C3"
-		VarSetCapacity(PixelateBitmap, StrLen(MCode_PixelateBitmap)//2)
-		Loop % StrLen(MCode_PixelateBitmap)//2		;%
-			NumPut("0x" SubStr(MCode_PixelateBitmap, (2*A_Index)-1, 2), PixelateBitmap, A_Index-1, "char")
-	}
+    static PixelateBitmap
+    if !PixelateBitmap
+    {
+        MCode_PixelateBitmap := "83EC388B4424485355568B74245C99F7FE8B5C244C8B6C2448578BF88BCA894C241C897C243485FF0F8E2E0300008B44245"
+        . "499F7FE897C24448944242833C089542418894424308944242CEB038D490033FF397C2428897C24380F8E750100008BCE0FAFCE894C24408DA4240000"
+        . "000033C03BF08944241089442460894424580F8E8A0000008B5C242C8D4D028BD52BD183C203895424208D3CBB0FAFFE8BD52BD142895424248BD52BD"
+        . "103F9897C24148974243C8BCF8BFE8DA424000000008B5C24200FB61C0B03C30FB619015C24588B5C24240FB61C0B015C24600FB61C11015C241083C1"
+        . "0483EF0175D38B7C2414037C245C836C243C01897C241475B58B7C24388B6C244C8B5C24508B4C244099F7F9894424148B44245899F7F9894424588B4"
+        . "4246099F7F9894424608B44241099F7F98944241085F60F8E820000008D4B028BC32BC18D68038B44242C8D04B80FAFC68BD32BD142895424248BD32B"
+        . "D103C18944243C89742420EB038D49008BC88BFE0FB64424148B5C24248804290FB644245888010FB644246088040B0FB644241088040A83C10483EF0"
+        . "175D58B44243C0344245C836C2420018944243C75BE8B4C24408B5C24508B6C244C8B7C2438473B7C2428897C24380F8C9FFEFFFF8B4C241C33D23954"
+        . "24180F846401000033C03BF2895424108954246089542458895424148944243C0F8E82000000EB0233D2395424187E6F8B4C243003C80FAF4C245C8B4"
+        . "424280FAFC68D550203CA8D0C818BC52BC283C003894424208BC52BC2408BFD2BFA8B54241889442424895424408B4424200FB614080FB60101542414"
+        . "8B542424014424580FB6040A0FB61439014424600154241083C104836C24400175CF8B44243C403BC68944243C7C808B4C24188B4424140FAFCE99F7F"
+        . "9894424148B44245899F7F9894424588B44246099F7F9894424608B44241099F7F98944241033C08944243C85F60F8E7F000000837C2418007E6F8B4C"
+        . "243003C80FAF4C245C8B4424280FAFC68D530203CA8D0C818BC32BC283C003894424208BC32BC2408BFB2BFA8B54241889442424895424400FB644241"
+        . "48B5424208804110FB64424580FB654246088018B4424248814010FB654241088143983C104836C24400175CF8B44243C403BC68944243C7C818B4C24"
+        . "1C8B44245C0144242C01742430836C2444010F85F4FCFFFF8B44245499F7FE895424188944242885C00F8E890100008BF90FAFFE33D2897C243C89542"
+        . "45489442438EB0233D233C03BCA89542410895424608954245889542414894424400F8E840000003BF27E738B4C24340FAFCE03C80FAF4C245C034C24"
+        . "548D55028BC52BC283C003894424208BC52BC2408BFD03CA894424242BFA89742444908B5424200FB6040A0FB611014424148B442424015424580FB61"
+        . "4080FB6040F015424600144241083C104836C24440175CF8B4424408B7C243C8B4C241C33D2403BC1894424400F8C7CFFFFFF8B44241499F7FF894424"
+        . "148B44245899F7FF894424588B44246099F7FF894424608B44241099F7FF8944241033C08944244085C90F8E8000000085F67E738B4C24340FAFCE03C"
+        . "80FAF4C245C034C24548D53028BC32BC283C003894424208BC32BC2408BFB03CA894424242BFA897424448D49000FB65424148B4424208814010FB654"
+        . "24580FB644246088118B5424248804110FB644241088043983C104836C24440175CF8B4424408B7C243C8B4C241C403BC1894424407C808D04B500000"
+        . "00001442454836C2438010F858CFEFFFF33D233C03BCA89542410895424608954245889542414894424440F8E9A000000EB048BFF33D2395424180F8E"
+        . "7D0000008B4C24340FAFCE03C80FAF4C245C8B4424280FAFC68D550203CA8D0C818BC52BC283C003894424208BC52BC240894424248BC52BC28B54241"
+        . "8895424548DA424000000008B5424200FB6140A015424140FB611015424588B5424240FB6140A015424600FB614010154241083C104836C24540175CF"
+        . "8B4424448B4C241C403BC1894424440F8C6AFFFFFF0FAF4C24188B44241499F7F9894424148B44245899F7F9894424588B44246099F7F9894424608B4"
+        . "4241099F7F98944241033C03944241C894424540F8E7B0000008B7C241885FF7E688B4C24340FAFCE03C80FAF4C245C8B4424280FAFC68D530203CA8D"
+        . "0C818BC32BC283C003894424208BC32BC2408BEB894424242BEA0FB65424148B4424208814010FB65424580FB644246088118B5424248804110FB6442"
+        . "41088042983C10483EF0175D18B442454403B44241C894424547C855F5E5D33C05B83C438C3"
+        VarSetCapacity(PixelateBitmap, StrLen(MCode_PixelateBitmap)//2)
+        Loop % StrLen(MCode_PixelateBitmap)//2		;%
+        NumPut("0x" SubStr(MCode_PixelateBitmap, (2*A_Index)-1, 2), PixelateBitmap, A_Index-1, "char")
+    }
 
-	Gdip_GetImageDimensions(pBitmap, Width, Height)
-	if (Width != Gdip_GetImageWidth(pBitmapOut) || Height != Gdip_GetImageHeight(pBitmapOut))
-		return -1
-	if (BlockSize > Width || BlockSize > Height)
-		return -2
+    Gdip_GetImageDimensions(pBitmap, Width, Height)
+    if (Width != Gdip_GetImageWidth(pBitmapOut) || Height != Gdip_GetImageHeight(pBitmapOut))
+        return -1
+    if (BlockSize > Width || BlockSize > Height)
+        return -2
 
-	E1 := Gdip_LockBits(pBitmap, 0, 0, Width, Height, Stride1, Scan01, BitmapData1)
-	E2 := Gdip_LockBits(pBitmapOut, 0, 0, Width, Height, Stride2, Scan02, BitmapData2)
-	if (E1 || E2)
-		return -3
+    E1 := Gdip_LockBits(pBitmap, 0, 0, Width, Height, Stride1, Scan01, BitmapData1)
+    E2 := Gdip_LockBits(pBitmapOut, 0, 0, Width, Height, Stride2, Scan02, BitmapData2)
+    if (E1 || E2)
+        return -3
 
-	E := DllCall(&PixelateBitmap, "uint", Scan01, "uint", Scan02, "int", Width, "int", Height, "int", Stride1, "int", BlockSize)
-	Gdip_UnlockBits(pBitmap, BitmapData1), Gdip_UnlockBits(pBitmapOut, BitmapData2)
-	return 0
+    E := DllCall(&PixelateBitmap, "uint", Scan01, "uint", Scan02, "int", Width, "int", Height, "int", Stride1, "int", BlockSize)
+    Gdip_UnlockBits(pBitmap, BitmapData1), Gdip_UnlockBits(pBitmapOut, BitmapData2)
+return 0
 }
 
 ;#####################################################################################
 
 Gdip_ToARGB(A, R, G, B)
 {
-	return (A << 24) | (R << 16) | (G << 8) | B
+return (A << 24) | (R << 16) | (G << 8) | B
 }
 
 ;#####################################################################################
 
 Gdip_FromARGB(ARGB, ByRef A, ByRef R, ByRef G, ByRef B)
 {
-	A := (0xff000000 & ARGB) >> 24
-	R := (0x00ff0000 & ARGB) >> 16
-	G := (0x0000ff00 & ARGB) >> 8
-	B := 0x000000ff & ARGB
+    A := (0xff000000 & ARGB) >> 24
+    R := (0x00ff0000 & ARGB) >> 16
+    G := (0x0000ff00 & ARGB) >> 8
+    B := 0x000000ff & ARGB
 }
 
 ;#####################################################################################
 
 Gdip_AFromARGB(ARGB)
 {
-	return (0xff000000 & ARGB) >> 24
+return (0xff000000 & ARGB) >> 24
 }
 
 ;#####################################################################################
 
 Gdip_RFromARGB(ARGB)
 {
-	return (0x00ff0000 & ARGB) >> 16
+return (0x00ff0000 & ARGB) >> 16
 }
 
 ;#####################################################################################
 
 Gdip_GFromARGB(ARGB)
 {
-	return (0x0000ff00 & ARGB) >> 8
+return (0x0000ff00 & ARGB) >> 8
 }
 
 ;#####################################################################################
 
 Gdip_BFromARGB(ARGB)
 {
-	return 0x000000ff & ARGB
+return 0x000000ff & ARGB
 }
 ;****************************************************************************************************************************************************************************************
 ;****************************************************************************************************************************************************************************************
@@ -5746,173 +5745,173 @@ Gdip_BFromARGB(ARGB)
 ;****************************************************************************************************************************************************************************************
 ;****************************************************************************************************************************************************************************************
 Class HButton	{
-	;Gen 3 Button Class By Hellbent
-	static init , Button := [] , Active , LastControl , HoldCtrl 
-	
-	__New( Input := "" , All := "" , Default := "" , Hover := "" , Pressed := "" ){
-		
-		local hwnd 
-		
-			;If this is the first time the class is being used.
-		if( !HButton.init && HButton.init := 1 )
-			
-				;Set a timer to watch to see if the cursor goes over one of the controls.
-			HButton._SetHoverTimer()
-			
-		This._CreateNewButtonObject( hwnd := This._CreateControl( Input ) , Input )
-		
-		This._BindButton( hwnd , Input )
-		
-		This._GetButtonBitmaps( hwnd , Input , All , Default , Hover , Pressed )
-		
-		This._DisplayButton( hwnd , HButton.Button[hwnd].Bitmaps.Default.hBitmap )
-		
-		return hwnd
-	}
+    ;Gen 3 Button Class By Hellbent
+    static init , Button := [] , Active , LastControl , HoldCtrl 
 
-	_DisplayButton( hwnd , hBitmap){
-		
-		SetImage( hwnd , hBitmap )
-		
-	}
-	
-	_GetButtonBitmaps( hwnd , Input := "" , All := "" , Default := "" , Hover := "" , Pressed := "" ){
-	
-		HButton.Button[hwnd].Bitmaps := GuiButtonType1.CreateButtonBitmapSet( Input , All , Default , Hover , Pressed )
-		
-	}
-	
-	_CreateNewButtonObject( hwnd , Input ){
-		
-		local k , v  
-		
-		HButton.Button[ hwnd ] := {}
-		
-		for k , v in Input
-			
-			HButton.Button[ hwnd ][ k ] := v
-		
-		HButton.Button[ hwnd ].Hwnd := hwnd
-		
-	}
-	
-	_CreateControl( Input ){
-		
-		local hwnd
-		
-		Gui , % Input.Owner ":Add" , Pic , % "x" Input.X " y" Input.Y " w" Input.W " h" Input.H " hwndhwnd 0xE"  
-		
-		return hwnd
-		
-	}
-	
-	_BindButton( hwnd , Input ){
-		
-		local bd
-		
-		bd := This._OnClick.Bind( This )
-		
-		GuiControl, % Input.Owner ":+G" , % hwnd , % bd
-		
-	}
-	
-	_SetHoverTimer( timer := "" ){
-		
-		local HoverTimer 
+    __New( Input := "" , All := "" , Default := "" , Hover := "" , Pressed := "" ){
 
-		if( !HButton.HoverTimer ) 
-			
-			HButton.HoverTimer := ObjBindMethod( HButton , "_OnHover" ) 
-		
-		HoverTimer := HButton.HoverTimer
-		
-		SetTimer , % HoverTimer , % ( Timer ) ? ( Timer ) : ( 100 )
-		
-	}
-	
-	_OnHover(){
-		
-		local Ctrl
-		
-		MouseGetPos,,,,ctrl,2
-		
-		if( HButton.Button[ ctrl ] && !HButton.Active ){
-			
-			HButton.Active := 1
-			
-			HButton.LastControl := ctrl
-			
-			HButton._DisplayButton( ctrl , HButton.Button[ ctrl ].Bitmaps.Hover.hBitmap )
-			
-		}else if( HButton.Active && ctrl != HButton.LastControl ){
-			
-			HButton.Active := 0
-			
-			HButton._DisplayButton( HButton.LastControl , HButton.Button[ HButton.LastControl ].Bitmaps.Default.hBitmap )
+        local hwnd 
 
-		}
-		
-	}
-	
-	_OnClick(){
-		
-		local Ctrl, last
-		
-		HButton._SetHoverTimer( "Off" )
-		
-		MouseGetPos,,,, Ctrl , 2
-		last := ctrl
-		HButton._SetFocus( ctrl )
-		HButton._DisplayButton( last , HButton.Button[ last ].Bitmaps.Pressed.hBitmap )
-		
-		While(GetKeyState("LButton"))
-			sleep, 60
-		
-		HButton._SetHoverTimer()
-		
-		loop, 2
-			This._OnHover()
-		
-		MouseGetPos,,,, Ctrl , 2
-		
-		if(ctrl!=last){
-			
-			HButton._DisplayButton( last , HButton.Button[ last ].Bitmaps.Default.hBitmap )
-		
-		}else{
-			HButton._DisplayButton( last , HButton.Button[ last ].Bitmaps.Hover.hBitmap )
-			if( HButton.Button[ last ].Label ){
-			
-			if(IsFunc( HButton.Button[ last ].Label ) )
-				
-				fn := Func( HButton.Button[ last ].Label )
-				, fn.Call()
-				
-			else 
-				
-				gosub, % HButton.Button[ last ].Label
-			}
-		
-		}
-		
-	}
-	
-	_SetFocus( ctrl ){
-		
-		GuiControl, % HButton.Button[ ctrl ].Owner ":Focus" , % ctrl
-		
-	}
-	
-	DeleteButton( hwnd ){
-		
-		for k , v in HButton.Button[ hwnd ].Bitmaps
-				Gdip_DisposeImage( HButton.Button[hwnd].Bitmaps[k].pBitmap )
-				, DeleteObject( HButton.Button[ hwnd ].Bitmaps[k].hBitmap )
-				
-		GuiControl , % HButton.Button[ hwnd ].Owner ":Move", % hwnd , % "x-1 y-1 w0 h0" 
-		HButton.Button[ hwnd ] := ""
-	}
-	
+        ;If this is the first time the class is being used.
+        if( !HButton.init && HButton.init := 1 )
+
+        ;Set a timer to watch to see if the cursor goes over one of the controls.
+        HButton._SetHoverTimer()
+
+        This._CreateNewButtonObject( hwnd := This._CreateControl( Input ) , Input )
+
+        This._BindButton( hwnd , Input )
+
+        This._GetButtonBitmaps( hwnd , Input , All , Default , Hover , Pressed )
+
+        This._DisplayButton( hwnd , HButton.Button[hwnd].Bitmaps.Default.hBitmap )
+
+        return hwnd
+    }
+
+    _DisplayButton( hwnd , hBitmap){
+
+        SetImage( hwnd , hBitmap )
+
+    }
+
+    _GetButtonBitmaps( hwnd , Input := "" , All := "" , Default := "" , Hover := "" , Pressed := "" ){
+
+        HButton.Button[hwnd].Bitmaps := GuiButtonType1.CreateButtonBitmapSet( Input , All , Default , Hover , Pressed )
+
+    }
+
+    _CreateNewButtonObject( hwnd , Input ){
+
+        local k , v 
+
+        HButton.Button[ hwnd ] := {}
+
+        for k , v in Input
+
+        HButton.Button[ hwnd ][ k ] := v
+
+        HButton.Button[ hwnd ].Hwnd := hwnd
+
+    }
+
+    _CreateControl( Input ){
+
+        local hwnd
+
+        Gui , % Input.Owner ":Add" , Pic , % "x" Input.X " y" Input.Y " w" Input.W " h" Input.H " hwndhwnd 0xE" 
+
+        return hwnd
+
+    }
+
+    _BindButton( hwnd , Input ){
+
+        local bd
+
+        bd := This._OnClick.Bind( This )
+
+        GuiControl, % Input.Owner ":+G" , % hwnd , % bd
+
+    }
+
+    _SetHoverTimer( timer := "" ){
+
+        local HoverTimer 
+
+        if( !HButton.HoverTimer ) 
+
+        HButton.HoverTimer := ObjBindMethod( HButton , "_OnHover" ) 
+
+        HoverTimer := HButton.HoverTimer
+
+        SetTimer , % HoverTimer , % ( Timer ) ? ( Timer ) : ( 100 )
+
+    }
+
+    _OnHover(){
+
+        local Ctrl
+
+        MouseGetPos,,,,ctrl,2
+
+        if( HButton.Button[ ctrl ] && !HButton.Active ){
+
+            HButton.Active := 1
+
+            HButton.LastControl := ctrl
+
+            HButton._DisplayButton( ctrl , HButton.Button[ ctrl ].Bitmaps.Hover.hBitmap )
+
+        }else if( HButton.Active && ctrl != HButton.LastControl ){
+
+            HButton.Active := 0
+
+            HButton._DisplayButton( HButton.LastControl , HButton.Button[ HButton.LastControl ].Bitmaps.Default.hBitmap )
+
+        }
+
+    }
+
+    _OnClick(){
+
+        local Ctrl, last
+
+        HButton._SetHoverTimer( "Off" )
+
+        MouseGetPos,,,, Ctrl , 2
+        last := ctrl
+        HButton._SetFocus( ctrl )
+        HButton._DisplayButton( last , HButton.Button[ last ].Bitmaps.Pressed.hBitmap )
+
+        While(GetKeyState("LButton"))
+            sleep, 60
+
+        HButton._SetHoverTimer()
+
+        loop, 2
+            This._OnHover()
+
+        MouseGetPos,,,, Ctrl , 2
+
+        if(ctrl!=last){
+
+            HButton._DisplayButton( last , HButton.Button[ last ].Bitmaps.Default.hBitmap )
+
+        }else{
+            HButton._DisplayButton( last , HButton.Button[ last ].Bitmaps.Hover.hBitmap )
+            if( HButton.Button[ last ].Label ){
+
+                if(IsFunc( HButton.Button[ last ].Label ) )
+
+                fn := Func( HButton.Button[ last ].Label )
+                , fn.Call()
+
+                else 
+
+                gosub, % HButton.Button[ last ].Label
+            }
+
+        }
+
+    }
+
+    _SetFocus( ctrl ){
+
+        GuiControl, % HButton.Button[ ctrl ].Owner ":Focus" , % ctrl
+
+    }
+
+    DeleteButton( hwnd ){
+
+        for k , v in HButton.Button[ hwnd ].Bitmaps
+            Gdip_DisposeImage( HButton.Button[hwnd].Bitmaps[k].pBitmap )
+        , DeleteObject( HButton.Button[ hwnd ].Bitmaps[k].hBitmap )
+
+        GuiControl , % HButton.Button[ hwnd ].Owner ":Move", % hwnd , % "x-1 y-1 w0 h0" 
+        HButton.Button[ hwnd ] := ""
+    }
+
 }
 ;****************************************************************************************************************************************************************************************
 ;****************************************************************************************************************************************************************************************
@@ -5921,375 +5920,375 @@ Class HButton	{
 ;****************************************************************************************************************************************************************************************
 Class GuiButtonType1	{
 
-	static List := [ "Default" , "Hover" , "Pressed" ]
-	
-	_CreatePressedBitmap(){
-		
-		local arr := [] , Bitmap := {} , fObj := This.CurrentBitmapData.Pressed
-		
-		Bitmap.pBitmap := Gdip_CreateBitmap( fObj.W , fObj.H ) , G := Gdip_GraphicsFromImage( Bitmap.pBitmap ) , Gdip_SetSmoothingMode( G , 2 )
-		
-		Brush := Gdip_BrushCreateSolid( fObj.BackgroundColor ) , Gdip_FillRectangle( G , Brush , -1 , -1 , fObj.W+2 , fObj.H+2 ) , Gdip_DeleteBrush( Brush )
-		
-		Brush := Gdip_BrushCreateSolid( fObj.ButtonOuterBorderColor ) , Gdip_FillRoundedRectangle( G , Brush , 3 , 4 , fObj.W-7 , fObj.H-7 , 5 ) , Gdip_DeleteBrush( Brush )
-		
-		Brush := Gdip_CreateLineBrushFromRect( 0 , 0 , fObj.W , fObj.H , fObj.ButtonInnerBorderColor1 , fObj.ButtonInnerBorderColor2 , 1 , 1 ) , Gdip_FillRoundedRectangle( G , Brush , 2 , 3 , fObj.W-5 , fObj.H-8 , 5 ) , Gdip_DeleteBrush( Brush )
-		
-		Brush := Gdip_CreateLineBrushFromRect( 0 , 0 , fObj.W-7 , fObj.H-10 , fObj.ButtonMainColor1 , fObj.ButtonMainColor2 , 1 , 1 ) , Gdip_FillRoundedRectangle( G , Brush , 5 , 5 , fObj.W-11 , fObj.H-12 , 5 ) , Gdip_DeleteBrush( Brush )
-			
-		Brush := Gdip_CreateLineBrushFromRect( 0 , 2 , fObj.W , fObj.H , fObj.TextBottomColor1 , fObj.TextBottomColor2 , 1 , 1 )
-		
-		arr := [ { X: -1 , Y: -1 } , { X: 0 , Y: -1 } , { X: 1 , Y: -1 } , { X: -1 , Y: 0 } , { X: 1 , Y: 0 } , { X: -1 , Y: 1 } , { X: 0 , Y: 1 } , { X: 1 , Y: 1 } ]
-		
-		Loop, % 8
-			
-			Gdip_TextToGraphics( G , fObj.Text , "s" fObj.FontSize " " fObj.FontOptions " c" Brush " x" 1 + arr[A_Index].X + fObj.TextOffsetX " y" 3 + arr[A_Index].Y + fObj.TextOffsetY , fObj.Font , fObj.W + fObj.TextOffsetW , fObj.H + fObj.TextOffsetH )
-	
-		Brush := Gdip_CreateLineBrushFromRect( 0 , 2 , fObj.W , fObj.H , fObj.TextTopColor1 , fObj.TextTopColor2 , 1 , 1 )
-		
-		Gdip_TextToGraphics( G , fObj.Text , "s" fObj.FontSize " " fObj.FontOptions " c" Brush " x" 1 + fObj.TextOffsetX " y" 3 + fObj.TextOffsetY , fObj.Font , fObj.W + fObj.TextOffsetW , fObj.H + fObj.TextOffsetH )
-	
-	if( fObj.ButtonAddGlossy ){
-		
-		Brush := Gdip_BrushCreateSolid( fObj.GlossTopColor ) , Gdip_FillRectangle( G , Brush , 5 , 10 , fObj.W-11 , ( fObj.H / 2 ) - 10   ) , Gdip_DeleteBrush( Brush )
+    static List := [ "Default" , "Hover" , "Pressed" ]
 
-		Brush := Gdip_BrushCreateSolid( fObj.GlossTopAccentColor ) , Gdip_FillRectangle( G , Brush , 10 , 12 , fObj.W-21 , fObj.H / 15 ) , Gdip_DeleteBrush( Brush )
-		
-		Brush := Gdip_BrushCreateSolid( fObj.GlossBottomColor ) , Gdip_FillRectangle( G , Brush , 5  , 10 + ( fObj.H / 2 ) - 10 , fObj.W-11 , ( fObj.H / 2 ) - 7 ) , Gdip_DeleteBrush( Brush )
-				
-	}
+    _CreatePressedBitmap(){
 
-		Gdip_DeleteGraphics( G )
-		
-		Bitmap.hBitmap := Gdip_CreateHBITMAPFromBitmap( Bitmap.pBitmap )
-		
-		return Bitmap
-	}
-	
-	_CreateHoverBitmap(){
-		
-		local arr := [] , Bitmap := {} , fObj := This.CurrentBitmapData.Hover
-		
-		Bitmap.pBitmap := Gdip_CreateBitmap( fObj.W , fObj.H ) , G := Gdip_GraphicsFromImage( Bitmap.pBitmap ) , Gdip_SetSmoothingMode( G , 2 )
-		
-		Brush := Gdip_BrushCreateSolid( fObj.BackgroundColor ) , Gdip_FillRectangle( G , Brush , -1 , -1 , fObj.W+2 , fObj.H+2 ) , Gdip_DeleteBrush( Brush )
-		
-		Brush := Gdip_BrushCreateSolid( fObj.ButtonOuterBorderColor ) , Gdip_FillRoundedRectangle( G , Brush , 2 , 3 , fObj.W-5 , fObj.H-7 , 5 ) , Gdip_DeleteBrush( Brush )
-		
-		Brush := Gdip_BrushCreateSolid( fObj.ButtonCenterBorderColor ) , Gdip_FillRoundedRectangle( G , Brush , 3 , 4 , fObj.W-7 , fObj.H-9 , 5 ) , Gdip_DeleteBrush( Brush )
-		
-		Brush := Gdip_CreateLineBrushFromRect( 0 , 0 , fObj.W , fObj.H-10 , fObj.ButtonInnerBorderColor1 , fObj.ButtonInnerBorderColor2 , 1 , 1 ) , Gdip_FillRoundedRectangle( G , Brush , 4 , 5 , fObj.W-9 , fObj.H-11 , 5 ) , Gdip_DeleteBrush( Brush )
-		
-		Brush := Gdip_CreateLineBrushFromRect( 5 , 7 , fObj.W-11 , fObj.H-14 , fObj.ButtonMainColor1 , fObj.ButtonMainColor2 , 1 , 1 ) , Gdip_FillRoundedRectangle( G , Brush , 5 , 7 , fObj.W-11 , fObj.H-14 , 5 ) , Gdip_DeleteBrush( Brush )
-		
-		Brush := Gdip_CreateLineBrushFromRect( 0 , 2 , fObj.W , fObj.H , fObj.TextBottomColor1 , fObj.TextBottomColor2 , 1 , 1 )
-		
-		arr := [ { X: -1 , Y: -1 } , { X: 0 , Y: -1 } , { X: 1 , Y: -1 } , { X: -1 , Y: 0 } , { X: 1 , Y: 0 } , { X: -1 , Y: 1 } , { X: 0 , Y: 1 } , { X: 1 , Y: 1 } ]
-		
-		Loop, % 8
-			
-			Gdip_TextToGraphics( G , fObj.Text , "s" fObj.FontSize " " fObj.FontOptions " c" Brush " x" 0 + arr[A_Index].X + fObj.TextOffsetX " y" 2 + arr[A_Index].Y + fObj.TextOffsetY , fObj.Font , fObj.W + fObj.TextOffsetW , fObj.H + fObj.TextOffsetH )
-	
-		Brush := Gdip_CreateLineBrushFromRect( 0 , 2 , fObj.W , fObj.H , fObj.TextTopColor1 , fObj.TextTopColor2 , 1 , 1 )
-		
-		Gdip_TextToGraphics( G , fObj.Text , "s" fObj.FontSize " " fObj.FontOptions " c" Brush " x" 0 + fObj.TextOffsetX " y" 2 + fObj.TextOffsetY , fObj.Font , fObj.W + fObj.TextOffsetW , fObj.H + fObj.TextOffsetH )
-	
-		if( fObj.ButtonAddGlossy = 1 ){
-			
-			Brush := Gdip_BrushCreateSolid( fObj.GlossTopColor ) , Gdip_FillRectangle( G , Brush , 6 , 10 , fObj.W-13 , ( fObj.H / 2 ) - 10   ) , Gdip_DeleteBrush( Brush )
-			
-			Brush := Gdip_BrushCreateSolid( fObj.GlossTopAccentColor ) , Gdip_FillRectangle( G , Brush , 10 , 12 , fObj.W-21 , fObj.H / 15 ) , Gdip_DeleteBrush( Brush )
-			
-			Brush := Gdip_BrushCreateSolid( fObj.GlossBottomColor ) , Gdip_FillRectangle( G , Brush , 6  , 10 + ( fObj.H / 2 ) - 10 , fObj.W-13 , ( fObj.H / 2 ) - 7 ) , Gdip_DeleteBrush( Brush )
-					
-		}
-	
-		Gdip_DeleteGraphics( G )
-		
-		Bitmap.hBitmap := Gdip_CreateHBITMAPFromBitmap( Bitmap.pBitmap )
-		
-		return Bitmap
-		
-	}
-	
-	_CreateDefaultBitmap(){
-		
-		local arr := [] , Bitmap := {} , fObj := This.CurrentBitmapData.Default
-		
-		Bitmap.pBitmap := Gdip_CreateBitmap( fObj.W , fObj.H ) , G := Gdip_GraphicsFromImage( Bitmap.pBitmap ) , Gdip_SetSmoothingMode( G , 2 )
-	
-		Brush := Gdip_BrushCreateSolid( fObj.BackgroundColor ) , Gdip_FillRectangle( G , Brush , -1 , -1 , fObj.W+2 , fObj.H+2 ) , Gdip_DeleteBrush( Brush )
-	
-		Brush := Gdip_BrushCreateSolid( fObj.ButtonOuterBorderColor ) , Gdip_FillRoundedRectangle( G , Brush , 2 , 3 , fObj.W-5 , fObj.H-7 , 5 ) , Gdip_DeleteBrush( Brush )
-		
-		Brush := Gdip_BrushCreateSolid( fObj.ButtonCenterBorderColor ) , Gdip_FillRoundedRectangle( G , Brush , 3 , 4 , fObj.W-7 , fObj.H-9 , 5 ) , Gdip_DeleteBrush( Brush )
-	
-		Brush := Gdip_CreateLineBrushFromRect( 0 , 0 , fObj.W , fObj.H-10 , fObj.ButtonInnerBorderColor1 , fObj.ButtonInnerBorderColor2 , 1 , 1 ) , Gdip_FillRoundedRectangle( G , Brush , 4 , 5 , fObj.W-9 , fObj.H-11 , 5 ) , Gdip_DeleteBrush( Brush )
-	
-		Brush := Gdip_CreateLineBrushFromRect( 5 , 7 , fObj.W-11 , fObj.H-14 , fObj.ButtonMainColor1 , fObj.ButtonMainColor2 , 1 , 1 ) , Gdip_FillRoundedRectangle( G , Brush , 5 , 7 , fObj.W-11 , fObj.H-14 , 5 ) , Gdip_DeleteBrush( Brush )
-		
-		Brush := Gdip_CreateLineBrushFromRect( 0 , 2 , fObj.W , fObj.H , fObj.TextBottomColor1 , fObj.TextBottomColor2 , 1 , 1 )
-		
-		arr := [ { X: -1 , Y: -1 } , { X: 0 , Y: -1 } , { X: 1 , Y: -1 } , { X: -1 , Y: 0 } , { X: 1 , Y: 0 } , { X: -1 , Y: 1 } , { X: 0 , Y: 1 } , { X: 1 , Y: 1 } ]
-		
-		Loop, % 8
-			
-			Gdip_TextToGraphics( G , fObj.Text , "s" fObj.FontSize " " fObj.FontOptions " c" Brush " x" 0 + arr[A_Index].X + fObj.TextOffsetX " y" 2 + arr[A_Index].Y + fObj.TextOffsetY , fObj.Font , fObj.W + fObj.TextOffsetW , fObj.H + fObj.TextOffsetH )
-	
-		Brush := Gdip_CreateLineBrushFromRect( 0 , 2 , fObj.W , fObj.H , fObj.TextTopColor1 , fObj.TextTopColor2 , 1 , 1 )
-		
-		Gdip_TextToGraphics( G , fObj.Text , "s" fObj.FontSize " " fObj.FontOptions " c" Brush " x" 0 + fObj.TextOffsetX " y" 2 + fObj.TextOffsetY , fObj.Font , fObj.W + fObj.TextOffsetW , fObj.H + fObj.TextOffsetH )
-	
-		if( fObj.ButtonAddGlossy ){
-		
-			Brush := Gdip_BrushCreateSolid( fObj.GlossTopColor ) , Gdip_FillRectangle( G , Brush , 6 , 10 , fObj.W-13 , ( fObj.H / 2 ) - 10   ) , Gdip_DeleteBrush( Brush )
-			
-			Brush := Gdip_BrushCreateSolid( fObj.GlossTopAccentColor ) , Gdip_FillRectangle( G , Brush , 10 , 12 , fObj.W-21 , fObj.H / 15 ) , Gdip_DeleteBrush( Brush )
-			
-			Brush := Gdip_BrushCreateSolid( fObj.GlossBottomColor ) , Gdip_FillRectangle( G , Brush , 6  , 10 + ( fObj.H / 2 ) - 10 , fObj.W-13 , ( fObj.H / 2 ) - 7 ) , Gdip_DeleteBrush( Brush )
-				
-		}
-	
-		Gdip_DeleteGraphics( G )
-		
-		Bitmap.hBitmap := Gdip_CreateHBITMAPFromBitmap( Bitmap.pBitmap )
-		
-		return Bitmap
-		
-	}
-	
-	_GetMasterDefaultValues(){ ;Default State
-		
-		local Default := {}
-		
-		Default.pBitmap := "" 
-		, Default.hBitmap := ""
-		, Default.Font := "Arial"
-		, Default.FontOptions := " Bold Center vCenter "
-		, Default.FontSize := "12"
-		, Default.Text := "Button"
-		, Default.W := 10
-		, Default.H := 10
-		, Default.TextBottomColor1 := "0x0002112F"
-		, Default.TextBottomColor2 := Default.TextBottomColor1
-		, Default.TextTopColor1 := "0xFFFFFFFF"
-		, Default.TextTopColor2 := "0xFF000000"
-		, Default.TextOffsetX := 0
-		, Default.TextOffsetY := 0
-		, Default.TextOffsetW := 0
-		, Default.TextOffsetH := 0
-		, Default.BackgroundColor := "0xFF22262A"
-		, Default.ButtonOuterBorderColor := "0xFF161B1F"	
-		, Default.ButtonCenterBorderColor := "0xFF262B2F"	
-		, Default.ButtonInnerBorderColor1 := "0xFF3F444A"
-		, Default.ButtonInnerBorderColor2 := "0xFF24292D"
-		, Default.ButtonMainColor1 := "0xFF272C32"
-		, Default.ButtonMainColor2 := "" Default.ButtonMainColor1
-		, Default.ButtonAddGlossy := 0
-		, Default.GlossTopColor := "0x11FFFFFF"
-		, Default.GlossTopAccentColor := "0x05FFFFFF"	
-		, Default.GlossBottomColor := "0x33000000"
-		
-		return Default
-		
-	}
-	
-	_GetMasterHoverValues(){ ;Hover State
-		
-		local Default := {}
-		
-		Default.pBitmap := ""
-		, Default.hBitmap := ""
-		, Default.Font := "Arial"
-		, Default.FontOptions := " Bold Center vCenter "
-		, Default.FontSize := "12"
-		, Default.Text := "Button"
-		, Default.W := 10
-		, Default.H := 10
-		, Default.TextBottomColor1 := "0x0002112F"
-		, Default.TextBottomColor2 := Default.TextBottomColor1
-		, Default.TextTopColor1 := "0xFFFFFFFF"
-		, Default.TextTopColor2 := "0xFF000000"
-		, Default.TextOffsetX := 0
-		, Default.TextOffsetY := 0
-		, Default.TextOffsetW := 0
-		, Default.TextOffsetH := 0
-		, Default.BackgroundColor := "0xFF22262A"
-		, Default.ButtonOuterBorderColor := "0xFF161B1F"	
-		, Default.ButtonCenterBorderColor := "0xFF262B2F"	
-		, Default.ButtonInnerBorderColor1 := "0xFF3F444A"
-		, Default.ButtonInnerBorderColor2 := "0xFF24292D"
-		, Default.ButtonMainColor1 := "0xFF373C42"
-		, Default.ButtonMainColor2 := "" Default.ButtonMainColor1
-		, Default.ButtonAddGlossy := 0
-		, Default.GlossTopColor := "0x11FFFFFF"
-		, Default.GlossTopAccentColor := "0x05FFFFFF"	
-		, Default.GlossBottomColor := "0x33000000"
-		
-		return Default
-		
-	}
-	
-	_GetMasterPressedValues(){ ;Pressed State
-		
-		local Default := {}
-		
-		Default.pBitmap := ""
-		, Default.hBitmap := ""
-		, Default.Font := "Arial"
-		, Default.FontOptions := " Bold Center vCenter "
-		, Default.FontSize := "12"
-		, Default.Text := "Button"
-		, Default.W := 10
-		, Default.H := 10
-		, Default.TextBottomColor1 := "0x0002112F"
-		, Default.TextBottomColor2 := Default.TextBottomColor1
-		, Default.TextTopColor1 := "0xFFFFFFFF"
-		, Default.TextTopColor2 := "0xFF000000"
-		, Default.TextOffsetX := 0
-		, Default.TextOffsetY := 0
-		, Default.TextOffsetW := 0
-		, Default.TextOffsetH := 0
-		, Default.BackgroundColor := "0xFF22262A"
-		, Default.ButtonOuterBorderColor := "0xFF62666a"
-		, Default.ButtonCenterBorderColor := "0xFF262B2F"	
-		, Default.ButtonInnerBorderColor1 := "0xFF151A20"
-		, Default.ButtonInnerBorderColor2 := "0xFF151A20"
-		, Default.ButtonMainColor1 := "0xFF12161a"
-		, Default.ButtonMainColor2 := "0xFF33383E"
-		, Default.ButtonAddGlossy := 0
-		, Default.GlossTopColor := "0x11FFFFFF"
-		, Default.GlossTopAccentColor := "0x05FFFFFF"	
-		, Default.GlossBottomColor := "0x33000000"
-	
-		return Default
-		
-	}
-	
-	SetSessionDefaults( All := "" , Default := "" , Hover := "" , Pressed := "" ){ ;Set the default values based on user input
-		
-		This.SessionBitmapData := {} 
-		, This.Preset := 1
-		, This.init := 0
-		
-		This._LoadDefaults("SessionBitmapData")
-		
-		This._SetSessionData( All , Default , Hover , Pressed )
-		
-	}
-	
-	_SetSessionData( All := "" , Default := "" , Hover := "" , Pressed := "" ){
-		
-		local index , k , v , i , j
-	
-		if( IsObject( All ) ){
-			
-			Loop, % GuiButtonType1.List.Length()	{
-				index := A_Index
-				For k , v in All
-					This.SessionBitmapData[ GuiButtonType1.List[ index ] ][ k ] := v
-			}
-		}
-		
-		For k , v in GuiButtonType1.List
-			if( isObject( %v% ) )
-				For i , j in %v%
-					This.SessionBitmapData[ GuiButtonType1.List[ k ] ][ i ] := j
-				
-	}
-	
-	_LoadDefaults( input := "" ){
-		
-		This.CurrentBitmapData := "" , This.CurrentBitmapData := {}
-			
-		For k , v in This.SessionBitmapData
-			This.CurrentBitmapData[k] := {}
-		
-		This[ input ].Default := This._GetMasterDefaultValues()
-		, This[ input ].Hover := This._GetMasterHoverValues()
-		, This[ input ].Pressed := This._GetMasterPressedValues()
-		
-	}
-	
-	_SetCurrentBitmapDataFromSessionData(){
-		
-		local k , v , i , j
-			
-		This.CurrentBitmapData := "" , This.CurrentBitmapData := {}
-			
-		For k , v in This.SessionBitmapData
-		{
-			This.CurrentBitmapData[k] := {}
-			
-			For i , j in This.SessionBitmapData[k]
-				
-				This.CurrentBitmapData[k][i] := j
+        local arr := [] , Bitmap := {} , fObj := This.CurrentBitmapData.Pressed
 
-		}
-		
-	}
-	
-	_UpdateCurrentBitmapData( All := "" , Default := "" , Hover := "" , Pressed := "" ){
-		
-		local k , v , i , j
-		
-		if( IsObject( All ) ){
-			
-			Loop, % GuiButtonType1.List.Length()	{
-				
-				index := A_Index
-			
-				For k , v in All
-					
-					This.CurrentBitmapData[ GuiButtonType1.List[ index ] ][ k ] := v
-					
-			}
-		}
-		
-		For k , v in GuiButtonType1.List
-			
-			if( isObject( %v% ) )
-				
-				For i , j in %v%
-					
-					This.CurrentBitmapData[ GuiButtonType1.List[ k ] ][ i ] := j
-				
-	}
-	
-	_UpdateInstanceData( obj := ""){
-		
-		For k , v in GuiButtonType1.List	
-			
-			This.CurrentBitmapData[v].Text := obj.Text
-			, This.CurrentBitmapData[v].W := obj.W
-			, This.CurrentBitmapData[v].H := obj.H
-			
-	}
+        Bitmap.pBitmap := Gdip_CreateBitmap( fObj.W , fObj.H ) , G := Gdip_GraphicsFromImage( Bitmap.pBitmap ) , Gdip_SetSmoothingMode( G , 2 )
 
-	CreateButtonBitmapSet( obj := "" ,  All := "" , Default := "" , Hover := "" , Pressed := ""  ){ ;Create a new button
-		
-		local Bitmaps := {}
-		
-		if( This.Preset )
-				
-			This._SetCurrentBitmapDataFromSessionData()
-			
-		else
-			
-			This._LoadDefaults( "CurrentBitmapData" )
-			
-		This._UpdateCurrentBitmapData( All , Default , Hover , Pressed )
-		
-		This._UpdateInstanceData( obj )
-		 
-		Bitmaps.Default := This._CreateDefaultBitmap()
-		, Bitmaps.Hover := This._CreateHoverBitmap()
-		, Bitmaps.Pressed := This._CreatePressedBitmap()
-		
-		return Bitmaps
-		
-	}
-	
+        Brush := Gdip_BrushCreateSolid( fObj.BackgroundColor ) , Gdip_FillRectangle( G , Brush , -1 , -1 , fObj.W+2 , fObj.H+2 ) , Gdip_DeleteBrush( Brush )
+
+        Brush := Gdip_BrushCreateSolid( fObj.ButtonOuterBorderColor ) , Gdip_FillRoundedRectangle( G , Brush , 3 , 4 , fObj.W-7 , fObj.H-7 , 5 ) , Gdip_DeleteBrush( Brush )
+
+        Brush := Gdip_CreateLineBrushFromRect( 0 , 0 , fObj.W , fObj.H , fObj.ButtonInnerBorderColor1 , fObj.ButtonInnerBorderColor2 , 1 , 1 ) , Gdip_FillRoundedRectangle( G , Brush , 2 , 3 , fObj.W-5 , fObj.H-8 , 5 ) , Gdip_DeleteBrush( Brush )
+
+        Brush := Gdip_CreateLineBrushFromRect( 0 , 0 , fObj.W-7 , fObj.H-10 , fObj.ButtonMainColor1 , fObj.ButtonMainColor2 , 1 , 1 ) , Gdip_FillRoundedRectangle( G , Brush , 5 , 5 , fObj.W-11 , fObj.H-12 , 5 ) , Gdip_DeleteBrush( Brush )
+
+        Brush := Gdip_CreateLineBrushFromRect( 0 , 2 , fObj.W , fObj.H , fObj.TextBottomColor1 , fObj.TextBottomColor2 , 1 , 1 )
+
+        arr := [ { X: -1 , Y: -1 } , { X: 0 , Y: -1 } , { X: 1 , Y: -1 } , { X: -1 , Y: 0 } , { X: 1 , Y: 0 } , { X: -1 , Y: 1 } , { X: 0 , Y: 1 } , { X: 1 , Y: 1 } ]
+
+        Loop, % 8
+
+        Gdip_TextToGraphics( G , fObj.Text , "s" fObj.FontSize " " fObj.FontOptions " c" Brush " x" 1 + arr[A_Index].X + fObj.TextOffsetX " y" 3 + arr[A_Index].Y + fObj.TextOffsetY , fObj.Font , fObj.W + fObj.TextOffsetW , fObj.H + fObj.TextOffsetH )
+
+        Brush := Gdip_CreateLineBrushFromRect( 0 , 2 , fObj.W , fObj.H , fObj.TextTopColor1 , fObj.TextTopColor2 , 1 , 1 )
+
+        Gdip_TextToGraphics( G , fObj.Text , "s" fObj.FontSize " " fObj.FontOptions " c" Brush " x" 1 + fObj.TextOffsetX " y" 3 + fObj.TextOffsetY , fObj.Font , fObj.W + fObj.TextOffsetW , fObj.H + fObj.TextOffsetH )
+
+        if( fObj.ButtonAddGlossy ){
+
+            Brush := Gdip_BrushCreateSolid( fObj.GlossTopColor ) , Gdip_FillRectangle( G , Brush , 5 , 10 , fObj.W-11 , ( fObj.H / 2 ) - 10 ) , Gdip_DeleteBrush( Brush )
+
+            Brush := Gdip_BrushCreateSolid( fObj.GlossTopAccentColor ) , Gdip_FillRectangle( G , Brush , 10 , 12 , fObj.W-21 , fObj.H / 15 ) , Gdip_DeleteBrush( Brush )
+
+            Brush := Gdip_BrushCreateSolid( fObj.GlossBottomColor ) , Gdip_FillRectangle( G , Brush , 5 , 10 + ( fObj.H / 2 ) - 10 , fObj.W-11 , ( fObj.H / 2 ) - 7 ) , Gdip_DeleteBrush( Brush )
+
+        }
+
+        Gdip_DeleteGraphics( G )
+
+        Bitmap.hBitmap := Gdip_CreateHBITMAPFromBitmap( Bitmap.pBitmap )
+
+        return Bitmap
+    }
+
+    _CreateHoverBitmap(){
+
+        local arr := [] , Bitmap := {} , fObj := This.CurrentBitmapData.Hover
+
+        Bitmap.pBitmap := Gdip_CreateBitmap( fObj.W , fObj.H ) , G := Gdip_GraphicsFromImage( Bitmap.pBitmap ) , Gdip_SetSmoothingMode( G , 2 )
+
+        Brush := Gdip_BrushCreateSolid( fObj.BackgroundColor ) , Gdip_FillRectangle( G , Brush , -1 , -1 , fObj.W+2 , fObj.H+2 ) , Gdip_DeleteBrush( Brush )
+
+        Brush := Gdip_BrushCreateSolid( fObj.ButtonOuterBorderColor ) , Gdip_FillRoundedRectangle( G , Brush , 2 , 3 , fObj.W-5 , fObj.H-7 , 5 ) , Gdip_DeleteBrush( Brush )
+
+        Brush := Gdip_BrushCreateSolid( fObj.ButtonCenterBorderColor ) , Gdip_FillRoundedRectangle( G , Brush , 3 , 4 , fObj.W-7 , fObj.H-9 , 5 ) , Gdip_DeleteBrush( Brush )
+
+        Brush := Gdip_CreateLineBrushFromRect( 0 , 0 , fObj.W , fObj.H-10 , fObj.ButtonInnerBorderColor1 , fObj.ButtonInnerBorderColor2 , 1 , 1 ) , Gdip_FillRoundedRectangle( G , Brush , 4 , 5 , fObj.W-9 , fObj.H-11 , 5 ) , Gdip_DeleteBrush( Brush )
+
+        Brush := Gdip_CreateLineBrushFromRect( 5 , 7 , fObj.W-11 , fObj.H-14 , fObj.ButtonMainColor1 , fObj.ButtonMainColor2 , 1 , 1 ) , Gdip_FillRoundedRectangle( G , Brush , 5 , 7 , fObj.W-11 , fObj.H-14 , 5 ) , Gdip_DeleteBrush( Brush )
+
+        Brush := Gdip_CreateLineBrushFromRect( 0 , 2 , fObj.W , fObj.H , fObj.TextBottomColor1 , fObj.TextBottomColor2 , 1 , 1 )
+
+        arr := [ { X: -1 , Y: -1 } , { X: 0 , Y: -1 } , { X: 1 , Y: -1 } , { X: -1 , Y: 0 } , { X: 1 , Y: 0 } , { X: -1 , Y: 1 } , { X: 0 , Y: 1 } , { X: 1 , Y: 1 } ]
+
+        Loop, % 8
+
+        Gdip_TextToGraphics( G , fObj.Text , "s" fObj.FontSize " " fObj.FontOptions " c" Brush " x" 0 + arr[A_Index].X + fObj.TextOffsetX " y" 2 + arr[A_Index].Y + fObj.TextOffsetY , fObj.Font , fObj.W + fObj.TextOffsetW , fObj.H + fObj.TextOffsetH )
+
+        Brush := Gdip_CreateLineBrushFromRect( 0 , 2 , fObj.W , fObj.H , fObj.TextTopColor1 , fObj.TextTopColor2 , 1 , 1 )
+
+        Gdip_TextToGraphics( G , fObj.Text , "s" fObj.FontSize " " fObj.FontOptions " c" Brush " x" 0 + fObj.TextOffsetX " y" 2 + fObj.TextOffsetY , fObj.Font , fObj.W + fObj.TextOffsetW , fObj.H + fObj.TextOffsetH )
+
+        if( fObj.ButtonAddGlossy = 1 ){
+
+            Brush := Gdip_BrushCreateSolid( fObj.GlossTopColor ) , Gdip_FillRectangle( G , Brush , 6 , 10 , fObj.W-13 , ( fObj.H / 2 ) - 10 ) , Gdip_DeleteBrush( Brush )
+
+            Brush := Gdip_BrushCreateSolid( fObj.GlossTopAccentColor ) , Gdip_FillRectangle( G , Brush , 10 , 12 , fObj.W-21 , fObj.H / 15 ) , Gdip_DeleteBrush( Brush )
+
+            Brush := Gdip_BrushCreateSolid( fObj.GlossBottomColor ) , Gdip_FillRectangle( G , Brush , 6 , 10 + ( fObj.H / 2 ) - 10 , fObj.W-13 , ( fObj.H / 2 ) - 7 ) , Gdip_DeleteBrush( Brush )
+
+        }
+
+        Gdip_DeleteGraphics( G )
+
+        Bitmap.hBitmap := Gdip_CreateHBITMAPFromBitmap( Bitmap.pBitmap )
+
+        return Bitmap
+
+    }
+
+    _CreateDefaultBitmap(){
+
+        local arr := [] , Bitmap := {} , fObj := This.CurrentBitmapData.Default
+
+        Bitmap.pBitmap := Gdip_CreateBitmap( fObj.W , fObj.H ) , G := Gdip_GraphicsFromImage( Bitmap.pBitmap ) , Gdip_SetSmoothingMode( G , 2 )
+
+        Brush := Gdip_BrushCreateSolid( fObj.BackgroundColor ) , Gdip_FillRectangle( G , Brush , -1 , -1 , fObj.W+2 , fObj.H+2 ) , Gdip_DeleteBrush( Brush )
+
+        Brush := Gdip_BrushCreateSolid( fObj.ButtonOuterBorderColor ) , Gdip_FillRoundedRectangle( G , Brush , 2 , 3 , fObj.W-5 , fObj.H-7 , 5 ) , Gdip_DeleteBrush( Brush )
+
+        Brush := Gdip_BrushCreateSolid( fObj.ButtonCenterBorderColor ) , Gdip_FillRoundedRectangle( G , Brush , 3 , 4 , fObj.W-7 , fObj.H-9 , 5 ) , Gdip_DeleteBrush( Brush )
+
+        Brush := Gdip_CreateLineBrushFromRect( 0 , 0 , fObj.W , fObj.H-10 , fObj.ButtonInnerBorderColor1 , fObj.ButtonInnerBorderColor2 , 1 , 1 ) , Gdip_FillRoundedRectangle( G , Brush , 4 , 5 , fObj.W-9 , fObj.H-11 , 5 ) , Gdip_DeleteBrush( Brush )
+
+        Brush := Gdip_CreateLineBrushFromRect( 5 , 7 , fObj.W-11 , fObj.H-14 , fObj.ButtonMainColor1 , fObj.ButtonMainColor2 , 1 , 1 ) , Gdip_FillRoundedRectangle( G , Brush , 5 , 7 , fObj.W-11 , fObj.H-14 , 5 ) , Gdip_DeleteBrush( Brush )
+
+        Brush := Gdip_CreateLineBrushFromRect( 0 , 2 , fObj.W , fObj.H , fObj.TextBottomColor1 , fObj.TextBottomColor2 , 1 , 1 )
+
+        arr := [ { X: -1 , Y: -1 } , { X: 0 , Y: -1 } , { X: 1 , Y: -1 } , { X: -1 , Y: 0 } , { X: 1 , Y: 0 } , { X: -1 , Y: 1 } , { X: 0 , Y: 1 } , { X: 1 , Y: 1 } ]
+
+        Loop, % 8
+
+        Gdip_TextToGraphics( G , fObj.Text , "s" fObj.FontSize " " fObj.FontOptions " c" Brush " x" 0 + arr[A_Index].X + fObj.TextOffsetX " y" 2 + arr[A_Index].Y + fObj.TextOffsetY , fObj.Font , fObj.W + fObj.TextOffsetW , fObj.H + fObj.TextOffsetH )
+
+        Brush := Gdip_CreateLineBrushFromRect( 0 , 2 , fObj.W , fObj.H , fObj.TextTopColor1 , fObj.TextTopColor2 , 1 , 1 )
+
+        Gdip_TextToGraphics( G , fObj.Text , "s" fObj.FontSize " " fObj.FontOptions " c" Brush " x" 0 + fObj.TextOffsetX " y" 2 + fObj.TextOffsetY , fObj.Font , fObj.W + fObj.TextOffsetW , fObj.H + fObj.TextOffsetH )
+
+        if( fObj.ButtonAddGlossy ){
+
+            Brush := Gdip_BrushCreateSolid( fObj.GlossTopColor ) , Gdip_FillRectangle( G , Brush , 6 , 10 , fObj.W-13 , ( fObj.H / 2 ) - 10 ) , Gdip_DeleteBrush( Brush )
+
+            Brush := Gdip_BrushCreateSolid( fObj.GlossTopAccentColor ) , Gdip_FillRectangle( G , Brush , 10 , 12 , fObj.W-21 , fObj.H / 15 ) , Gdip_DeleteBrush( Brush )
+
+            Brush := Gdip_BrushCreateSolid( fObj.GlossBottomColor ) , Gdip_FillRectangle( G , Brush , 6 , 10 + ( fObj.H / 2 ) - 10 , fObj.W-13 , ( fObj.H / 2 ) - 7 ) , Gdip_DeleteBrush( Brush )
+
+        }
+
+        Gdip_DeleteGraphics( G )
+
+        Bitmap.hBitmap := Gdip_CreateHBITMAPFromBitmap( Bitmap.pBitmap )
+
+        return Bitmap
+
+    }
+
+    _GetMasterDefaultValues(){ ;Default State
+
+        local Default := {}
+
+        Default.pBitmap := "" 
+        , Default.hBitmap := ""
+        , Default.Font := "Arial"
+        , Default.FontOptions := " Bold Center vCenter "
+        , Default.FontSize := "12"
+        , Default.Text := "Button"
+        , Default.W := 10
+        , Default.H := 10
+        , Default.TextBottomColor1 := "0x0002112F"
+        , Default.TextBottomColor2 := Default.TextBottomColor1
+        , Default.TextTopColor1 := "0xFFFFFFFF"
+        , Default.TextTopColor2 := "0xFF000000"
+        , Default.TextOffsetX := 0
+        , Default.TextOffsetY := 0
+        , Default.TextOffsetW := 0
+        , Default.TextOffsetH := 0
+        , Default.BackgroundColor := "0xFF22262A"
+        , Default.ButtonOuterBorderColor := "0xFF161B1F"	
+        , Default.ButtonCenterBorderColor := "0xFF262B2F"	
+        , Default.ButtonInnerBorderColor1 := "0xFF3F444A"
+        , Default.ButtonInnerBorderColor2 := "0xFF24292D"
+        , Default.ButtonMainColor1 := "0xFF272C32"
+        , Default.ButtonMainColor2 := "" Default.ButtonMainColor1
+        , Default.ButtonAddGlossy := 0
+        , Default.GlossTopColor := "0x11FFFFFF"
+        , Default.GlossTopAccentColor := "0x05FFFFFF"	
+        , Default.GlossBottomColor := "0x33000000"
+
+        return Default
+
+    }
+
+    _GetMasterHoverValues(){ ;Hover State
+
+        local Default := {}
+
+        Default.pBitmap := ""
+        , Default.hBitmap := ""
+        , Default.Font := "Arial"
+        , Default.FontOptions := " Bold Center vCenter "
+        , Default.FontSize := "12"
+        , Default.Text := "Button"
+        , Default.W := 10
+        , Default.H := 10
+        , Default.TextBottomColor1 := "0x0002112F"
+        , Default.TextBottomColor2 := Default.TextBottomColor1
+        , Default.TextTopColor1 := "0xFFFFFFFF"
+        , Default.TextTopColor2 := "0xFF000000"
+        , Default.TextOffsetX := 0
+        , Default.TextOffsetY := 0
+        , Default.TextOffsetW := 0
+        , Default.TextOffsetH := 0
+        , Default.BackgroundColor := "0xFF22262A"
+        , Default.ButtonOuterBorderColor := "0xFF161B1F"	
+        , Default.ButtonCenterBorderColor := "0xFF262B2F"	
+        , Default.ButtonInnerBorderColor1 := "0xFF3F444A"
+        , Default.ButtonInnerBorderColor2 := "0xFF24292D"
+        , Default.ButtonMainColor1 := "0xFF373C42"
+        , Default.ButtonMainColor2 := "" Default.ButtonMainColor1
+        , Default.ButtonAddGlossy := 0
+        , Default.GlossTopColor := "0x11FFFFFF"
+        , Default.GlossTopAccentColor := "0x05FFFFFF"	
+        , Default.GlossBottomColor := "0x33000000"
+
+        return Default
+
+    }
+
+    _GetMasterPressedValues(){ ;Pressed State
+
+        local Default := {}
+
+        Default.pBitmap := ""
+        , Default.hBitmap := ""
+        , Default.Font := "Arial"
+        , Default.FontOptions := " Bold Center vCenter "
+        , Default.FontSize := "12"
+        , Default.Text := "Button"
+        , Default.W := 10
+        , Default.H := 10
+        , Default.TextBottomColor1 := "0x0002112F"
+        , Default.TextBottomColor2 := Default.TextBottomColor1
+        , Default.TextTopColor1 := "0xFFFFFFFF"
+        , Default.TextTopColor2 := "0xFF000000"
+        , Default.TextOffsetX := 0
+        , Default.TextOffsetY := 0
+        , Default.TextOffsetW := 0
+        , Default.TextOffsetH := 0
+        , Default.BackgroundColor := "0xFF22262A"
+        , Default.ButtonOuterBorderColor := "0xFF62666a"
+        , Default.ButtonCenterBorderColor := "0xFF262B2F"	
+        , Default.ButtonInnerBorderColor1 := "0xFF151A20"
+        , Default.ButtonInnerBorderColor2 := "0xFF151A20"
+        , Default.ButtonMainColor1 := "0xFF12161a"
+        , Default.ButtonMainColor2 := "0xFF33383E"
+        , Default.ButtonAddGlossy := 0
+        , Default.GlossTopColor := "0x11FFFFFF"
+        , Default.GlossTopAccentColor := "0x05FFFFFF"	
+        , Default.GlossBottomColor := "0x33000000"
+
+        return Default
+
+    }
+
+    SetSessionDefaults( All := "" , Default := "" , Hover := "" , Pressed := "" ){ ;Set the default values based on user input
+
+        This.SessionBitmapData := {} 
+        , This.Preset := 1
+        , This.init := 0
+
+        This._LoadDefaults("SessionBitmapData")
+
+        This._SetSessionData( All , Default , Hover , Pressed )
+
+    }
+
+    _SetSessionData( All := "" , Default := "" , Hover := "" , Pressed := "" ){
+
+        local index , k , v , i , j
+
+        if( IsObject( All ) ){
+
+            Loop, % GuiButtonType1.List.Length()	{
+                index := A_Index
+                For k , v in All
+                    This.SessionBitmapData[ GuiButtonType1.List[ index ] ][ k ] := v
+            }
+        }
+
+        For k , v in GuiButtonType1.List
+            if( isObject( %v% ) )
+            For i , j in %v%
+            This.SessionBitmapData[ GuiButtonType1.List[ k ] ][ i ] := j
+
+    }
+
+    _LoadDefaults( input := "" ){
+
+        This.CurrentBitmapData := "" , This.CurrentBitmapData := {}
+
+        For k , v in This.SessionBitmapData
+            This.CurrentBitmapData[k] := {}
+
+        This[ input ].Default := This._GetMasterDefaultValues()
+        , This[ input ].Hover := This._GetMasterHoverValues()
+        , This[ input ].Pressed := This._GetMasterPressedValues()
+
+    }
+
+    _SetCurrentBitmapDataFromSessionData(){
+
+        local k , v , i , j
+
+        This.CurrentBitmapData := "" , This.CurrentBitmapData := {}
+
+        For k , v in This.SessionBitmapData
+        {
+            This.CurrentBitmapData[k] := {}
+
+            For i , j in This.SessionBitmapData[k]
+
+            This.CurrentBitmapData[k][i] := j
+
+        }
+
+    }
+
+    _UpdateCurrentBitmapData( All := "" , Default := "" , Hover := "" , Pressed := "" ){
+
+        local k , v , i , j
+
+        if( IsObject( All ) ){
+
+            Loop, % GuiButtonType1.List.Length()	{
+
+                index := A_Index
+
+                For k , v in All
+
+                This.CurrentBitmapData[ GuiButtonType1.List[ index ] ][ k ] := v
+
+            }
+        }
+
+        For k , v in GuiButtonType1.List
+
+        if( isObject( %v% ) )
+
+        For i , j in %v%
+
+        This.CurrentBitmapData[ GuiButtonType1.List[ k ] ][ i ] := j
+
+    }
+
+    _UpdateInstanceData( obj := ""){
+
+        For k , v in GuiButtonType1.List	
+
+        This.CurrentBitmapData[v].Text := obj.Text
+        , This.CurrentBitmapData[v].W := obj.W
+        , This.CurrentBitmapData[v].H := obj.H
+
+    }
+
+    CreateButtonBitmapSet( obj := "" , All := "" , Default := "" , Hover := "" , Pressed := "" ){ ;Create a new button
+
+        local Bitmaps := {}
+
+        if( This.Preset )
+
+        This._SetCurrentBitmapDataFromSessionData()
+
+        else
+
+        This._LoadDefaults( "CurrentBitmapData" )
+
+        This._UpdateCurrentBitmapData( All , Default , Hover , Pressed )
+
+        This._UpdateInstanceData( obj )
+
+        Bitmaps.Default := This._CreateDefaultBitmap()
+        , Bitmaps.Hover := This._CreateHoverBitmap()
+        , Bitmaps.Pressed := This._CreatePressedBitmap()
+
+        return Bitmaps
+
+    }
+
 }
 ;****************************************************************************************************************************************************************************************
 ;****************************************************************************************************************************************************************************************
