@@ -1437,6 +1437,7 @@ AutoRepairDura:
     PerformDuraRepair()
 return
 
+
 ShowAdditionalBuffSequences:
     Gui, 2:New
     Gui, 2:Add, GroupBox, x10 y10 w480 h150, Sequence 4
@@ -1448,7 +1449,8 @@ ShowAdditionalBuffSequences:
     Gui, 2:Add, Edit, x130 y95 w60 h20 vTimerIntervalEdit4, %TimerInterval4%
     Gui, 2:Add, Button, x20 y125 w100 h25 gSaveSequence4, Save Sequence 4
     Gui, 2:Add, Button, x130 y125 w100 h25 gToggleSequence4, Toggle Sequence 4
-    Gui, 2:Add, Text, x240 y125 w200 h25 vSequence4Status, Status: Stopped
+    status4Text := IsRunning4 ? "Status: Running" : "Status: Stopped"
+    Gui, 2:Add, Text, x240 y125 w200 h25 vSequence4Status, %status4Text%
 
     Gui, 2:Add, GroupBox, x10 y170 w480 h150, Sequence 5
     Gui, 2:Add, Text, x20 y195 w100 h20, Keys:
@@ -1459,7 +1461,8 @@ ShowAdditionalBuffSequences:
     Gui, 2:Add, Edit, x130 y255 w60 h20 vTimerIntervalEdit5, %TimerInterval5%
     Gui, 2:Add, Button, x20 y285 w100 h25 gSaveSequence5, Save Sequence 5
     Gui, 2:Add, Button, x130 y285 w100 h25 gToggleSequence5, Toggle Sequence 5
-    Gui, 2:Add, Text, x240 y285 w200 h25 vSequence5Status, Status: Stopped
+    status5Text := IsRunning5 ? "Status: Running" : "Status: Stopped"
+    Gui, 2:Add, Text, x240 y285 w200 h25 vSequence5Status, %status5Text%
 
     Gui, 2:Add, GroupBox, x10 y330 w480 h150, Sequence 6
     Gui, 2:Add, Text, x20 y355 w100 h20, Keys:
@@ -1470,10 +1473,13 @@ ShowAdditionalBuffSequences:
     Gui, 2:Add, Edit, x130 y415 w60 h20 vTimerIntervalEdit6, %TimerInterval6%
     Gui, 2:Add, Button, x20 y445 w100 h25 gSaveSequence6, Save Sequence 6
     Gui, 2:Add, Button, x130 y445 w100 h25 gToggleSequence6, Toggle Sequence 6
-    Gui, 2:Add, Text, x240 y445 w200 h25 vSequence6Status, Status: Stopped
+    status6Text := IsRunning6 ? "Status: Running" : "Status: Stopped"
+    Gui, 2:Add, Text, x240 y445 w200 h25 vSequence6Status, %status6Text%
 
     Gui, 2:Show, w500 h490, Additional Buff Sequences
+    
 return
+
 SaveSequence4:
     Gui, 2:Submit, NoHide
     KeyCombination4 := KeyCombinationEdit4
@@ -1514,60 +1520,98 @@ ToggleSequence4:
     IsRunning4 := !IsRunning4
     if (IsRunning4) {
         KeySequence4 := StrSplit(KeyCombination4, "|")
-        SetTimer, CheckExecutions456, 50
         NextExecutionTime4 := A_TickCount
         Gosub, SendKeys4
         NextExecutionTime4 := A_TickCount + (TimerInterval4 * 60 * 1000)
         GuiControl, 2:, Sequence4Status, Status: Running
     } else {
-        SetTimer, CheckExecutions456, Off
         GuiControl, 2:, Sequence4Status, Status: Stopped
     }
+    if (IsRunning4 || IsRunning5 || IsRunning6)
+        SetTimer, CheckExecutions456, 50
+    else
+        SetTimer, CheckExecutions456, Off
 return
 
 ToggleSequence5:
     IsRunning5 := !IsRunning5
     if (IsRunning5) {
         KeySequence5 := StrSplit(KeyCombination5, "|")
-        SetTimer, CheckExecutions456, 50
         NextExecutionTime5 := A_TickCount
         Gosub, SendKeys5
         NextExecutionTime5 := A_TickCount + (TimerInterval5 * 60 * 1000)
         GuiControl, 2:, Sequence5Status, Status: Running
     } else {
-        SetTimer, CheckExecutions456, Off
         GuiControl, 2:, Sequence5Status, Status: Stopped
     }
+    if (IsRunning4 || IsRunning5 || IsRunning6)
+        SetTimer, CheckExecutions456, 50
+    else
+        SetTimer, CheckExecutions456, Off
 return
 
 ToggleSequence6:
     IsRunning6 := !IsRunning6
     if (IsRunning6) {
         KeySequence6 := StrSplit(KeyCombination6, "|")
-        SetTimer, CheckExecutions456, 50
         NextExecutionTime6 := A_TickCount
         Gosub, SendKeys6
         NextExecutionTime6 := A_TickCount + (TimerInterval6 * 60 * 1000)
         GuiControl, 2:, Sequence6Status, Status: Running
     } else {
-        SetTimer, CheckExecutions456, Off
         GuiControl, 2:, Sequence6Status, Status: Stopped
     }
+    if (IsRunning4 || IsRunning5 || IsRunning6)
+        SetTimer, CheckExecutions456, 50
+    else
+        SetTimer, CheckExecutions456, Off
 return
 
 CheckExecutions456:
-    if (IsRunning4 && A_TickCount >= NextExecutionTime4) {
+    CurrentTime := A_TickCount
+
+    if (IsRunning4 && CurrentTime >= NextExecutionTime4) {
         Gosub, SendKeys4
-        NextExecutionTime4 := A_TickCount + (TimerInterval4 * 60 * 1000)
+        NextExecutionTime4 := CurrentTime + (TimerInterval4 * 60 * 1000)
     }
-    if (IsRunning5 && A_TickCount >= NextExecutionTime5) {
+    if (IsRunning5 && CurrentTime >= NextExecutionTime5) {
         Gosub, SendKeys5
-        NextExecutionTime5 := A_TickCount + (TimerInterval5 * 60 * 1000)
+        NextExecutionTime5 := CurrentTime + (TimerInterval5 * 60 * 1000)
     }
-    if (IsRunning6 && A_TickCount >= NextExecutionTime6) {
+    if (IsRunning6 && CurrentTime >= NextExecutionTime6) {
         Gosub, SendKeys6
-        NextExecutionTime6 := A_TickCount + (TimerInterval6 * 60 * 1000)
+        NextExecutionTime6 := CurrentTime + (TimerInterval6 * 60 * 1000)
     }
+
+    ; Update status with time remaining for each sequence
+    if (IsRunning4) {
+        TimeRemaining := NextExecutionTime4 - CurrentTime
+        if (TimeRemaining <= 0) {
+            MinutesLeft := 0
+        } else {
+            MinutesLeft := Round(TimeRemaining / 60000, 2)
+        }
+        GuiControl, 2:, Sequence4Status, Status: Running (%MinutesLeft%m left)
+    }
+    if (IsRunning5) {
+        TimeRemaining := NextExecutionTime5 - CurrentTime
+        if (TimeRemaining <= 0) {
+            MinutesLeft := 0
+        } else {
+            MinutesLeft := Round(TimeRemaining / 60000, 2)
+        }
+        GuiControl, 2:, Sequence5Status, Status: Running (%MinutesLeft%m left)
+    }
+    if (IsRunning6) {
+        TimeRemaining := NextExecutionTime6 - CurrentTime
+        if (TimeRemaining <= 0) {
+            MinutesLeft := 0
+        } else {
+            MinutesLeft := Round(TimeRemaining / 60000, 2)
+        }
+        GuiControl, 2:, Sequence6Status, Status: Running (%MinutesLeft%m left)
+    }
+
     if (!IsRunning4 && !IsRunning5 && !IsRunning6) {
         SetTimer, CheckExecutions456, Off
     }
@@ -6237,19 +6281,56 @@ AssignHealKeys:
                                     ChatBuffToggle:
                                         Gui, Submit, NoHide
                                         if (chatbuff) {
-                                            IniRead, chatBuffCommandGlobal, %SettingsFile%, Settings, chatBuffCommand, /info
-                                            InputBox, chatBuffCommandGlobal, Chat Buff Command, Enter chat command:, , 300, 120, , , , , %chatBuffCommandGlobal%
-                                            if (!ErrorLevel && chatBuffCommandGlobal != "") {
-                                                IniWrite, %chatBuffCommandGlobal%, %SettingsFile%, Settings, chatBuffCommand
-                                                if (win1 != "") {
-                                                    gosub, SendChatBuffCommand
-                                                    SetTimer, SendChatBuffCommand, % (chatBuffTimerEdit * 60 * 1000)
-                                                    SetTimer, UpdateChatBuffTimeLeft, 1000
-                                                    chatBuffStartTime := A_TickCount
+                                            ; Load existing commands
+                                            savedCommands := []
+                                            IniRead, commandCount, %SettingsFile%, ChatBuffCommands, Count, 0
+                                            Loop, %commandCount% {
+                                                IniRead, command, %SettingsFile%, ChatBuffCommands, Command%A_Index%, ERROR
+                                                if (command != "" && command != "ERROR") {
+                                                    savedCommands.Push(command)
                                                 }
-                                            } else {
+                                            }
+                                            
+                                            ; Get first command
+                                            defaultCmd := savedCommands.Length() > 0 ? savedCommands[1] : "/info"
+                                            InputBox, firstCommand, Chat Buff Command, Enter first chat command:, , 300, 120, , , , , %defaultCmd%
+                                            if (ErrorLevel || firstCommand = "") {
                                                 GuiControl,, chatbuff, 0
                                                 chatbuff := false
+                                                return
+                                            }
+                                            
+                                            ; Start fresh list
+                                            chatBuffCommands := []
+                                            chatBuffCommands.Push(firstCommand)
+                                            
+                                            ; Ask for more commands
+                                            cmdIndex := 2
+                                            Loop {
+                                                MsgBox, 4, More Commands?, Do you want to add another chat buff command?
+                                                IfMsgBox No
+                                                    break
+                                                defaultNext := cmdIndex <= savedCommands.Length() ? savedCommands[cmdIndex] : ""
+                                                InputBox, nextCommand, Chat Buff Command, Enter next chat command:, , 300, 120, , , , , %defaultNext%
+                                                if (ErrorLevel || nextCommand = "")
+                                                    break
+                                                chatBuffCommands.Push(nextCommand)
+                                                cmdIndex++
+                                            }
+                                            
+                                            ; Save commands
+                                            IniDelete, %SettingsFile%, ChatBuffCommands
+                                            IniWrite, % chatBuffCommands.Length(), %SettingsFile%, ChatBuffCommands, Count
+                                            for index, command in chatBuffCommands {
+                                                IniWrite, %command%, %SettingsFile%, ChatBuffCommands, Command%index%
+                                            }
+                                            
+                                            ; Send immediately then start timer
+                                            if (win1 != "") {
+                                                gosub, SendChatBuffCommand
+                                                SetTimer, SendChatBuffCommand, % (chatBuffTimerEdit * 60 * 1000)
+                                                SetTimer, UpdateChatBuffTimeLeft, 1000
+                                                chatBuffStartTime := A_TickCount
                                             }
                                         } else {
                                             SetTimer, SendChatBuffCommand, Off
@@ -6260,15 +6341,23 @@ AssignHealKeys:
                                     return
 
                                     SendChatBuffCommand:
-                                        if (win1 != "" && chatBuffCommandGlobal != "") {
-                                            WinActivate, ahk_id %win1%
-                                            Sleep, 150
-                                            Clipboard := chatBuffCommandGlobal
-                                            Send, {Enter}
-                                            Sleep, 80
-                                            Send, ^v
-                                            Sleep, 80
-                                            Send, {Enter}
+                                        if (win1 != "") {
+                                            IniRead, commandCount, %SettingsFile%, ChatBuffCommands, Count, 0
+                                            Loop, %commandCount% {
+                                                IniRead, command, %SettingsFile%, ChatBuffCommands, Command%A_Index%, 
+                                                if (command != "" && command != "ERROR") {
+                                                    WinActivate, ahk_id %win1%
+                                                    Sleep, 150
+                                                    Clipboard := command
+                                                    Send, {Enter}
+                                                    Sleep, 80
+                                                    Send, ^v
+                                                    Sleep, 80
+                                                    Send, {Enter}
+                                                    Random, randSleep, 500, 2000
+                                                    Sleep, %randSleep%
+                                                }
+                                            }
                                             chatBuffStartTime := A_TickCount
                                         }
                                     return
