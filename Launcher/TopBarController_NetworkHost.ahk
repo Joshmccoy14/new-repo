@@ -3124,8 +3124,8 @@ OpenSettings:
         UtilityScriptPaths[script.display] := script.full
     }
     UtilityScriptDropdownList := RTrim(UtilityScriptDropdownList, "|")
-    Gui, Settings:Add, DropDownList, x15 y180 w150 h120 vUtilityScriptDropdown, %UtilityScriptDropdownList%||
-    New HButton( { Owner: SettingsHwnd , X: 170 , Y: 180 , W: 40 , H: 24 , Text: "Start" , Label: "LaunchUtilityScript" } )
+Gui, Settings:Add, DropDownList, x15 y180 w150 h120 vUtilityScriptDropdown, %UtilityScriptDropdownList%||
+New HButton( { Owner: SettingsHwnd , X: 170 , Y: 180 , W: 40 , H: 24 , Text: "Start" , Label: "LaunchUtilityScript" } )
     
     ; Button Color GroupBox
     Gui, Settings:Font, s8 cWhite, Segoe UI
@@ -3232,6 +3232,28 @@ SaveServerPort:
     GuiControl, TopBar:, ServerPort, %ServerPort%
     SaveSettingsToFile()
 return
+
+LaunchUtilityScript:
+    Gui, Settings:Submit, NoHide
+    selectedScript := UtilityScriptDropdown
+
+    ; Dynamically get the latest list of addon scripts
+    scripts := GetAddonScripts()
+    scriptPath := ""
+    for i, script in scripts {
+        if (script.display = selectedScript) {
+            scriptPath := script.full
+            break
+        }
+    }
+
+    if (!scriptPath || !FileExist(scriptPath)) {
+        MsgBox, Script not found: %scriptPath%
+        return
+    }
+    Run, %scriptPath%
+return
+
 GetAddonScripts() {
     scripts := []
     Loop, Files, % A_ScriptDir "\addons\*.*", R
@@ -3240,19 +3262,8 @@ GetAddonScripts() {
             scripts.Push({display: A_LoopFileName, full: A_LoopFileFullPath})
         }
     }
-return scripts
+    return scripts
 }
-LaunchUtilityScript:
-    Gui, TopBar:Submit, NoHide
-    global UtilityScriptDropdown, UtilityScriptPaths
-    selectedScript := UtilityScriptDropdown
-    scriptPath := UtilityScriptPaths[selectedScript]
-    if (!scriptPath || !FileExist(scriptPath)) {
-        MsgBox, Script not found: %scriptPath%
-        return
-    }
-    Run, %scriptPath%
-return
 
 ChangeButtonColor:
 return

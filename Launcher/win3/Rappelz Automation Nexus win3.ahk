@@ -57,7 +57,8 @@ Global IsExecutingCommand := false
 ;SetRandomKeyDelay()
 global usegodmotherbottle := "|<>*106$151.0000000000000000000000000000000000000000000000000000X00DU3361800T1003k4Y00000lU0AE1Vb0Y0080001A2K00000MrSA3rkvjvnr4DLZsazzS0000ASNa3CMLwdD+3kenUSnhtU0006DznDbA/SIbx13p/s9tqzk00U36y1Vna4j+HkUX+b74QvS00Dz0nb0Mtn27Z9sEFZFVWSIj407s0TSy7rj11Sorc8ScbVtvSy03w0200000000000000E0000001zs000000000000000M000000Tzzzzzzzzzzzzzzzzzzzzzzzzzzk"
 usegodmotherbottle .= "|<>*120$151.0000000000000000000000000000000000000000000000000000008k03s0UlUG007kE00w19000004M0340MNk/0020000H0YU00002BrX0xwCvzwzl3ztS9jzLU00037aNUna5z+nnUwDgs7gdCM0001Xzwntn2rZNzkEzmz2SIjw0000FbUMQtV/mgwM8ntll7+HU00008Vk6CQkVtKSA4NwMMXZ9k00007rj1xvsErhBu27e9sSSqj3zy00U00000000000004000011"
-
+global HVpass:="|<>EAD596-0.81$29.0000000000000Q001sy01kTw0MTzx4Dzzu0Tzzs7zzzmjzzzkDT8Tk0zM7U1zJz0lcDm1U60A01sDg0A7k803s0E1w00kT000bk000Q000000000000000001"
+global hvout := false
 ; Resurrection settings
 global ResurrectionEnabled := false
 global MaxResurrections := 8
@@ -421,7 +422,7 @@ global MouseMoveDelayEdit
 global MouseClickDelayEdit
 global MainTabs
 Global refreshScrollEndTime := 0
-
+global lastPressTimes := {}
 ; Add these with your other global variables at the top of your script
 ; Add these at the very top of your script with other globals
 global dpsEnabled := false
@@ -617,6 +618,7 @@ CreateCombinedGUI:
     ; Auto-Resurrection Section
     Gui, Add, GroupBox, x20 y280 w470 h70, Auto-Resurrection
     Gui, Add, Checkbox, x30 y300 w150 vResurrectionEnabled gResurrectionEnabled, Enable Auto-Resurrection
+    Gui, Add, Checkbox, x190 y300 w150 vhvout gHVout,HV if max res count met
     ;gui, add, button, x200 y270 w80 h20 gtestdeathdetection, Test
     Gui, Add, Text, x30 y320 w120 h20, Max Resurrections:
     Gui, Add, Edit, x150 y320 w50 h20 vMaxResurrectionsEdit
@@ -1165,6 +1167,8 @@ CreateCombinedGUI:
     ; Load all checkbox states after GUI is created
     SetTimer, LoadCheckboxStatesDelayed, -50
     SetTimer, ChangeKeyDelay, 1000
+       ; Load max resurrections from INI on startup
+LoadMaxResurrections()
     ; Initialize navigation variables
     ;InitializeNavigation()
 return
@@ -4131,16 +4135,84 @@ CheckForDeath() {
 
 return false
 }
-
+; Checkbox toggle for hvout (HV if max res count met)
+HVout:
+    Gui, Submit, NoHide
+    if (hvout) {
+        hvout := true
+        tooltip, HVout enabled: Will use HV if max resurrection count is met.
+        Sleep, 3000
+        tooltip
+    } else {
+        hvout := false
+        tooltip, HVout disabled: Will NOT use HV if max resurrection count is met.
+        Sleep, 3000
+        tooltip
+    }
+    ; Optionally save to INI if you want persistence:
+    IniWrite, %hvout%, %iniFile%, Settings, HVout
+return
 ; Handle resurrection process
 HandleResurrection() {
     global usegodmotherbottle, win1, CurrentResurrections, MaxResurrections
-    global ResurrectionEnabled
+    global ResurrectionEnabled, HVpass
 
     if (!ResurrectionEnabled) {
         return false
     }
+    if (CurrentResurrections >= MaxResurrections && hvout) {
+        UpdateResurrectionStatus("Max resurrections reached!")
+        tooltip, Auto-Resurrection, Maximum number of resurrections (%MaxResurrections%) reached!, 3
+        ; Get window position
+    WinGetPos, winX, winY,,, ahk_id %win1%
 
+    if (winX = "" || winY = "") {
+        return false
+    }
+
+    ; Search for and click the resurrection bottle
+    WinGetPos, winX, winY, winWidth, winHeight, ahk_id %win1%
+    deathPattern := FindText(0, 0, winX, winY, winX + winWidth, winY + winHeight, 0, 0, usegodmotherbottle)
+
+    if (deathPattern && IsObject(deathPattern) && deathPattern.MaxIndex() >= 1) {
+        ; Get click coordinates (center of found pattern)
+        clickX := deathPattern.1.x
+        clickY := deathPattern.1.y
+
+        ; Validate coordinates
+        if (clickX > 0 && clickY > 0 && clickX < A_ScreenWidth && clickY < A_ScreenHeight) {
+            ; Convert screen coordinates to window-relative and click center
+            WinGetPos, winX, winY,,, ahk_id %win1%
+            relX := clickX - winX
+            relY := clickY - winY
+            ControlClick, x%relX% y%relY%, ahk_id %win1%,, Left, 1
+            Sleep, 500
+
+            ; Increment counter
+            CurrentResurrections++
+            UpdateResurrectionStatus("Resurrected! " . CurrentResurrections . "/" . MaxResurrections)
+
+            ; Log the resurrection
+            ToolTip, Character Resurrected (%CurrentResurrections%/%MaxResurrections%), 10, 10, 4
+            SetTimer, ClearResurrectionTooltip, -3000
+            ; Loop to find and click HVpass every 100ms for up to 2 minutes (120,000ms)
+            startTime := A_TickCount
+            while ((A_TickCount - startTime) < 120000) {
+                WinGetPos, winX, winY, winWidth, winHeight, ahk_id %win1%
+                if (FindText(foundX, foundY, winX, winY, winX + winWidth, winY + winHeight, 0, 0, HVpass)) {
+                    relX := foundX - winX
+                    relY := foundY - winY
+                    ControlClick, x%relX% y%relY%, ahk_id %win1%,, Left, 1
+                    Sleep, 100
+                } else {
+                    break
+                }
+            }
+            return true
+        }
+    }
+        return false
+    }
     if (CurrentResurrections >= MaxResurrections) {
         UpdateResurrectionStatus("Max resurrections reached!")
         MsgBox, 0, Auto-Resurrection, Maximum number of resurrections (%MaxResurrections%) reached!, 3
@@ -8255,53 +8327,108 @@ AssignHealKeys:
                                                                                         IniWrite, %selectedKey%, %iniFile%, Settings, FollowWhoKey
                                                                                     return
                                                                                     
+                                                                                    
                                                                                     UseRefreshScroll:
                                                                                         if (refreshscrollEnabled) {
-                                                                                            ; Simulate refresh scroll key press
+                                                                                            ; Allow multiple key combos separated by |
                                                                                             if (refreshKey != "") {
-                                                                                                ; Check for modifier keys
-                                                                                                hasCtrl := InStr(refreshKey, "^")
-                                                                                                hasAlt := InStr(refreshKey, "!")
-                                                                                                hasShift := InStr(refreshKey, "+")
+                                                                                                keyList := StrSplit(refreshKey, "|")
+                                                                                                if (!IsObject(lastPressTimes))
+                                                                                                    lastPressTimes := {}
+                                                                                                keysPressed := 0
+                                                                                                now := A_TickCount
 
-                                                                                                ; Extract the base key (remove modifiers)
-                                                                                                baseKey := refreshKey
-                                                                                                if (hasCtrl)
-                                                                                                    baseKey := StrReplace(baseKey, "^")
-                                                                                                if (hasAlt)
-                                                                                                    baseKey := StrReplace(baseKey, "!")
-                                                                                                if (hasShift)
-                                                                                                    baseKey := StrReplace(baseKey, "+")
+                                                                                                Loop % keyList.Length() {
+                                                                                                    keyCombo := Trim(keyList[A_Index])
+                                                                                                    ; Check for modifier keys
+                                                                                                    hasCtrl := InStr(keyCombo, "^")
+                                                                                                    hasAlt := InStr(keyCombo, "!")
+                                                                                                    hasShift := InStr(keyCombo, "+")
 
-                                                                                                ; Send modifier keys down
-                                                                                                if (hasCtrl)
-                                                                                                    ControlSend,, {Ctrl down}, ahk_id %win1%
-                                                                                                if (hasAlt)
-                                                                                                    ControlSend,, {Alt down}, ahk_id %win1%
-                                                                                                if (hasShift)
-                                                                                                    ControlSend,, {Shift down}, ahk_id %win1%
+                                                                                                    ; Extract the base key (remove modifiers)
+                                                                                                    baseKey := keyCombo
+                                                                                                    if (hasCtrl)
+                                                                                                        baseKey := StrReplace(baseKey, "^")
+                                                                                                    if (hasAlt)
+                                                                                                        baseKey := StrReplace(baseKey, "!")
+                                                                                                    if (hasShift)
+                                                                                                        baseKey := StrReplace(baseKey, "+")
 
-                                                                                                ; Send the base key
-                                                                                                ControlSend,, {%baseKey% down}, ahk_id %win1%
-                                                                                                Sleep, 50
-                                                                                                ControlSend,, {%baseKey% up}, ahk_id %win1%
+                                                                                                }
 
-                                                                                                ; Release modifiers (reverse order)
-                                                                                                if (hasShift)
-                                                                                                    ControlSend,, {Shift up}, ahk_id %win1%
-                                                                                                if (hasAlt)
-                                                                                                    ControlSend,, {Alt up}, ahk_id %win1%
-                                                                                                if (hasCtrl)
-                                                                                                    ControlSend,, {Ctrl up}, ahk_id %win1%
+                                                                                                ; Initialize sequence tracking
+                                                                                                if (!IsObject(refreshScrollState)) {
+                                                                                                    refreshScrollState := {currentKeyIndex: 1, lastPressTime: 0}
+                                                                                                }
+
+                                                                                                ; Check if it's time to press the next key in sequence
+                                                                                                if (now - refreshScrollState.lastPressTime >= 20000) {
+                                                                                                    if (refreshScrollState.currentKeyIndex <= keyList.Length()) {
+                                                                                                        ; Get current key to press
+                                                                                                        currentKey := keyList[refreshScrollState.currentKeyIndex]
+                                                                                                        
+                                                                                                        ; Parse modifiers
+                                                                                                        hasCtrl := InStr(currentKey, "^")
+                                                                                                        hasAlt := InStr(currentKey, "!")
+                                                                                                        hasShift := InStr(currentKey, "+")
+                                                                                                        baseKey := currentKey
+                                                                                                        if (hasCtrl)
+                                                                                                            baseKey := StrReplace(baseKey, "^")
+                                                                                                        if (hasAlt)
+                                                                                                            baseKey := StrReplace(baseKey, "!")
+                                                                                                        if (hasShift)
+                                                                                                            baseKey := StrReplace(baseKey, "+")
+
+                                                                                                        ; Send the key
+                                                                                                        if (hasCtrl)
+                                                                                                            ControlSend,, {Ctrl down}, ahk_id %win1%
+                                                                                                        if (hasAlt)
+                                                                                                            ControlSend,, {Alt down}, ahk_id %win1%
+                                                                                                        if (hasShift)
+                                                                                                            ControlSend,, {Shift down}, ahk_id %win1%
+
+                                                                                                        ControlSend,, {%baseKey% down}, ahk_id %win1%
+                                                                                                        Sleep, 50
+                                                                                                        ControlSend,, {%baseKey% up}, ahk_id %win1%
+
+                                                                                                        if (hasShift)
+                                                                                                            ControlSend,, {Shift up}, ahk_id %win1%
+                                                                                                        if (hasAlt)
+                                                                                                            ControlSend,, {Alt up}, ahk_id %win1%
+                                                                                                        if (hasCtrl)
+                                                                                                            ControlSend,, {Ctrl up}, ahk_id %win1%
+
+                                                                                                        refreshScrollState.lastPressTime := now
+                                                                                                        refreshScrollState.currentKeyIndex++
+                                                                                                        
+                                                                                                        ; If sequence complete, set 1-hour wait
+                                                                                                        if (refreshScrollState.currentKeyIndex > keyList.Length()) {
+                                                                                                            refreshScrollState.lastPressTime := now + 3600000  ; Wait 1 hour
+                                                                                                        }
+                                                                                                    }
+                                                                                                    
+                                                                                                }
+                                                                                                
+
 
                                                                                             }
-                                                                                            refreshScrollEndTime := A_TickCount + 3600000
                                                                                         }
 
                                                                                     UpdateRefreshScrollTimer:
-                                                                                        remaining := refreshScrollEndTime - A_TickCount
-                                                                                        if (remaining < 0)
+                                                                                        ; Pause timer until all keys are pressed
+                                                                                        if (refreshScrollState.currentKeyIndex <= StrSplit(refreshKey, "|").Length()) {
+                                                                                            GuiControl,, refreshScrollTimer, % "Pressing keys..."
+                                                                                            return
+                                                                                        }
+                                                                                        
+                                                                                        ; Show 1-hour countdown after all keys pressed
+                                                                                        remaining := refreshScrollState.lastPressTime - A_TickCount
+                                                                                        if (remaining < 0) {
                                                                                             remaining := 0
+                                                                                            refreshScrollState.currentKeyIndex := 1
+                                                                                            refreshScrollState.lastPressTime := 0
+                                                                                        }
+                                                                                        
                                                                                         hours := Floor(remaining / 3600000)
                                                                                         minutes := Floor(Mod(remaining, 3600000) / 60000)
                                                                                         seconds := Floor(Mod(remaining, 60000) / 1000)
@@ -8314,10 +8441,12 @@ AssignHealKeys:
                                                                                         if (refreshscrollEnabled) {
                                                                                             GuiControl, Show, refreshKeyLabel
                                                                                             GuiControl, Show, refreshKey
+                                                                                            ; Initialize refresh scroll state
+                                                                                            refreshScrollState := {currentKeyIndex: 1, lastPressTime: 0}
                                                                                             Gosub, userefreshscroll
                                                                                             refreshScrollEndTime := A_TickCount + 3600000
                                                                                             SetTimer, UpdateRefreshScrollTimer, 1000
-                                                                                            SetTimer, userefreshscroll, 3600000
+                                                                                            SetTimer, userefreshscroll, 5000
                                                                                         } else {
                                                                                             GuiControl, Hide, refreshKeyLabel
                                                                                             GuiControl, Hide, refreshKey
@@ -8335,6 +8464,7 @@ AssignHealKeys:
                                                                                         if (refreshKey != "")
                                                                                             UpdateDPSStatus("Refresh key set to: " . refreshKey)
                                                                                     return
+
 
                                                                                     ; DPS Priority Management
                                                                                     DPSPrioritySelect:
@@ -11117,24 +11247,25 @@ AssignHealKeys:
                                                                     }
 
                                                                     NewProfile() {
-                                                                        ; Get profile name from input
-                                                                        GuiControlGet, ProfileNameEdit,, ProfileNameEdit
-                                                                        if (ProfileNameEdit != "") {
-                                                                            CurrentProfileName := ProfileNameEdit
-                                                                            ; Ensure a section exists and persist default/settings immediately
-                                                                            FileEncoding, UTF-8
-                                                                            ; use an explicit non-empty placeholder to avoid IniWrite parameter #1 being empty
-                                                                            safeValue := " " ; single space (or use "default" / "0" if you prefer)
-                                                                            IniWrite, %safeValue%, %ProfileSettingsFile%, %CurrentProfileName%, KeyCombination1
-                                                                            FileEncoding
-                                                                            ; Refresh dropdown and select new profile
-                                                                            RefreshProfileDropdown()
-                                                                            GuiControl,, ProfileNameEdit,
-                                                                            ;MsgBox, 64, Success, New profile "%CurrentProfileName%" created and saved!
-                                                                        } else {
-                                                                            MsgBox, 48, Warning, Please enter a profile name first.
-                                                                        }
-                                                                    }
+                                                                                ; Get profile name from input
+                                                                                GuiControlGet, ProfileNameEdit,, ProfileNameEdit
+                                                                                if (ProfileNameEdit != "") {
+                                                                                    CurrentProfileName := ProfileNameEdit
+                                                                                    ; Ensure a section exists and persist default/settings immediately
+                                                                                    FileEncoding, UTF-8
+                                                                                    ; use an explicit non-empty placeholder to avoid IniWrite parameter #1 being empty
+                                                                                    safeValue := " " ; single space (or use "default" / "0" if you prefer)
+                                                                                    IniWrite, %safeValue%, %ProfileSettingsFile%, %CurrentProfileName%, KeyCombination1
+                                                                                    FileEncoding
+                                                                                    ; Refresh dropdown and select new profile
+                                                                                    RefreshProfileDropdown()
+                                                                                    GuiControl,, ProfileNameEdit,
+                                                                                    loadprofile()
+                                                                                    ;MsgBox, 64, Success, New profile "%CurrentProfileName%" created and saved!
+                                                                                } else {
+                                                                                    MsgBox, 48, Warning, Please enter a profile name first.
+                                                                                }
+                                                                            }
 
                                                                     RenameProfile() {
                                                                         global CurrentProfileName, ProfileSettingsFile
@@ -12596,8 +12727,9 @@ AssignHealKeys:
                                                                 if (refreshscrollEnabled = 1 || refreshscrollEnabled = "1") {
                                                                     GuiControl, Show, refreshKey
                                                                     refreshScrollEndTime := A_TickCount + 3600000
+                                                                    gosub, UseRefreshScroll
                                                                     SetTimer, UpdateRefreshScrollTimer, 1000
-                                                                    SetTimer, userefreshscroll, 3600000
+                                                                    SetTimer, userefreshscroll, 5000
                                                                 }
 
                                                                 ; Debug: Show what was loaded
@@ -26825,3 +26957,21 @@ across multiple RECEIVED events. This would also demonstrate your application's 
             } Else {
                 AddClientLog("Reconnecting...")
             }
+            ; Function to load max resurrections from INI
+LoadMaxResurrections() {
+    IniRead, loadedMaxRes, %iniFile%, Settings, MaxResurrections, 8
+    MaxResurrections := loadedMaxRes
+    ; Update GUI display
+    GuiControl,, MaxResurrectionsEdit, %MaxResurrections%
+    GuiControl,, ResurrectionStatus, Count: %CurrentResurrections%/%MaxResurrections%
+}
+
+; Function to save max resurrections to INI
+SaveMaxResurrections(newMaxRes) {
+    MaxResurrections := newMaxRes
+    IniWrite, %newMaxRes%, %iniFile%, Settings, MaxResurrections
+    ; Update GUI display before reload
+    GuiControl,, ResurrectionStatus, Count: %CurrentResurrections%/%MaxResurrections%
+    ; Reload script to apply new setting
+    Reload
+}
