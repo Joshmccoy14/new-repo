@@ -2,10 +2,13 @@
 #SingleInstance Force
 SetBatchLines, -1
 SendMode Input
+CoordMode, Mouse, Screen
+CoordMode, Pixel, Screen
 ;***************************************************************************************************
 ;#Include gdip.ahk ; <----------- GDIP LIB
 ;#Include buttons.ahk ; <---------- HButton class
 ;***************************************************************************************************
+#Include findtext2.ahk
 #SingleInstance, Force
 Gdip_Startup()
 ; ==========================================
@@ -15,11 +18,16 @@ global SelectedWindow := "win1"
 global NexusPIDs := {}
 global ServerPort := 12345
 global Clients := []
-global Connected := false
-global ClientSocket := -1
+global ClientInfo := {}  ; Stores {socket: {type: "nexus" or "topbar", ip: "...", name: "..."}}
+global ConnectMode := false
+global ConnectIP := ""
+global ConnectPort := 12345
+global ConnectedToMaster := false
+global MasterSocket := -1
 global BtnServerToggle
 global ServerStatus
 global ClientCount
+global SettingsHwnd
 global NetWin1, NetWin2, NetWin3, NetWin4, NetWin5, NetWin6, NetWin7, NetWin8
 global WinLabel1, WinLabel2, WinLabel3, WinLabel4, WinLabel5, WinLabel6, WinLabel7, WinLabel8
 global LogoText, NexusMasterText
@@ -39,10 +47,27 @@ global ServerListening := false
 global TopBarVisible := true
 global ActBarVisible := true
 global SelectAllState := false
+global SelectedClients := ""
+global ClientSelectorList := ""
+global ClientSelectorVisible := false
 global ButtonTextColor := "0xFF00FF00"
 global LogoTextColor := "Gray"
 global CheckboxTextColor := "Lime"
 global BarBackgroundColor := "0x1E1E1E"
+global lastActiveWinNum := 0
+global RemoteClients := {}  ; Track clients from connected TopBar: {"ClientName": true}
+
+; Navigation text patterns for coordinate reading
+global NavText := "|<0>*95$5.W1nbCQtoTzz"
+NavText .= "|<1>*87$5.zzyEtnbCQUz"
+NavText .= "|<2>*95$5.zA7jQvivkTz"
+NavText .= "|<3>*95$5.zy8DSnXri1z"
+NavText .= "|<4>*95$6.zzztldNN0tttzU"
+NavText .= "|<5>*95$5.z01nVtvr0zz"
+NavText .= "|<6>*95$6.zzlVDT1RQQBVzU"
+NavText .= "|<7>*95$4.zk3gqPBry"
+NavText .= "|<8>*95$7.lmPhq31i7/g6"
+NavText .= "|<9>*95$5.0tnUGxkDzzz"
 
 ; Screen dimensions for GUI positioning
 SysGet, ScreenWidth, 78
@@ -55,7 +80,7 @@ LoadSettings()
 CreateTopBarGUI()
 CreateActivationBar()
 SetTimer, AutoRefreshPIDs, 500
-SetTimer, UpdateActivationBar, 1000
+SetTimer, UpdateActivationBar, 250
 ; Auto-start network server
 SetTimer, AutoStartServer, -1000
 SetTimer, MonitorAndClearRAM, 5000
@@ -65,7 +90,7 @@ return
 ; SETTINGS PERSISTENCE
 ; ==========================================
 LoadSettings() {
-    global RAMClearingEnabled, MaxRAMValue, ServerPort, ButtonTextColor, LogoTextColor, CheckboxTextColor, BarBackgroundColor
+    global RAMClearingEnabled, MaxRAMValue, ServerPort, ButtonTextColor, LogoTextColor, CheckboxTextColor, BarBackgroundColor, ConnectMode, ConnectIP, ConnectPort
 
     settingsFile := A_ScriptDir "\Settings.ini"
 
@@ -80,6 +105,18 @@ LoadSettings() {
     ; Load Server Port (default: 12345)
     IniRead, port, %settingsFile%, Settings, ServerPort, 12345
     ServerPort := port
+
+    ; Load Connect Mode (default: 0/false)
+    IniRead, connectMode, %settingsFile%, Settings, ConnectMode, 0
+    ConnectMode := connectMode
+
+    ; Load Connect IP (default: blank)
+    IniRead, connectIP, %settingsFile%, Settings, ConnectIP, %A_Space%
+    ConnectIP := connectIP
+
+    ; Load Connect Port (default: 12345)
+    IniRead, connectPort, %settingsFile%, Settings, ConnectPort, 12345
+    ConnectPort := connectPort
 
     ; Load Button Text Color (default: green)
     IniRead, btnColor, %settingsFile%, Settings, ButtonTextColor, 0xFF00FF00
@@ -130,57 +167,44 @@ CreateTopBarGUI() {
     ; 1. Hide Bar
     TopBarHideBtn := New HButton( { Owner: TopBarHwnd , X: 5 , Y: 3 , W: 70 , H: 24 , Text: "Hide Bar" , Label: "ToggleBarVisibility" } )
 
-    ; 2. Nexus Button (was at X:250, now shift left to X:80)
-    New HButton( { Owner: TopBarHwnd , X: 80 , Y: 3 , W: 60 , H: 24 , Text: "Nexus" , Label: "NexusMenu" } )
+    ; 1.5 Logo Text
+    global TopBarLogoText
+    colorHex := GetTextColorHex(LogoTextColor)
+    Gui, TopBar:Font, s9 c%colorHex% Bold, Segoe UI
+    Gui, TopBar:Add, Text, x90 y7 w150 h16 vTopBarLogoText, Rappelz Nexus Master
 
-    ; 3. Client Launcher (was at X:315, now shift left to X:145)
-    New HButton( { Owner: TopBarHwnd , X: 145 , Y: 3 , W: 85 , H: 24 , Text: "Launcher" , Label: "ToggleLauncherGui" } )
+    ; 2. Nexus Button (shifted right to make room for logo)
+    New HButton( { Owner: TopBarHwnd , X: 235 , Y: 3 , W: 60 , H: 24 , Text: "Nexus" , Label: "NexusMenu" } )
 
-    ; 4. Commands Dropdown (was at X:410, now shift left to X:235)
+    ; 3. Client Launcher (shifted right)
+    New HButton( { Owner: TopBarHwnd , X: 300 , Y: 3 , W: 85 , H: 24 , Text: "Launcher" , Label: "ToggleLauncherGui" } )
+
+    ; 4. Commands Dropdown (shifted right)
     Gui, TopBar:Font, s8, Segoe UI
-    Gui, TopBar:Add, DropDownList, x235 y3 w160 h200 vCommandDropdown gOnCommandSelect, Buff All||AutoFollow Toggle|Start Healing|Stop Healing|Start DPS|Stop DPS|Character Select BD5|Get Coords|Load Path for All Clients|Setup DPS Navigation|Start Travel|Stop Travel
+    Gui, TopBar:Add, DropDownList, x390 y3 w160 h200 vCommandDropdown gOnCommandSelect, Buff All||Come To Me|AutoFollow Toggle|Start Healing|Stop Healing|Start DPS|Stop DPS|Character Select BD5|Get Coords|HV Out|Load Path for All Clients|Setup DPS Navigation|Start Travel|Stop Travel
 
-    ; 5. Execute (was at X:575, now shift left to X:400)
-    New HButton( { Owner: TopBarHwnd , X: 400 , Y: 3 , W: 70 , H: 24 , Text: "Execute" , Label: "ExecuteCommand" } )
+    ; 5. Execute button - opens client selector popup
+    New HButton( { Owner: TopBarHwnd , X: 555 , Y: 3 , W: 70 , H: 24 , Text: "Execute" , Label: "ShowClientSelector" } )
 
-    ; 6. Select All (was at X:645, now shift left to X:470)
-    New HButton( { Owner: TopBarHwnd , X: 470 , Y: 3 , W: 75 , H: 24 , Text: "Select All" , Label: "ToggleSelectAll" } )
-
-    ; 7. Win Checkboxes (was at X:725, now shift left by 170)
-    Gui, TopBar:Add, Checkbox, x555 y6 w15 h18 vNetWin1
-    Gui, TopBar:Add, Checkbox, x593 y6 w15 h18 vNetWin2
-    Gui, TopBar:Add, Checkbox, x631 y6 w15 h18 vNetWin3
-    Gui, TopBar:Add, Checkbox, x669 y6 w15 h18 vNetWin4
-    Gui, TopBar:Add, Checkbox, x707 y6 w15 h18 vNetWin5
-    Gui, TopBar:Add, Checkbox, x745 y6 w15 h18 vNetWin6
-    Gui, TopBar:Add, Checkbox, x783 y6 w15 h18 vNetWin7
-    Gui, TopBar:Add, Checkbox, x821 y6 w15 h18 vNetWin8
-
-    ; 8. Win Labels (was at X:740, now shift left by 170)
-    labelColorHex := GetTextColorHex(CheckboxTextColor)
-    Gui, TopBar:Font, s8 c%labelColorHex%, Segoe UI
-    Gui, TopBar:Add, Text, x570 y8 w23 h14 vWinLabel1 BackgroundTrans, W1
-    Gui, TopBar:Add, Text, x608 y8 w23 h14 vWinLabel2 BackgroundTrans, W2
-    Gui, TopBar:Add, Text, x646 y8 w23 h14 vWinLabel3 BackgroundTrans, W3
-    Gui, TopBar:Add, Text, x684 y8 w23 h14 vWinLabel4 BackgroundTrans, W4
-    Gui, TopBar:Add, Text, x722 y8 w23 h14 vWinLabel5 BackgroundTrans, W5
-    Gui, TopBar:Add, Text, x760 y8 w23 h14 vWinLabel6 BackgroundTrans, W6
-    Gui, TopBar:Add, Text, x798 y8 w23 h14 vWinLabel7 BackgroundTrans, W7
-    Gui, TopBar:Add, Text, x836 y8 w23 h14 vWinLabel8 BackgroundTrans, W8
-
-    ; 9. Server Status (was at X:1040, now shift left by 170)
+    ; 6. Server Status
     Gui, TopBar:Font, s8 cWhite, Segoe UI
-    Gui, TopBar:Add, Text, x870 y7 w90 h16 vServerStatus, Listening: Off
+    Gui, TopBar:Add, Text, x635 y7 w90 h16 vServerStatus, Listening: Off
 
-    ; 10. Client Count (was at X:1135, now shift left by 170)
-    Gui, TopBar:Add, Text, x965 y7 w65 h16 vClientCount, 0 Clients
+    ; 7. Client Count
+    Gui, TopBar:Add, Text, x730 y7 w65 h16 vClientCount, 0 Clients
+    
+    ; 7b. Client List Info Button
+    New HButton( { Owner: TopBarHwnd , X: 795 , Y: 3 , W: 20 , H: 24 , Text: "?" , Label: "ShowClientListPopup" } )
 
-    ; 11. RAM Status indicator (was at X:1205, now shift left by 170)
+    ; 8. RAM Status indicator
     Gui, TopBar:Font, s8 cLime Bold, Segoe UI
-    Gui, TopBar:Add, Text, x1035 y7 w200 h16 vRAMStatusText,
+    Gui, TopBar:Add, Text, x820 y7 w200 h16 vRAMStatusText,
 
-    ; Show the GUI (was w1200, now w1200-170=1030)
-    Gui, TopBar:Show, x0 y0 w1027 h27, Rappelz Network Controller
+    ; 9. Shutdown Button (far right)
+    New HButton( { Owner: TopBarHwnd , X: 975 , Y: 3 , W: 75 , H: 24 , Text: "Shutdown" , Label: "ShutdownAll" } )
+
+    ; Show the GUI (back to original compact size)
+    Gui, TopBar:Show, x0 y0 w1055 h27, Rappelz Network Controller
 }
 
 ; ==========================================
@@ -273,22 +297,97 @@ HBCustomButton(){
     return MyButtonDesign
 }
 UpdateActivationBar:
-    global ActBtn1, ActBtn2, ActBtn3, ActBtn4, ActBtn5, ActBtn6, ActBtn7, ActBtn8
+    global ActBtn1, ActBtn2, ActBtn3, ActBtn4, ActBtn5, ActBtn6, ActBtn7, ActBtn8, lastActiveWinNum
 
+    ; Track which game window is currently ACTIVE (foreground)
+    activeWinNum := 0
     Loop, 8 {
         winName := "win" . A_Index
         btnHwnd := ActBtn%A_Index%
 
-        if WinExist(winName) {
+        ; Check if game window exists
+        SetTitleMatchMode, 3
+        WinGet, gameWinID, ID, %winName%
+        
+        if (gameWinID) {
             GuiControl, ActBar:Show, % btnHwnd
-            if WinActive(winName) {
+            
+            ; Check if THIS specific window is the active one
+            if WinActive("ahk_id " . gameWinID) {
                 Gui, ActBar:Show, NoActivate
+                ; This is the active window
+                activeWinNum := A_Index
             }
         } else {
             GuiControl, ActBar:Hide, % btnHwnd
         }
     }
+
+    ; Check if TopBar or ActBar is active - if so, preserve the last state
+    WinGet, activeID, ID, A
+    WinGetClass, activeClass, ahk_id %activeID%
+    WinGetTitle, activeTitle, ahk_id %activeID%
+    
+    ; Check if it's one of our GUI windows
+    isOurGUI := (InStr(activeTitle, "Rappelz Network Controller") 
+                || InStr(activeTitle, "Window Activator") 
+                || InStr(activeTitle, "NexusSelector")
+                || (activeClass = "AutoHotkeyGUI" && (activeID = A_ScriptHwnd || InStr(activeTitle, "Rappelz"))))
+
+    ; Manage positions based on active window
+    if (isOurGUI) {
+        ; Our GUI is active - keep current Nexus state (do nothing)
+    } else if (activeWinNum > 0 && activeWinNum != lastActiveWinNum) {
+        ; A game window is active and different from last - show its Nexus
+        ManageNexusPositions(activeWinNum)
+        lastActiveWinNum := activeWinNum
+    } else if (activeWinNum = 0 && lastActiveWinNum != 0) {
+        ; Some other window is active (not game, not our GUIs) - hide all Nexus
+        ManageNexusPositions(0)
+        lastActiveWinNum := 0
+    }
 return
+
+; Function to manage Nexus window positions
+ManageNexusPositions(activeWinNum) {
+    SetTitleMatchMode, 3
+    
+    ; Move all Nexus windows off-screen first
+    Loop, 8 {
+        winName := "win" . A_Index
+        StringUpper, upperWindow, winName
+        nexusTitle := "Rappelz Automation Nexus " . upperWindow
+        
+        nexusWinID := WinExist(nexusTitle)
+        if (nexusWinID) {
+            WinGetPos, currentX, , , , ahk_id %nexusWinID%
+            ; Only move if not already off-screen
+            if (currentX > -5000) {
+                WinMove, ahk_id %nexusWinID%, , -10000, 100
+            }
+        }
+    }
+    
+    ; If we have an active game window, bring its corresponding Nexus on-screen
+    if (activeWinNum > 0) {
+        winName := "win" . activeWinNum
+        StringUpper, upperWindow, winName
+        nexusTitle := "Rappelz Automation Nexus " . upperWindow
+        
+        nexusWinID := WinExist(nexusTitle)
+        if (nexusWinID) {
+            ; Check if we have a saved position
+            IniRead, savedX, NexusPositions.ini, %winName%, X, 1024
+            IniRead, savedY, NexusPositions.ini, %winName%, Y, 30
+            
+            ; Get current position to avoid unnecessary moves
+            WinGetPos, currentX, , , , ahk_id %nexusWinID%
+            if (currentX != savedX) {
+                WinMove, ahk_id %nexusWinID%, , %savedX%, %savedY%
+            }
+        }
+    }
+}
 
 ; Window activation handlers
 ActivateWin1:
@@ -661,7 +760,7 @@ return
 ; GUI BUTTON HANDLERS
 ; ==========================================
 ToggleBarVisibility:
-    global NexusWindowSelectorVisible, TopBarVisible, TopBarHwnd, TopBarHideBtn, MinBtn
+    global NexusWindowSelectorVisible, TopBarVisible, TopBarHwnd, TopBarHideBtn, MinBtn, ClientSelectorVisible, ClientListPopupVisible
 
     TopBarVisible := !TopBarVisible
     If (TopBarVisible) {
@@ -681,25 +780,22 @@ ToggleBarVisibility:
         } else {
             GuiControl, TopBar:Show, % MinBtn
         }
+        ; Close all popups when hiding the bar
         if (NexusWindowSelectorVisible) {
             Gui, NexusSelector:Destroy
             NexusWindowSelectorVisible := false
         }
+        if (ClientSelectorVisible) {
+            Gui, ClientSelector:Destroy
+            ClientSelectorVisible := false
+        }
+        Gui, ClientListPopup:Destroy
+        ClientListPopupVisible := false
     }
 return
 
 OnWindowSelect:
     Gui, TopBar:Submit, NoHide
-return
-
-ToggleSelectAll:
-    global SelectAllState
-    Gui, TopBar:Submit, NoHide
-    SelectAllState := !SelectAllState
-
-    Loop, 8 {
-        GuiControl, TopBar:, NetWin%A_Index%, % SelectAllState
-    }
 return
 
 NexusMenu:
@@ -721,7 +817,7 @@ NexusMenu:
 
     ; Build the Nexus Selector GUI
     Gui, NexusSelector:New, +AlwaysOnTop +ToolWindow -Caption
-    Gui, NexusSelector:Color, 0x1E1E1E
+    Gui, NexusSelector:Color, %BarBackgroundColor%
     Gui, NexusSelector:+HwndNexusSelectorHwnd
     Gui, NexusSelector:Font, s9 cWhite, Segoe UI
     Gui, NexusSelector:Add, Text, x0 y8 w140 h20 Center, Nexus Macros
@@ -731,14 +827,17 @@ NexusMenu:
 
     y := 35
     Loop, 8 {
-        btnLabel := "Win" . A_Index
-        New HButton( { Owner: NexusSelectorHwnd , X: 10 , Y: y , W: 120 , H: 28 , Text: btnLabel , Label: "NexusSelectorBtn" . A_Index } )
+        btnText := "Win" . A_Index
+        btnLabelName := "NexusSelectorBtn" . A_Index
+        btnObj := {Owner: NexusSelectorHwnd, X: 10, Y: y, W: 120, H: 28, Text: btnText, Label: btnLabelName}
+        New HButton(btnObj)
         y += 32
     }
-    New HButton( { Owner: NexusSelectorHwnd , X: 10 , Y: y , W: 120 , H: 28 , Text: "Hide All" , Label: "HideAllNexusBtn" } )
+    hideObj := {Owner: NexusSelectorHwnd, X: 10, Y: y, W: 120, H: 28, Text: "Hide All", Label: "HideAllNexusBtn"}
+    New HButton(hideObj)
 
     totalH := y + 38
-    Gui, NexusSelector:Show, x%menuX% y%menuY% w140 h%totalH%, NexusSelector
+    Gui, NexusSelector:Show, x200 y27 w140 h329, NexusSelector
     NexusWindowSelectorVisible := true
 return
 
@@ -767,7 +866,7 @@ NexusSelectorBtn8:
     Gui, NexusSelector:Destroy
     NexusWindowSelectorVisible := false
 return
-
+ 
 HideAllNexusBtn:
     Gosub, HideAllNexus
     Gui, NexusSelector:Destroy
@@ -924,11 +1023,260 @@ ToggleServer:
     }
 return
 
+ToggleConnect:
+    global ConnectedToMaster, MasterSocket, ConnectIP, ConnectPort
+    Gui, Settings:Submit, NoHide
+    
+    ; Save settings to INI
+    settingsFile := A_ScriptDir "\Settings.ini"
+    IniWrite, %ConnectIP%, %settingsFile%, Settings, ConnectIP
+    IniWrite, %ConnectPort%, %settingsFile%, Settings, ConnectPort
+
+    If (ConnectedToMaster) {
+        ; Disconnect from master
+        If (MasterSocket != -1) {
+            AHKsock_Close(MasterSocket)
+        }
+        ConnectedToMaster := false
+        MasterSocket := -1
+        
+        Gui, Settings:Font, s8 cRed, Segoe UI
+        GuiControl, Settings:Font, ConnectStatusText
+        GuiControl, Settings:, ConnectStatusText, Disconnected
+        
+        MsgBox, Disconnected from master TopBar
+    } Else {
+        ; Connect to master TopBar
+        If (ConnectIP = "" || ConnectPort = "") {
+            MsgBox, Please enter a valid IP and Port
+            Return
+        }
+        
+        ; Attempt connection
+        If (i := AHKsock_Connect(ConnectIP, ConnectPort, "ClientEvents")) {
+            MsgBox, ERROR: Failed to connect to %ConnectIP%:%ConnectPort% (code %i%)
+        } Else {
+            ; Connection initiated, wait for result in ClientEvents
+            MsgBox, Connecting to %ConnectIP%:%ConnectPort%...
+        }
+    }
+return
+
+ShowConnectionInfo:
+    MsgBox, 0, Connection Information, Server is LAN only unless you configure port forwarding in your router.`n`nTo allow internet access:`n1. Configure port forwarding in your router`n2. Forward the server port to this PC's local IP`n3. Share your Public IP and Port with friends
+return
+
+ClientEvents(sEvent, iSocket = 0, sName = 0, sAddr = 0, sPort = 0, ByRef bData = 0, iLength = 0) {
+    global MasterSocket, ConnectedToMaster
+    Static recvBuffer := ""
+    
+    If (sEvent = "CONNECTED") {
+        ; Successfully connected to master TopBar
+        MasterSocket := iSocket
+        ConnectedToMaster := true
+        
+        ; Send handshake to identify as TopBar
+        handshake := "HANDSHAKE:TOPBAR`n"
+        bufferSize := StrPut(handshake, "CP0")
+        VarSetCapacity(buffer, bufferSize)
+        StrPut(handshake, &buffer, "CP0")
+        AHKsock_Send(iSocket, &buffer, bufferSize - 1)
+        
+        ; Request client list from the remote TopBar
+        Sleep, 100
+        requestMsg := "REQUEST_CLIENT_LIST`n"
+        bufferSize2 := StrPut(requestMsg, "CP0")
+        VarSetCapacity(buffer2, bufferSize2)
+        StrPut(requestMsg, &buffer2, "CP0")
+        AHKsock_Send(iSocket, &buffer2, bufferSize2 - 1)
+        
+        Gui, Settings:Font, s8 cLime, Segoe UI
+        GuiControl, Settings:Font, ConnectStatusText
+        GuiControl, Settings:, ConnectStatusText, Connected
+        
+        MsgBox, Connected to master TopBar
+        
+    }Else If (sEvent = "DISCONNECTED") {
+        ; Disconnected from master
+        MasterSocket := -1
+        ConnectedToMaster := false
+        RemoteClients := {}  ; Clear remote clients
+        
+        Gui, Settings:Font, s8 cRed, Segoe UI
+        GuiControl, Settings:Font, ConnectStatusText
+        GuiControl, Settings:, ConnectStatusText, Disconnected
+        
+        MsgBox, Disconnected from master TopBar
+        
+    } Else If (sEvent = "RECEIVED") {
+        ; Received message from connected TopBar
+        data := StrGet(&bData, iLength, "CP0")
+        data := StrReplace(data, "`n", "")
+        data := StrReplace(data, "`r", "")
+        
+        If (data != "") {
+            ; Check if this is a client list message
+            If (SubStr(data, 1, 12) = "CLIENT_LIST:") {
+                ; Parse client list: CLIENT_LIST:name1,name2,name3
+                clientListData := SubStr(data, 13)
+                UpdateRemoteClientList(clientListData)
+            }
+            ; Check if this is a request for our client list
+            Else If (data = "REQUEST_CLIENT_LIST") {
+                SendClientListToRemote(iSocket)
+            }
+            ; Check if this is a targeted command: TARGET:ClientName:COMMAND
+            Else If (SubStr(data, 1, 7) = "TARGET:") {
+                targetData := SubStr(data, 8)
+                colonPos := InStr(targetData, ":")
+                If (colonPos > 0) {
+                    targetName := SubStr(targetData, 1, colonPos - 1)
+                    actualCommand := SubStr(targetData, colonPos + 1)
+                    ; Send to the specific local client
+                    SendCommandToNamedClient(targetName, actualCommand)
+                }
+            }
+            ; Otherwise relay to all local Nexus clients
+            Else {
+                SendCommandToNexusClients(data)
+            }
+        }
+    }
+}
+
 ; ==========================================
 ; COMMAND EXECUTION
 ; ==========================================
 OnCommandSelect:
 return
+
+ShowClientSelector:
+    Global Clients, ClientInfo, ClientSelectorVisible
+    
+    ; If selector is already open, close it
+    If (ClientSelectorVisible) {
+        Gui, ClientSelector:Destroy
+        ClientSelectorVisible := false
+        Return
+    }
+    
+    ; Check if we have any clients
+    If (Clients.MaxIndex() = "" || Clients.MaxIndex() = 0) {
+        MsgBox, No clients connected!
+        Return
+    }
+    
+    ; Get TopBar position to place popup below it
+    Gui, TopBar:+LastFound
+    WinGetPos, topBarX, topBarY, topBarW, topBarH, ahk_id %TopBarHwnd%
+    
+    ; Create popup selector
+    Gui, ClientSelector:Destroy
+    Gui, ClientSelector:+AlwaysOnTop -Caption +ToolWindow
+    Gui, ClientSelector:+HwndClientSelectorHwnd
+    Gui, ClientSelector:Color, %BarBackgroundColor%
+    Gui, ClientSelector:Font, s9 cWhite, Segoe UI
+    
+    Gui, ClientSelector:Add, Text, x10 y10 w200 h20, Select clients to send command:
+    
+    ; Add checkbox for each connected client
+    yPos := 35
+    clientIndex := 0
+    For index, socket in Clients {
+        clientIndex++
+        If (ClientInfo.HasKey(socket)) {
+            clientName := ClientInfo[socket].HasKey("name") ? ClientInfo[socket].name : ""
+            If (clientName != "" && clientName != " ") {
+                displayName := clientName
+            } Else {
+                displayName := "Unknown"
+            }
+        } Else {
+            displayName := "Pending..."
+        }
+        
+        Gui, ClientSelector:Add, Checkbox, x10 y%yPos% w200 h20 vClientCheck%clientIndex%, %displayName%
+        yPos += 25
+    }
+    
+    ; Add HButtons below checkboxes
+    buttonY := yPos + 5
+    
+    Theme1 := HBCustomButton()
+    GuiButtonType1.SetSessionDefaults( Theme1.All , Theme1.Default , Theme1.Hover , Theme1.Pressed )
+    
+    New HButton( { Owner: ClientSelectorHwnd , X: 10 , Y: buttonY , W: 95 , H: 25 , Text: "Select All" , Label: "ClientSelectorSelectAll" } )
+    New HButton( { Owner: ClientSelectorHwnd , X: 115 , Y: buttonY , W: 95 , H: 25 , Text: "Send" , Label: "ClientSelectorSend" } )
+    
+    cancelButtonY := buttonY + 30
+    New HButton( { Owner: ClientSelectorHwnd , X: 10 , Y: cancelButtonY , W: 200 , H: 25 , Text: "Cancel" , Label: "ClientSelectorCancel" } )
+    
+    ; Calculate total height
+    totalHeight := cancelButtonY + 35
+    
+    ; Position popup below Execute button
+    popupX := topBarX + 400
+    popupY := topBarY + topBarH
+    Gui, ClientSelector:Show, x%popupX% y%popupY% w220 h%totalHeight%, Select Clients
+    ClientSelectorVisible := true
+Return
+
+ClientSelectorSelectAll:
+    Global Clients
+    
+    ; Check if all are selected
+    allSelected := true
+    Loop, % Clients.MaxIndex()
+    {
+        GuiControlGet, isChecked, ClientSelector:, ClientCheck%A_Index%
+        If (!isChecked) {
+            allSelected := false
+            Break
+        }
+    }
+    
+    ; If all selected, deselect all. Otherwise select all
+    newState := allSelected ? 0 : 1
+    Loop, % Clients.MaxIndex()
+        GuiControl, ClientSelector:, ClientCheck%A_Index%, %newState%
+Return
+
+ClientSelectorSend:
+    Global Clients, ClientInfo, ClientSelectorList, ClientSelectorVisible
+    
+    Gui, ClientSelector:Submit, NoHide
+    
+    ; Build list of selected clients
+    ClientSelectorList := ""
+    clientIndex := 0
+    For index, socket in Clients {
+        clientIndex++
+        GuiControlGet, isChecked, ClientSelector:, ClientCheck%clientIndex%
+        
+        If (isChecked) {
+            If (ClientInfo.HasKey(socket)) {
+                clientName := ClientInfo[socket].HasKey("name") ? ClientInfo[socket].name : ""
+                If (clientName != "" && clientName != " ") {
+                    ClientSelectorList .= clientName . "`n"
+                } Else {
+                    ClientSelectorList .= "Unknown`n"
+                }
+            }
+        }
+    }
+    
+    Gui, ClientSelector:Destroy
+    ClientSelectorVisible := false
+    
+    ; Now execute the command with selected clients
+    Gosub, ExecuteCommand
+Return
+
+ClientSelectorCancel:
+    Global ClientSelectorVisible
+    Gui, ClientSelector:Destroy
+    ClientSelectorVisible := false
+Return
 
 ExecuteCommand:
     Gui, TopBar:Submit, NoHide
@@ -952,8 +1300,22 @@ ExecuteCommand:
         ; Buff All needs to be done sequentially, one window at a time
         ExecuteBuffSequential()
         return
-    }
-    Else If (CommandDropdown = "Load Path for All Clients") {
+    } Else If (CommandDropdown = "Come To Me") {
+        ; Capture coordinates from screen
+        coordX := ""
+        coordY := ""
+        GetCurrentCoordinatesFromScreen(coordX, coordY)
+        
+        If (coordX != "" && coordY != "") {
+            ; Send navigate command with coordinates
+            command := "NAVIGATETO:" . coordX . "|" . coordY
+            ToolTip, Come To Me: X:%coordX% Y:%coordY%
+            SetTimer, RemoveToolTip, -2000
+        } Else {
+            MsgBox, Could not capture coordinates from screen! Make sure a Rappelz window is visible.
+            return
+        }
+    } Else If (CommandDropdown = "Load Path for All Clients") {
         ; Prompt user to select a path file
         FileSelectFile, selectedPath, 3, , Select a path file to load on all clients, INI Files (*.ini)
         If (ErrorLevel || selectedPath = "") {
@@ -979,8 +1341,36 @@ ExecuteCommand:
         command := "STARTDPS"
     Else If (CommandDropdown = "Stop DPS")
         command := "STOPDPS"
-    Else If (CommandDropdown = "Setup DPS Navigation")
-        command := "SETUPDPSNAV:100"
+    Else If (CommandDropdown = "Setup DPS Navigation") {
+        ; Prompt user for radius
+        InputBox, radius, DPS Navigation Radius, Enter the radius for DPS Navigation (default: 100):, , 300, 130, , , , , 100
+        If (ErrorLevel) {
+            ; User cancelled
+            return
+        }
+        ; Validate input
+        If (radius = "" || radius < 1) {
+            MsgBox, Invalid radius value! Using default of 100.
+            radius := 100
+        }
+        
+        ; Capture coordinates from screen
+        coordX := ""
+        coordY := ""
+        GetCurrentCoordinatesFromScreen(coordX, coordY)
+        
+        If (coordX != "" && coordY != "") {
+            ; Send command with coordinates and radius
+            command := "SETUPDPSNAV:" . coordX . "|" . coordY . "|" . radius
+            ToolTip, DPS Nav setup: X:%coordX% Y:%coordY% Radius:%radius%
+            SetTimer, RemoveToolTip, -2000
+        } Else {
+            MsgBox, Could not capture coordinates from screen! Make sure a Rappelz window is visible.
+            return
+        }
+    }
+    Else If (CommandDropdown = "HV Out")
+        command := "HVOUT"
     Else If (CommandDropdown = "Start Travel")
         command := "STARTTRAVEL"
     Else If (CommandDropdown = "Stop Travel")
@@ -992,92 +1382,337 @@ ExecuteCommand:
 return
 
 SendNetworkCommand(command) {
-    Gui, TopBar:Submit, NoHide
-
-    ; Check which windows are targeted
-    targets := []
-    Loop, 8 {
-        GuiControlGet, checked,, NetWin%A_Index%
-        If (checked)
-            targets.Push(A_Index)
+    Global Clients, ClientInfo, ClientSelectorList
+    
+    ; Get selected clients from the popup selector
+    selectedItems := ClientSelectorList
+    
+    ; If nothing selected, show error
+    If (selectedItems = "") {
+        MsgBox, Please select at least one client from the list
+        return
     }
-
-    ; Debug: Show what was detected
-    targetCount := targets.Length()
-
-    ; If no targets selected, don't send anything
-    If (targetCount = 0) {
-        MsgBox, Please select at least one window target (W1-W8)
+    
+    ; Build array of selected client names
+    selectedNames := []
+    Loop, Parse, selectedItems, `n
+    {
+        If (A_LoopField != "")
+            selectedNames.Push(A_LoopField)
+    }
+    
+    If (selectedNames.MaxIndex() = "" || selectedNames.MaxIndex() = 0) {
+        MsgBox, Please select at least one client
         return
     }
 
-    ; Send selective command
-    targetList := ""
-    For index, winNum in targets {
-        targetList .= winNum
-        If (index < targets.Length())
-            targetList .= ","
+    ; Find the sockets for the selected client names and track remote clients
+    targetSockets := []
+    remoteTargets := []
+    
+    For idx, selectedName in selectedNames {
+        ; Check if this is a remote client
+        If (InStr(selectedName, "[Remote]")) {
+            ; Extract client name (remove " [Remote]" suffix)
+            clientName := StrReplace(selectedName, " [Remote]", "")
+            remoteTargets.Push(clientName)
+        } Else {
+            ; Local client - extract name and find socket
+            clientName := StrReplace(selectedName, " [Local]", "")
+            For index, socket in Clients {
+                If (ClientInfo.HasKey(socket)) {
+                    socketClientName := ClientInfo[socket].HasKey("name") ? ClientInfo[socket].name : ""
+                    If (socketClientName = clientName) {
+                        targetSockets.Push(socket)
+                        Break
+                    }
+                }
+            }
+        }
     }
-    selectiveCmd := "SELECTIVE:" targetList "|" command
-
-    SendCommandToAll(selectiveCmd)
-    ; MsgBox, Sent to Win%targetList%: %command%
+    
+    ; Send command to local sockets
+    If (targetSockets.MaxIndex() != "" && targetSockets.MaxIndex() > 0) {
+        message := command . "`n"
+        bufferSize := StrPut(message, "CP0")
+        
+        For index, socket in targetSockets {
+            VarSetCapacity(msgBuffer, bufferSize)
+            StrPut(message, &msgBuffer, "CP0")
+            AHKsock_Send(socket, &msgBuffer, bufferSize - 1)
+        }
+    }
+    
+    ; Send commands to remote clients via connected TopBar
+    If (remoteTargets.MaxIndex() != "" && remoteTargets.MaxIndex() > 0) {
+        SendCommandToRemoteClients(remoteTargets, command)
+    }
 }
 
 ExecuteBuffSequential() {
-    Gui, TopBar:Submit, NoHide
-
-    ; Check which windows are targeted
-    targets := []
-    Loop, 8 {
-        GuiControlGet, checked,, NetWin%A_Index%
-        If (checked)
-            targets.Push(A_Index)
+    Global Clients, ClientInfo, ClientSelectorList
+    
+    ; Get selected clients from the popup selector
+    selectedItems := ClientSelectorList
+    
+    If (selectedItems = "") {
+        MsgBox, Please select at least one client from the list
+        return
+    }
+    
+    ; Build array of selected client names and their sockets
+    targetSockets := []
+    Loop, Parse, selectedItems, `n
+    {
+        If (A_LoopField != "") {
+            selectedName := A_LoopField
+            ; Find socket for this client name
+            For index, socket in Clients {
+                If (ClientInfo.HasKey(socket)) {
+                    clientName := ClientInfo[socket].HasKey("name") ? ClientInfo[socket].name : ""
+                    If (clientName != "" && (InStr(selectedName, clientName) || selectedName = clientName)) {
+                        targetSockets.Push(socket)
+                        Break
+                    }
+                }
+            }
+        }
     }
 
-    ; If no targets selected, don't send anything
-    If (targets.Length() = 0) {
-        MsgBox, Please select at least one window target (W1-W8)
+    If (targetSockets.MaxIndex() = "" || targetSockets.MaxIndex() = 0) {
+        MsgBox, Could not find sockets for selected clients
         return
     }
 
-    ; Send GETCOORDS to each window sequentially
-    For index, winNum in targets {
-        ; Send to just this one window
-        selectiveCmd := "SELECTIVE:" winNum "|BUFF"
-        SendCommandToAll(selectiveCmd)
+    ; Ask once for chat buffs
+    useChatBuffs := 0
+    chatBuffCommands := ""
+    MsgBox, 4, Chat Buffs, Do you want to activate chat buffs?
+    IfMsgBox Yes
+    {
+        useChatBuffs := 1
+        ; Get chat buff commands
+        InputBox, firstCommand, Chat Buff Command, Enter first chat command:, , 300, 120, , , , , /info
+        if (!ErrorLevel && firstCommand != "") {
+            chatBuffCommands := firstCommand
+            
+            ; Ask for more commands
+            Loop {
+                MsgBox, 4, More Commands?, Do you want to add another chat buff command?
+                IfMsgBox No
+                    break
+                InputBox, nextCommand, Chat Buff Command, Enter next chat command:, , 300, 120
+                if (ErrorLevel || nextCommand = "")
+                    break
+                chatBuffCommands .= "," . nextCommand
+            }
+        } else {
+            useChatBuffs := 0
+        }
+    }
+
+    ; Ask once for pet buffs
+    usePetBuffs := 0
+    MsgBox, 4, Pet Buffs, Do you want to activate both pet buffs (DT and Gnoll)?
+    IfMsgBox Yes
+    {
+        usePetBuffs := 1
+    }
+
+    ; Send BUFF command to each socket sequentially with parameters
+    For index, socket in targetSockets {
+        ; Format: BUFF:chatBuffs|petBuffs|commands
+        buffCmd := "BUFF:" . useChatBuffs . "|" . usePetBuffs . "|" . chatBuffCommands
+        message := buffCmd . "`n"
+        bufferSize := StrPut(message, "CP0")
+        VarSetCapacity(msgBuffer, bufferSize)
+        StrPut(message, &msgBuffer, "CP0")
+        AHKsock_Send(socket, &msgBuffer, bufferSize - 1)
 
         ; Wait between commands to allow each window to process
-        Sleep,60000
+        Sleep, 60000
     }
 }
 ExecuteGetCoordsSequential() {
-    Gui, TopBar:Submit, NoHide
-
-    ; Check which windows are targeted
-    targets := []
-    Loop, 8 {
-        GuiControlGet, checked,, NetWin%A_Index%
-        If (checked)
-            targets.Push(A_Index)
+    Global Clients, ClientInfo, ClientSelectorList, RemoteClients
+    
+    ; Get selected clients from the popup selector
+    selectedItems := ClientSelectorList
+    
+    ; If nothing selected, show error
+    If (selectedItems = "") {
+        MsgBox, Please select at least one client from the list
+        return
     }
-
-    ; If no targets selected, don't send anything
-    If (targets.Length() = 0) {
-        MsgBox, Please select at least one window target (W1-W8)
+    
+    ; Build array of selected client names
+    selectedNames := []
+    Loop, Parse, selectedItems, `n
+    {
+        If (A_LoopField != "")
+            selectedNames.Push(A_LoopField)
+    }
+    
+    If (selectedNames.MaxIndex() = "" || selectedNames.MaxIndex() = 0) {
+        MsgBox, Please select at least one client
         return
     }
 
-    ; Send GETCOORDS to each window sequentially
-    For index, winNum in targets {
-        ; Send to just this one window
-        selectiveCmd := "SELECTIVE:" winNum "|GETCOORDS"
-        SendCommandToAll(selectiveCmd)
+    ; Build array of selected LOCAL client sockets only (remote clients can't do sequential Get Coords)
+    targetSockets := []
+    Loop, Parse, selectedItems, `n
+    {
+        If (A_LoopField != "" && !InStr(A_LoopField, "[Remote]")) {
+            selectedName := StrReplace(A_LoopField, " [Local]", "")
+            ; Find socket for this client name
+            For index, socket in Clients {
+                If (ClientInfo.HasKey(socket)) {
+                    clientName := ClientInfo[socket].HasKey("name") ? ClientInfo[socket].name : ""
+                    If (clientName = selectedName) {
+                        targetSockets.Push(socket)
+                        Break
+                    }
+                }
+            }
+        }
+    }
+
+    If (targetSockets.MaxIndex() = "" || targetSockets.MaxIndex() = 0) {
+        MsgBox, Get Coords only works with local clients
+        return
+    }
+
+    ; First, capture coordinates from the screen
+    coordX := ""
+    coordY := ""
+    GetCurrentCoordinatesFromScreen(coordX, coordY)
+
+    ; Send GETCOORDS to each socket sequentially
+    For index, socket in targetSockets {
+        message := "GETCOORDS`n"
+        bufferSize := StrPut(message, "CP0")
+        VarSetCapacity(msgBuffer, bufferSize)
+        StrPut(message, &msgBuffer, "CP0")
+        AHKsock_Send(socket, &msgBuffer, bufferSize - 1)
 
         ; Wait between commands to allow each window to process
         Sleep, 1000
     }
+
+    ; If we successfully captured coordinates, send them to all selected clients
+    If (coordX != "" && coordY != "") {
+        coordCmd := "SETCOORDS:" coordX "|" coordY
+        message := coordCmd . "`n"
+        bufferSize := StrPut(message, "CP0")
+        
+        For index, socket in targetSockets {
+            VarSetCapacity(msgBuffer, bufferSize)
+            StrPut(message, &msgBuffer, "CP0")
+            AHKsock_Send(socket, &msgBuffer, bufferSize - 1)
+        }
+        ToolTip, Coordinates X:%coordX% Y:%coordY% sent to selected clients
+        SetTimer, RemoveToolTip, -2000
+    } Else {
+        ToolTip, Could not capture coordinates from screen
+        SetTimer, RemoveToolTip, -2000
+    }
 }
+
+; ==========================================
+; COORDINATE CAPTURE FUNCTION
+; ==========================================
+GetCurrentCoordinatesFromScreen(ByRef outX, ByRef outY) {
+    global NavText
+    outX := ""
+    outY := ""
+
+    ; Try to find any visible game window
+    gameWindow := 0
+    
+    ; First try by exact title match (win1-win8)
+    SetTitleMatchMode, 3
+    Loop, 8 {
+        WinGet, hwnd, ID, win%A_Index%
+        if (hwnd) {
+            ; Check if window is visible
+            WinGet, winStyle, Style, ahk_id %hwnd%
+            if (winStyle & 0x10000000) {  ; WS_VISIBLE
+                gameWindow := hwnd
+                break
+            }
+        }
+    }
+    
+    ; If not found, try by window class
+    if (!gameWindow) {
+        WinGet, gameWindows, List, ahk_class Rappelz
+        if (gameWindows > 0) {
+            gameWindow := gameWindows1
+        }
+    }
+    
+    if (!gameWindow) {
+        ; No game window found
+        return
+    }
+    
+    ; Use the found window
+    WinGetPos, winX, winY,,, ahk_id %gameWindow%
+    
+    ; Define search area for coordinates (top-right of game window)
+    searchX1 := winX + 835
+    searchY1 := winY + 30
+    searchX2 := winX + 1019
+    searchY2 := winY + 48
+
+    if (ok := FindText(x, y, searchX1, searchY1, searchX2, searchY2, 0, 0, NavText)) {
+        results := []
+        for i, v in ok {
+            results.Push({x: v.x, id: v.id})
+        }
+
+        ; Sort results by x position (left to right)
+        Loop % results.Length() - 1 {
+            i := A_Index
+            Loop % results.Length() - i {
+                j := A_Index + i
+                if (results[i].x > results[j].x) {
+                    temp := results[i]
+                    results[i] := results[j]
+                    results[j] := temp
+                }
+            }
+        }
+
+        coordX := ""
+        coordY := ""
+        spaceFound := false
+
+        ; Parse the digits - X coordinate first, then space, then Y coordinate
+        for i, v in results {
+            if (i > 1) {
+                prevX := results[i-1].x
+                gap := v.x - prevX
+                if (gap > 9 && !spaceFound) {
+                    spaceFound := true
+                }
+            }
+
+            if (!spaceFound) {
+                coordX .= v.id
+            } else {
+                coordY .= v.id
+            }
+        }
+
+        outX := coordX + 0
+        outY := coordY + 0
+    }
+}
+
+RemoveToolTip:
+    ToolTip
+return
 
 ; ==========================================
 ; PID AUTO-REFRESH
@@ -1112,7 +1747,11 @@ DetectRunningNexusScripts() {
 ; NETWORK SERVER FUNCTIONS
 ; ==========================================
 ServerEvents(sEvent, iSocket = 0, sName = 0, sAddr = 0, sPort = 0, ByRef bData = 0, iLength = 0) {
-    Global Clients
+    Global Clients, ClientInfo
+
+    ; Debug: Log all events to file
+    logFile := A_ScriptDir . "\topbar_debug.log"
+    FileAppend, %A_Now% - ServerEvent: %sEvent% Socket: %iSocket%`n, %logFile%
 
     If (sEvent = "ACCEPTED") {
         ; A client connected
@@ -1126,6 +1765,7 @@ ServerEvents(sEvent, iSocket = 0, sName = 0, sAddr = 0, sPort = 0, ByRef bData =
 
         If (!alreadyExists) {
             Clients.Push(iSocket)
+            ClientInfo[iSocket] := {type: "unknown", ip: sAddr}
             UpdateClientCount()
         }
 
@@ -1134,21 +1774,72 @@ ServerEvents(sEvent, iSocket = 0, sName = 0, sAddr = 0, sPort = 0, ByRef bData =
         For index, socket in Clients {
             If (socket = iSocket) {
                 Clients.RemoveAt(index)
+                ClientInfo.Delete(iSocket)
                 UpdateClientCount()
                 Break
             }
         }
 
     } Else If (sEvent = "RECEIVED") {
-        ; Received data from client - relay to all other clients
+        ; Received data from client
         data := StrGet(&bData, iLength, "CP0")
+        
+        ; Debug: Log raw data to file
+        FileAppend, %A_Now% - RECEIVED data (length %iLength%): "%data%"`n, %logFile%
+        
         data := StrReplace(data, "`n", "")
         data := StrReplace(data, "`r", "")
 
         If (data != "") {
-            ; Broadcast to all connected clients EXCEPT the sender
-            SendCommandToAll(data, iSocket)
+            ; Check if this is a handshake message (format: HANDSHAKE:TYPE or HANDSHAKE:TYPE:NAME)
+            If (SubStr(data, 1, 10) = "HANDSHAKE:") {
+                handshakeData := SubStr(data, 11)
+                colonPos := InStr(handshakeData, ":")
+                
+                If (colonPos > 0) {
+                    ; Has name: HANDSHAKE:TYPE:NAME
+                    clientType := SubStr(handshakeData, 1, colonPos - 1)
+                    clientName := SubStr(handshakeData, colonPos + 1)
+                } Else {
+                    ; No name: HANDSHAKE:TYPE
+                    clientType := handshakeData
+                    clientName := ""
+                }
+                
+                ; Debug: Log parsed handshake
+                logFile := A_ScriptDir . "\topbar_debug.log"
+                FileAppend, %A_Now% - Handshake parsed - Type: %clientType% Name: "%clientName%"`n, %logFile%
+                
+                If (clientType = "TOPBAR" || clientType = "NEXUS") {
+                    If (!ClientInfo.HasKey(iSocket)) {
+                        ClientInfo[iSocket] := {}
+                    }
+                    StringLower, clientTypeLower, clientType
+                    ClientInfo[iSocket].type := clientTypeLower
+                    ClientInfo[iSocket].name := clientName
+                    UpdateConnectedClientsList()
+                    
+                    ; If another TopBar connected, send our client list immediately
+                    If (clientType = "TOPBAR") {
+                        SendClientListToRemote(iSocket)
+                    }
+                }
+                Return
+            }
+
+            ; Check if sender is a TopBar - if so, relay to all Nexus clients
+            If (ClientInfo.HasKey(iSocket) && ClientInfo[iSocket].type = "topbar") {
+                ; Relay to all Nexus clients only
+                SendCommandToNexusClients(data)
+            } Else {
+                ; From Nexus client - broadcast to all other clients EXCEPT sender
+                SendCommandToAll(data, iSocket)
+            }
         }
+    } Else {
+        ; Log unknown events
+        logFile := A_ScriptDir . "\topbar_debug.log"
+        FileAppend, %A_Now% - Unknown event: %sEvent%`n, %logFile%
     }
 }
 
@@ -1166,10 +1857,162 @@ UpdateClientCount() {
         GuiControl, TopBar:Font, ClientCount
         GuiControl, TopBar:, ClientCount, %count% Client(s)
     }
+    
+    UpdateConnectedClientsList()
 }
 
+UpdateConnectedClientsList() {
+    ; This function is kept for compatibility but no longer updates GUI
+    ; Client list is now shown via ShowClientListPopup
+    
+    ; If we're connected to another TopBar, send them our updated client list
+    Global MasterSocket, ConnectedToMaster, Clients, ClientInfo
+    If (ConnectedToMaster && MasterSocket != -1) {
+        SendClientListToRemote(MasterSocket)
+    }
+    
+    ; Also send to any TopBar clients connected to us
+    For index, socket in Clients {
+        If (ClientInfo.HasKey(socket) && ClientInfo[socket].type = "topbar") {
+            SendClientListToRemote(socket)
+        }
+    }
+    
+    Return
+}
+
+ShowClientListPopup:
+    Global Clients, ClientInfo, TopBarHwnd, ClientListPopupVisible
+    
+    ClientListPopupVisible := true
+    
+    ; Build client list
+    clientList := ""
+    
+    For index, socket in Clients {
+        If (ClientInfo.HasKey(socket)) {
+            clientType := ClientInfo[socket].type
+            clientName := ClientInfo[socket].HasKey("name") ? ClientInfo[socket].name : ""
+            
+            If (clientName != "" && clientName != " ") {
+                clientList .= clientName . " (" . clientType . ")`n"
+            } Else {
+                clientList .= "Unknown (" . clientType . ")`n"
+            }
+        } Else {
+            clientList .= "Pending...`n"
+        }
+    }
+    
+    If (clientList = "") {
+        clientList := "No clients connected"
+    }
+    
+    ; Get TopBar position
+    WinGetPos, topBarX, topBarY, topBarW, topBarH, ahk_id %TopBarHwnd%
+    
+    ; Create popup
+    Gui, ClientListPopup:Destroy
+    Gui, ClientListPopup:+AlwaysOnTop +ToolWindow -Caption +Border
+    Gui, ClientListPopup:+HwndClientListPopupHwnd
+    Gui, ClientListPopup:Color, %BarBackgroundColor%
+    Gui, ClientListPopup:Font, s9 cWhite, Segoe UI
+    
+    Gui, ClientListPopup:Add, Text, x10 y10 w200 h20, Connected Clients:
+    Gui, ClientListPopup:Add, Edit, x10 y35 w200 h120 ReadOnly, %clientList%
+    
+    Theme1 := HBCustomButton()
+    GuiButtonType1.SetSessionDefaults( Theme1.All , Theme1.Default , Theme1.Hover , Theme1.Pressed )
+    New HButton( { Owner: ClientListPopupHwnd , X: 10 , Y: 160 , W: 200 , H: 25 , Text: "Close" , Label: "CloseClientListPopup" } )
+    
+    ; Position popup below the ? button
+    popupX := topBarX + 640
+    popupY := topBarY + topBarH
+    Gui, ClientListPopup:Show, x%popupX% y%popupY% w220 h195, Connected Clients
+Return
+
+CloseClientListPopup:
+    Global ClientListPopupVisible
+    Gui, ClientListPopup:Destroy
+    ClientListPopupVisible := false
+Return
+
+ShutdownAll:
+    MsgBox, 4, Shutdown All, Are you sure you want to shutdown all clients and close the launcher?
+    IfMsgBox, No
+        Return
+    
+    ; Close all SFrame.exe windows using the same method as MultiLaunch
+    DetectHiddenWindows, Off
+    WinGet, sframe_count, list, ahk_class SFRAME
+    Loop, %sframe_count%
+    {
+        this_id := sframe_count%A_Index%
+        WinClose, ahk_id %this_id%
+    }
+    
+    ; Wait a moment for graceful close
+    Sleep, 1000
+    
+    ; Force kill any remaining SFrame processes
+    WinGet, sframe_count2, list, ahk_class SFRAME
+    Loop, %sframe_count2%
+    {
+        this_id := sframe_count2%A_Index%
+        WinKill, ahk_id %this_id%
+    }
+    
+    ; Kill SFrame.exe process directly
+    Loop 20 {
+        Process, Close, SFrame.exe
+        Sleep, 200
+        Process, Exist, SFrame.exe
+        If (!ErrorLevel)
+            Break
+    }
+    
+    ; Kill all Nexus client processes (win1-win8)
+    nexusScripts := ["Rappelz Automation Nexus win1.ahk", "Rappelz Automation Nexus win2.ahk", "Rappelz Automation Nexus win3.ahk", "Rappelz Automation Nexus win4.ahk", "Rappelz Automation Nexus win5.ahk", "Rappelz Automation Nexus win6.ahk", "Rappelz Automation Nexus win7.ahk", "Rappelz Automation Nexus win8.ahk"]
+    
+    DetectHiddenWindows, On
+    SetTitleMatchMode, 2
+    For index, scriptName in nexusScripts {
+        WinClose, %scriptName% ahk_class AutoHotkey
+        WinKill, %scriptName% ahk_class AutoHotkey
+    }
+    
+    ; Wait for scripts to close
+    Sleep, 500
+    
+    ; Close MultiLaunch GUI
+    DetectHiddenWindows, Off
+    WinClose, Rappelz Multi-Client Launcher ahk_class AutoHotkeyGUI
+    Sleep, 200
+    WinKill, Rappelz Multi-Client Launcher ahk_class AutoHotkeyGUI
+    
+    ; Force kill MultiLaunch process
+    Process, Close, MultiLaunch.exe
+    Process, Close, MultiLaunch.ahk
+    
+    ; Close network connections
+    AHKsock_Close()
+    
+    ; Exit this script
+    ExitApp
+Return
+
 SendCommandToAll(command, excludeSocket := "") {
-    Global Clients
+    Global Clients, MasterSocket, ConnectedToMaster
+
+    ; If connected to master TopBar, send to master instead
+    If (ConnectedToMaster && MasterSocket != -1) {
+        message := command . "`n"
+        bufferSize := StrPut(message, "CP0")
+        VarSetCapacity(msgBuffer, bufferSize)
+        StrPut(message, &msgBuffer, "CP0")
+        AHKsock_Send(MasterSocket, &msgBuffer, bufferSize - 1)
+        Return
+    }
 
     If (Clients.MaxIndex() = "" || Clients.MaxIndex() = 0) {
         return
@@ -1186,6 +2029,107 @@ SendCommandToAll(command, excludeSocket := "") {
         StrPut(message, &msgBuffer, "CP0")
         AHKsock_Send(socket, &msgBuffer, bufferSize - 1)
     }
+}
+
+SendCommandToNexusClients(command) {
+    Global Clients, ClientInfo
+
+    If (Clients.MaxIndex() = "" || Clients.MaxIndex() = 0) {
+        return
+    }
+
+    message := command . "`n"
+    bufferSize := StrPut(message, "CP0")
+
+    For index, socket in Clients {
+        ; Only send to Nexus clients
+        If (ClientInfo.HasKey(socket) && ClientInfo[socket].type = "nexus") {
+            VarSetCapacity(msgBuffer, bufferSize)
+            StrPut(message, &msgBuffer, "CP0")
+            AHKsock_Send(socket, &msgBuffer, bufferSize - 1)
+        }
+    }
+}
+
+; Send command to a specific client by name (for remote targeting)
+SendCommandToNamedClient(clientName, command) {
+    Global Clients, ClientInfo
+    
+    For index, socket in Clients {
+        If (ClientInfo.HasKey(socket) && ClientInfo[socket].type = "nexus") {
+            socketClientName := ClientInfo[socket].HasKey("name") ? ClientInfo[socket].name : ""
+            If (socketClientName = clientName) {
+                message := command . "`n"
+                bufferSize := StrPut(message, "CP0")
+                VarSetCapacity(msgBuffer, bufferSize)
+                StrPut(message, &msgBuffer, "CP0")
+                AHKsock_Send(socket, &msgBuffer, bufferSize - 1)
+                Return
+            }
+        }
+    }
+}
+
+; Send commands to remote clients via connected TopBar
+SendCommandToRemoteClients(clientNames, command) {
+    Global MasterSocket, ConnectedToMaster
+    
+    If (!ConnectedToMaster || MasterSocket = -1) {
+        MsgBox, Not connected to remote TopBar!
+        Return
+    }
+    
+    ; Send targeted command for each remote client: TARGET:ClientName:COMMAND
+    For index, clientName in clientNames {
+        targetMsg := "TARGET:" . clientName . ":" . command . "`n"
+        bufferSize := StrPut(targetMsg, "CP0")
+        VarSetCapacity(msgBuffer, bufferSize)
+        StrPut(targetMsg, &msgBuffer, "CP0")
+        AHKsock_Send(MasterSocket, &msgBuffer, bufferSize - 1)
+    }
+}
+
+; Update the remote clients list when receiving from connected TopBar
+UpdateRemoteClientList(clientListData) {
+    Global RemoteClients
+    
+    ; Clear existing remote clients
+    RemoteClients := {}
+    
+    ; Parse comma-separated list
+    If (clientListData != "") {
+        Loop, Parse, clientListData, `,
+        {
+            If (A_LoopField != "") {
+                RemoteClients[A_LoopField] := true
+            }
+        }
+    }
+}
+
+; Send our client list to a connected TopBar
+SendClientListToRemote(targetSocket) {
+    Global Clients, ClientInfo
+    
+    ; Build comma-separated list of our Nexus client names
+    clientList := ""
+    For index, socket in Clients {
+        If (ClientInfo.HasKey(socket) && ClientInfo[socket].type = "nexus") {
+            clientName := ClientInfo[socket].HasKey("name") ? ClientInfo[socket].name : ""
+            If (clientName != "") {
+                If (clientList != "")
+                    clientList .= ","
+                clientList .= clientName
+            }
+        }
+    }
+    
+    ; Send CLIENT_LIST message
+    message := "CLIENT_LIST:" . clientList . "`n"
+    bufferSize := StrPut(message, "CP0")
+    VarSetCapacity(msgBuffer, bufferSize)
+    StrPut(message, &msgBuffer, "CP0")
+    AHKsock_Send(targetSocket, &msgBuffer, bufferSize - 1)
 }
 
 ; ==========================================
@@ -3074,46 +4018,65 @@ OpenSettings:
     Gui, Settings:+HwndSettingsHwnd
     Gui, Settings:Font, s9 cWhite, Segoe UI
 
-    ; RAM Settings GroupBox
-    Gui, Settings:Font, s8 cWhite, Segoe UI
-    Gui, Settings:Add, GroupBox, x5 y0 w210 h75, RAM Settings
-
-    ; RAM Clearing Toggle
-    If RAMClearingEnabled
-        Gui, Settings:Add, Checkbox, x15 y20 w190 h20 vRAMClearingEnabled gToggleRAMClearing Checked, Enable RAM Clearing
-    Else
-        Gui, Settings:Add, Checkbox, x15 y20 w190 h20 vRAMClearingEnabled gToggleRAMClearing, Enable RAM Clearing
-
-    ; Max RAM (MB):
-    Gui, Settings:Font, s9 cWhite, Segoe UI
-    Gui, Settings:Add, Text, x15 y45 w90 h20, Max RAM (MB):
-    Gui, Settings:Font, s9 cBlack, Segoe UI
-    Gui, Settings:Add, Edit, x110 y42 w78 h22 vMaxRAMValue, %MaxRAMValue%
-
     Theme1 := HBCustomButton()
     GuiButtonType1.SetSessionDefaults( Theme1.All , Theme1.Default , Theme1.Hover , Theme1.Pressed )
 
-    New HButton( { Owner: SettingsHwnd , X: 190 , Y: 42 , W: 10 , H: 11 , Text: "▲" , Label: "IncreaseRAM" } )
-    New HButton( { Owner: SettingsHwnd , X: 190 , Y: 53 , W: 10 , H: 11 , Text: "▼" , Label: "DecreaseRAM" } )
-
-    ; Server Settings GroupBox
+    ; ===== LEFT COLUMN =====
+    
+    ; Network Settings GroupBox
     Gui, Settings:Font, s8 cWhite, Segoe UI
-    Gui, Settings:Add, GroupBox, x5 y80 w210 h75, Server Settings
+    Gui, Settings:Add, GroupBox, x5 y5 w210 h180, Server Settings
 
     Gui, Settings:Font, s9 cWhite, Segoe UI
-    Gui, Settings:Add, Text, x10 y100 w90 h20, Server Port:
+    Gui, Settings:Add, Text, x15 y25 w90 h20, Server Port:
     Gui, Settings:Font, s9 cBlack, Segoe UI
-    Gui, Settings:Add, Edit, x105 y97 w105 h22 vServerPort, %ServerPort%
+    Gui, Settings:Add, Edit, x110 y22 w100 h22 vServerPort, %ServerPort%
 
     ; Server Toggle Button
     If ServerListening
-        New HButton( { Owner: SettingsHwnd , X: 15 , Y: 125 , W: 190 , H: 24 , Text: "Stop Server" , Label: "ToggleServer" } )
+        New HButton( { Owner: SettingsHwnd , X: 15 , Y: 50 , W: 190 , H: 24 , Text: "Stop Server" , Label: "ToggleServer" } )
     Else
-        New HButton( { Owner: SettingsHwnd , X: 15 , Y: 125 , W: 190 , H: 24 , Text: "Start Server" , Label: "ToggleServer" } )
+        New HButton( { Owner: SettingsHwnd , X: 15 , Y: 50 , W: 190 , H: 24 , Text: "Start Server" , Label: "ToggleServer" } )
 
-    ; Additional Scripts GroupBox
+    ; Connection Info
+    Gui, Settings:Font, s8 cLime, Segoe UI
+    Gui, Settings:Add, Text, x15 y80 w190 h15, Connection Information:
+    
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    Gui, Settings:Add, Text, x15 y100 w80 h15, Public IP:
+    Gui, Settings:Font, s8 cYellow, Segoe UI
+    Gui, Settings:Add, Text, x95 y100 w110 h15 vPublicIPText, Checking...
+    
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    Gui, Settings:Add, Text, x15 y120 w80 h15, Port:
+    Gui, Settings:Font, s8 cYellow, Segoe UI
+    Gui, Settings:Add, Text, x95 y120 w110 h15 vPortText, %ServerPort%
+    
+    ; Info button for connection instructions
+    New HButton( { Owner: SettingsHwnd , X: 15 , Y: 145 , W: 190 , H: 30 , Text: "Connection Info (?)" , Label: "ShowConnectionInfo" } )
+
+    ; RAM Settings GroupBox
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    Gui, Settings:Add, GroupBox, x5 y190 w210 h80, RAM Settings
+
+    ; RAM Clearing Toggle
+    If RAMClearingEnabled
+        Gui, Settings:Add, Checkbox, x15 y210 w190 h20 vRAMClearingEnabled gToggleRAMClearing Checked, Enable RAM Clearing
+    Else
+        Gui, Settings:Add, Checkbox, x15 y210 w190 h20 vRAMClearingEnabled gToggleRAMClearing, Enable RAM Clearing
+
+    ; Max RAM (MB):
     Gui, Settings:Font, s9 cWhite, Segoe UI
-    Gui, Settings:Add, GroupBox, x5 y160 w210 h65, Addon Scripts
+    Gui, Settings:Add, Text, x15 y235 w90 h20, Max RAM (MB):
+    Gui, Settings:Font, s9 cBlack, Segoe UI
+    Gui, Settings:Add, Edit, x110 y232 w78 h22 vMaxRAMValue, %MaxRAMValue%
+
+    New HButton( { Owner: SettingsHwnd , X: 190 , Y: 232 , W: 10 , H: 11 , Text: "▲" , Label: "IncreaseRAM" } )
+    New HButton( { Owner: SettingsHwnd , X: 190 , Y: 243 , W: 10 , H: 11 , Text: "▼" , Label: "DecreaseRAM" } )
+
+    ; Addon Scripts GroupBox
+    Gui, Settings:Font, s9 cWhite, Segoe UI
+    Gui, Settings:Add, GroupBox, x5 y275 w210 h70, Addon Scripts
 
     UtilityScriptDropdownList := ""
     UtilityScriptPaths := {}
@@ -3123,36 +4086,69 @@ OpenSettings:
         UtilityScriptPaths[script.display] := script.full
     }
     UtilityScriptDropdownList := RTrim(UtilityScriptDropdownList, "|")
-    Gui, Settings:Add, DropDownList, x15 y180 w150 h120 vUtilityScriptDropdown, %UtilityScriptDropdownList%||
-    New HButton( { Owner: SettingsHwnd , X: 170 , Y: 180 , W: 40 , H: 24 , Text: "Start" , Label: "LaunchUtilityScript" } )
+    Gui, Settings:Add, DropDownList, x15 y295 w150 h120 vUtilityScriptDropdown, %UtilityScriptDropdownList%||
+    New HButton( { Owner: SettingsHwnd , X: 170 , Y: 295 , W: 40 , H: 24 , Text: "Start" , Label: "LaunchUtilityScript" } )
 
-    ; Button Color GroupBox
-    Gui, Settings:Font, s8 cWhite, Segoe UI
-    Gui, Settings:Add, GroupBox, x5 y230 w210 h60, Button Color
-    Gui, Settings:Font, s9 cWhite, Segoe UI
-    Gui, Settings:Add, DropDownList, x15 y250 w120 h100 vButtonColorChoice, Green||Lime|Red|Blue|Yellow|Cyan|Magenta|White|Orange|Purple|Pink|Silver|Aqua|Fuchsia|Navy|Teal|Maroon|Olive|Black|Gray|Crimson|Gold|Indigo|Coral|Salmon|Violet|Turquoise|Khaki|Plum|Orchid|Tan|Chocolate|Peru|Sienna|Tomato|SkyBlue|SteelBlue|SlateBlue|RoyalBlue|DodgerBlue|DeepPink|HotPink|LightPink|PaleGreen|LightGreen|SpringGreen|SeaGreen|ForestGreen|DarkGreen|YellowGreen|OliveDrab|Chartreuse|GreenYellow|LawnGreen|MediumSpringGreen
-    New HButton( { Owner: SettingsHwnd , X: 140 , Y: 250 , W: 65 , H: 24 , Text: "Apply" , Label: "ApplyButtonColor" } )
+    ; ===== RIGHT COLUMN =====
 
-    ; Logo Color GroupBox
+    ; Connect Settings GroupBox
     Gui, Settings:Font, s8 cWhite, Segoe UI
-    Gui, Settings:Add, GroupBox, x5 y295 w210 h60, Logo Color
-    Gui, Settings:Font, s9 cWhite, Segoe UI
-    Gui, Settings:Add, DropDownList, x15 y315 w120 h100 vLogoColorChoice, Gray||Green|Lime|Red|Blue|Yellow|Cyan|Magenta|White|Orange|Purple|Pink|Silver|Aqua|Fuchsia|Navy|Teal|Maroon|Olive|Black|Crimson|Gold|Indigo|Coral|Salmon|Violet|Turquoise|Khaki|Plum|Orchid|Tan|Chocolate|Peru|Sienna|Tomato|SkyBlue|SteelBlue|SlateBlue|RoyalBlue|DodgerBlue|DeepPink|HotPink|LightPink|PaleGreen|LightGreen|SpringGreen|SeaGreen|ForestGreen|DarkGreen|YellowGreen|OliveDrab|Chartreuse|GreenYellow|LawnGreen|MediumSpringGreen
-    New HButton( { Owner: SettingsHwnd , X: 140 , Y: 315 , W: 65 , H: 24 , Text: "Apply" , Label: "ApplyLogoColor" } )
+    Gui, Settings:Add, GroupBox, x220 y5 w210 h180, Client Connect Settings
 
-    ; Checkbox Color GroupBox
-    Gui, Settings:Font, s8 cWhite, Segoe UI
-    Gui, Settings:Add, GroupBox, x5 y360 w210 h60, Checkbox Color
     Gui, Settings:Font, s9 cWhite, Segoe UI
-    Gui, Settings:Add, DropDownList, x15 y380 w120 h100 vCheckboxColorChoice, Lime||Green|Red|Blue|Yellow|Cyan|Magenta|White|Orange|Purple|Pink|Silver|Aqua|Fuchsia|Navy|Teal|Maroon|Olive|Black|Gray|Crimson|Gold|Indigo|Coral|Salmon|Violet|Turquoise|Khaki|Plum|Orchid|Tan|Chocolate|Peru|Sienna|Tomato|SkyBlue|SteelBlue|SlateBlue|RoyalBlue|DodgerBlue|DeepPink|HotPink|LightPink|PaleGreen|LightGreen|SpringGreen|SeaGreen|ForestGreen|DarkGreen|YellowGreen|OliveDrab|Chartreuse|GreenYellow|LawnGreen|MediumSpringGreen
-    New HButton( { Owner: SettingsHwnd , X: 140 , Y: 380 , W: 65 , H: 24 , Text: "Apply" , Label: "ApplyCheckboxColor" } )
+    Gui, Settings:Add, Text, x230 y25 w90 h20, Remote IP:
+    Gui, Settings:Font, s9 cBlack, Segoe UI
+    Gui, Settings:Add, Edit, x325 y22 w100 h22 vConnectIP, %ConnectIP%
 
-    ; Bar Color GroupBox
-    Gui, Settings:Font, s8 cWhite, Segoe UI
-    Gui, Settings:Add, GroupBox, x5 y425 w210 h60, Bar Color
     Gui, Settings:Font, s9 cWhite, Segoe UI
-    Gui, Settings:Add, DropDownList, x15 y445 w120 h100 vBarColorChoice, Dark Gray||Black|Charcoal|Slate Gray|Dark Blue|Navy Blue|Midnight Blue|Dark Teal|Dark Cyan|Dark Green|Forest Green|Dark Olive|Dark Red|Maroon|Dark Purple|Indigo|Dark Magenta|Brown|Saddle Brown|Chocolate|Dark Orange|Dark Slate Blue|Dark Slate Gray|Dim Gray|Steel Blue|Dark Sea Green
-    New HButton( { Owner: SettingsHwnd , X: 140 , Y: 445 , W: 65 , H: 24 , Text: "Apply" , Label: "ApplyBarColor" } )
+    Gui, Settings:Add, Text, x230 y50 w90 h20, Remote Port:
+    Gui, Settings:Font, s9 cBlack, Segoe UI
+    Gui, Settings:Add, Edit, x325 y47 w100 h22 vConnectPort, %ConnectPort%
+
+    ; Connect Toggle Button
+    If ConnectedToMaster
+        New HButton( { Owner: SettingsHwnd , X: 230 , Y: 80 , W: 190 , H: 24 , Text: "Disconnect" , Label: "ToggleConnect" } )
+    Else
+        New HButton( { Owner: SettingsHwnd , X: 230 , Y: 80 , W: 190 , H: 24 , Text: "Connect" , Label: "ToggleConnect" } )
+
+    ; Connection Status
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    Gui, Settings:Add, Text, x230 y110 w60 h15, Status:
+    If ConnectedToMaster {
+        Gui, Settings:Font, s8 cLime, Segoe UI
+        Gui, Settings:Add, Text, x290 y110 w130 h15 vConnectStatusText, Connected
+    } Else {
+        Gui, Settings:Font, s8 cRed, Segoe UI
+        Gui, Settings:Add, Text, x290 y110 w130 h15 vConnectStatusText, Disconnected
+    }
+
+    Gui, Settings:Font, s7 cYellow, Segoe UI
+    Gui, Settings:Add, Text, x230 y135 w190 h45, Note: Connect to another TopBar to relay commands across networks.
+
+    ; Appearance Settings GroupBox
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    Gui, Settings:Add, GroupBox, x220 y190 w210 h155, Appearance
+
+    ; Button Color
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    Gui, Settings:Add, Text, x230 y210 w80 h20, Button Color:
+    Gui, Settings:Font, s9 cWhite, Segoe UI
+    Gui, Settings:Add, DropDownList, x230 y225 w130 h100 vButtonColorChoice, Green||Lime|Red|Blue|Yellow|Cyan|Magenta|White|Orange|Purple|Pink|Silver
+    New HButton( { Owner: SettingsHwnd , X: 365 , Y: 225 , W: 55 , H: 24 , Text: "Apply" , Label: "ApplyButtonColor" } )
+
+    ; Logo Color
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    Gui, Settings:Add, Text, x230 y255 w80 h20, Logo Color:
+    Gui, Settings:Font, s9 cWhite, Segoe UI
+    Gui, Settings:Add, DropDownList, x230 y270 w130 h100 vLogoColorChoice, Gray||Green|Lime|Red|Blue|Yellow|Cyan|Magenta|White|Orange|Purple|Pink|Silver
+    New HButton( { Owner: SettingsHwnd , X: 365 , Y: 270 , W: 55 , H: 24 , Text: "Apply" , Label: "ApplyLogoColor" } )
+
+    ; Bar Color
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    Gui, Settings:Add, Text, x230 y300 w80 h20, Bar Color:
+    Gui, Settings:Font, s9 cWhite, Segoe UI
+    Gui, Settings:Add, DropDownList, x230 y315 w130 h100 vBarColorChoice, Dark Gray||Black|Charcoal|Slate Gray|Dark Blue|Navy Blue|Midnight Blue
+    New HButton( { Owner: SettingsHwnd , X: 365 , Y: 315 , W: 55 , H: 24 , Text: "Apply" , Label: "ApplyBarColor" } )
 
     ; Show GUI
     global actBarGuiHandle
@@ -3160,8 +4156,8 @@ OpenSettings:
     settingsOffsetX := -295
     settingsOffsetY := 0
 
-    settingsW := 220
-    settingsH := 495
+    settingsW := 440
+    settingsH := 350
     settingsX := actBarX + (actBarW // 2) - (settingsW // 2) + settingsOffsetX
     settingsY := actBarY - settingsH + settingsOffsetY
     if (settingsX < 0)
@@ -3170,6 +4166,14 @@ OpenSettings:
         settingsY := 0
     Gui, Settings:Show, x%settingsX% y%settingsY% w%settingsW% h%settingsH%, Settings
     SettingsGuiVisible := true
+    
+    ; Fetch public IP asynchronously
+    SetTimer, FetchPublicIP, -100
+return
+
+FetchPublicIP:
+    publicIP := GetPublicIPAddress()
+    GuiControl, Settings:, PublicIPText, %publicIP%
 return
 
 SettingsGuiClose:
@@ -3264,6 +4268,36 @@ GetAddonScripts() {
 return scripts
 }
 
+GetLocalIPAddress() {
+    ; Get local IP address using ipconfig command
+    RunWait, %ComSpec% /c ipconfig | findstr /i "IPv4" > %A_Temp%\ip.txt, , Hide
+    FileRead, ipOutput, %A_Temp%\ip.txt
+    FileDelete, %A_Temp%\ip.txt
+    
+    ; Parse the IP from the output (format: "   IPv4 Address. . . . . . . . . . . : 192.168.1.100")
+    if (RegExMatch(ipOutput, "(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})", ip)) {
+        return ip
+    }
+    
+    return "Not Found"
+}
+
+GetPublicIPAddress() {
+    ; Fetch public IP from whatismyip.com
+    whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+    try {
+        whr.Open("GET", "https://ipv4.icanhazip.com", false)
+        whr.SetRequestHeader("User-Agent", "Mozilla/5.0")
+        whr.Send()
+        publicIP := whr.ResponseText
+        ; Trim whitespace/newlines
+        publicIP := RegExReplace(publicIP, "[\r\n\s]+", "")
+        return publicIP
+    } catch {
+        return "Failed to fetch"
+    }
+}
+
 ChangeButtonColor:
 return
 
@@ -3290,8 +4324,8 @@ ApplyLogoColor:
     colorHex := GetTextColorHex(LogoTextColor)
     Gui, ActBar:Font, s7 c%colorHex%, Segoe UI
     GuiControl, ActBar:Font, LogoText
-    Gui, TopBar:Font, s11 c%colorHex% Bold, Segoe UI
-    GuiControl, TopBar:Font, NexusMasterText
+    Gui, TopBar:Font, s9 c%colorHex% Bold, Segoe UI
+    GuiControl, TopBar:Font, TopBarLogoText
 
     MsgBox, Logo color changed!
 return
