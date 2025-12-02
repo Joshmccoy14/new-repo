@@ -563,7 +563,7 @@ ShowMainGui() {
     Loop, %selectedCount% {
       accountNum := selectedAccounts[A_Index]
       if (AccountData[accountNum].AutoScript) {
-        scriptPath := A_ScriptDir . "\launcher\win" . accountNum . "\Rappelz Automation Nexus.ahk"
+        scriptPath := A_ScriptDir . "\launcher\win" . accountNum . "\Rappelz Automation Nexus win" . accountNum . ".ahk"
         if (FileExist(scriptPath)) {
           Run, %scriptPath%
         }
@@ -576,7 +576,7 @@ ShowMainGui() {
     WinGet, nexusWindows, List, Rappelz Automation Nexus ahk_class AutoHotkeyGUI
     Loop, %nexusWindows% {
       nexusID := nexusWindows%A_Index%
-      WinHide, ahk_id %nexusID%
+      WinMove, ahk_id %nexusID%, , -2000, 0
     }
     DetectHiddenWindows, Off
 
@@ -865,16 +865,21 @@ ShowMainGui() {
 
   StartNexus:
     Gui, Submit, NoHide
+    launchedScripts := ""
     Loop, 8 {
       GuiControlGet, autoScript,, Auto%A_Index%
       if (autoScript) {
-        scriptPath := A_ScriptDir . "\launcher\win" . A_Index . "\Rappelz Automation Nexus.ahk"
+        scriptPath := A_ScriptDir . "\launcher\win" . A_Index . "\Rappelz Automation Nexus win" . A_Index . ".ahk"
         if (FileExist(scriptPath)) {
           Run, "%scriptPath%"
+          launchedScripts .= "win" . A_Index . "`n"
         }
       }
     }
-    MsgBox, 0, , Started Nexus for selected windows, 2
+    if (launchedScripts != "")
+      MsgBox, 0, Started Nexus Scripts, %launchedScripts%, 3
+    else
+      MsgBox, 0, , No scripts to start (no Auto checkboxes selected), 2
       Return
 
   KillAll:

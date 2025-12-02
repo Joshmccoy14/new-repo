@@ -480,6 +480,10 @@ Global Connected := False
 Global ClientSocket := -1
 Global LastServerAddress := ""
 Global LastServerPort := ""
+Global CharacterName
+
+; Load CharacterName from settings, default to "win2"
+IniRead, CharacterName, %SettingsFile%, Settings, CharacterName, win2
 
 ; ========= Initialization =========
 ; Load saved text patterns when script starts
@@ -1090,23 +1094,27 @@ CreateCombinedGUI:
     Gui, Add, Edit, x25 y190 w470 h65 vtxtLog ReadOnly VScroll, Waiting to start server...`n
 
     ; CLIENT MODE - Connect to another server
-    Gui, Add, GroupBox, x15 y275 w490 h150, CLIENT MODE - Connect to Server
+    Gui, Add, GroupBox, x15 y275 w490 h170, CLIENT MODE - Connect to Server
     Gui, Add, Text, x25 y298 w460 h15, Run as client to connect to another game instance (server) and receive commands
 
-    Gui, Add, Text, x25 y320 w100 h20, Server Address:
-    Gui, Add, Edit, x130 y320 w150 h20 vsrvAddress gUpdateConnectButton, localhost
-    Gui, Add, Text, x290 y320 w30 h20, Port:
-    Gui, Add, Edit, x325 y320 w60 h20 vsrvPort gUpdateConnectButton, 12345
+    Gui, Add, Text, x25 y320 w100 h20, Character Name:
+    Gui, Add, Edit, x130 y320 w150 h20 vCharacterName, %CharacterName%
+    Gui, Add, Button, x290 y320 w80 h20 gSaveCharacterName, Save Name
 
-    Gui, Add, Button, x25 y350 w200 h25 gbtnConnect vbtnConnect, Connect (localhost:27016)
-    Gui, Add, Checkbox, x235 y350 w250 h25 vchkAutoReconnect Checked, Auto-reconnect every 15s
+    Gui, Add, Text, x25 y350 w100 h20, Server Address:
+    Gui, Add, Edit, x130 y350 w150 h20 vsrvAddress gUpdateConnectButton, localhost
+    Gui, Add, Text, x290 y350 w30 h20, Port:
+    Gui, Add, Edit, x325 y350 w60 h20 vsrvPort gUpdateConnectButton, 12345
 
-    Gui, Add, Text, x25 y380 w150 h25 vlblStatus, Status: Not Connected
-    Gui, Add, Text, x185 y380 w315 h20 cGray, (Connection status will appear here)
+    Gui, Add, Button, x25 y380 w200 h25 gbtnConnect vbtnConnect, Connect (localhost:27016)
+    Gui, Add, Checkbox, x235 y380 w250 h25 vchkAutoReconnect Checked, Auto-reconnect every 15s
+
+    Gui, Add, Text, x25 y410 w150 h25 vlblStatus, Status: Not Connected
+    Gui, Add, Text, x185 y410 w315 h20 cGray, (Connection status will appear here)
 
     ; CLIENT LOG
-    Gui, Add, GroupBox, x15 y435 w490 h95, Client Activity Log
-    Gui, Add, Edit, x25 y455 w470 h65 vtxtClientLog ReadOnly VScroll, Not connected to any server...`n
+    Gui, Add, GroupBox, x15 y455 w490 h95, Client Activity Log
+    Gui, Add, Edit, x25 y475 w470 h65 vtxtClientLog ReadOnly VScroll, Not connected to any server...`n
 
     ; QUICK REFERENCE
     Gui, Add, GroupBox, x15 y540 w490 h90, Quick Reference
@@ -6283,56 +6291,10 @@ AssignHealKeys:
                                     ChatBuffToggle:
                                         Gui, Submit, NoHide
                                         if (chatbuff) {
-                                            ; Load existing commands
-                                            savedCommands := []
-                                            IniRead, commandCount, %SettingsFile%, ChatBuffCommands, Count, 0
-                                            Loop, %commandCount% {
-                                                IniRead, command, %SettingsFile%, ChatBuffCommands, Command%A_Index%, ERROR
-                                                if (command != "" && command != "ERROR") {
-                                                    savedCommands.Push(command)
-                                                }
-                                            }
-                                            
-                                            ; Get first command
-                                            defaultCmd := savedCommands.Length() > 0 ? savedCommands[1] : "/info"
-                                            InputBox, firstCommand, Chat Buff Command, Enter first chat command:, , 300, 120, , , , , %defaultCmd%
-                                            if (ErrorLevel || firstCommand = "") {
+                                            if (!ActivateChatBuffs()) {
                                                 GuiControl,, chatbuff, 0
                                                 chatbuff := false
                                                 return
-                                            }
-                                            
-                                            ; Start fresh list
-                                            chatBuffCommands := []
-                                            chatBuffCommands.Push(firstCommand)
-                                            
-                                            ; Ask for more commands
-                                            cmdIndex := 2
-                                            Loop {
-                                                MsgBox, 4, More Commands?, Do you want to add another chat buff command?
-                                                IfMsgBox No
-                                                    break
-                                                defaultNext := cmdIndex <= savedCommands.Length() ? savedCommands[cmdIndex] : ""
-                                                InputBox, nextCommand, Chat Buff Command, Enter next chat command:, , 300, 120, , , , , %defaultNext%
-                                                if (ErrorLevel || nextCommand = "")
-                                                    break
-                                                chatBuffCommands.Push(nextCommand)
-                                                cmdIndex++
-                                            }
-                                            
-                                            ; Save commands
-                                            IniDelete, %SettingsFile%, ChatBuffCommands
-                                            IniWrite, % chatBuffCommands.Length(), %SettingsFile%, ChatBuffCommands, Count
-                                            for index, command in chatBuffCommands {
-                                                IniWrite, %command%, %SettingsFile%, ChatBuffCommands, Command%index%
-                                            }
-                                            
-                                            ; Send immediately then start timer
-                                            if (win1 != "") {
-                                                gosub, SendChatBuffCommand
-                                                SetTimer, SendChatBuffCommand, % (chatBuffTimerEdit * 60 * 1000)
-                                                SetTimer, UpdateChatBuffTimeLeft, 1000
-                                                chatBuffStartTime := A_TickCount
                                             }
                                         } else {
                                             SetTimer, SendChatBuffCommand, Off
@@ -6412,36 +6374,10 @@ AssignHealKeys:
                                             return
                                         }
                                         ; Ask if user wants to use chat buffs
-                                        MsgBox, 4, Chat Buffs, Do you want to activate a chat buff (e.g. /info or custom command)?
+                                        MsgBox, 4, Chat Buffs, Do you want to activate chat buffs?
                                         IfMsgBox Yes
                                         {
-                                            ; Load last used chat command from INI
-                                            IniRead, lastChatBuff, %SettingsFile%, ChatBuff, Command, /info
-                                            ; Show input box with last used command pre-filled
-                                            InputBox, chatBuffCommand, Enter Chat Buff Command, Enter the chat command to use (more power):, , 400, 120, , , , , %lastChatBuff%
-                                            if (!ErrorLevel && chatBuffCommand != "")
-                                            {
-                                                ; Save to INI for next time
-                                                IniWrite, %chatBuffCommand%, %SettingsFile%, ChatBuff, Command
-                                                ; If /info, send it to the game window
-                                                if (TargetGameWindow != "")
-                                                {
-                                                    WinActivate, ahk_id %TargetGameWindow%
-                                                    Sleep, 150
-                                                    Clipboard := chatBuffCommand
-                                                    Send, {Enter}
-                                                    Sleep, 80
-                                                    Send, ^v
-                                                    Sleep, 80
-                                                    Send, {Enter}
-                                                    Sleep, 300
-                                                    ; Set timer to send chat buff at the correct interval (minutes)
-                                                    global chatBuffCommandGlobal := chatBuffCommand
-                                                    interval := chatBuffTimerEdit ? chatBuffTimerEdit : 63
-                                                    intervalMs := interval * 60 * 1000
-                                                    SetTimer, SendChatBuffCommand, %intervalMs%
-                                                }
-                                            }
+                                            ActivateChatBuffs()
                                         }
 
                                         ; Ask about pet buffs
@@ -6560,9 +6496,67 @@ AssignHealKeys:
                                         ToolTip,,,,4
                                     return
 
+                                    ; Helper function to prompt and activate chat buffs
+                                    ActivateChatBuffs() {
+                                        global SettingsFile, TargetGameWindow, chatBuffTimerEdit, chatBuffCommands
+                                        global chatBuffStartTime
+                                        
+                                        ; Load existing commands
+                                        savedCommands := []
+                                        IniRead, commandCount, %SettingsFile%, ChatBuffCommands, Count, 0
+                                        Loop, %commandCount% {
+                                            IniRead, command, %SettingsFile%, ChatBuffCommands, Command%A_Index%, ERROR
+                                            if (command != "" && command != "ERROR") {
+                                                savedCommands.Push(command)
+                                            }
+                                        }
+                                        
+                                        ; Get first command
+                                        defaultCmd := savedCommands.Length() > 0 ? savedCommands[1] : "/info"
+                                        InputBox, firstCommand, Chat Buff Command, Enter first chat command:, , 300, 120, , , , , %defaultCmd%
+                                        if (ErrorLevel || firstCommand = "") {
+                                            return false
+                                        }
+                                        
+                                        ; Start fresh list
+                                        chatBuffCommands := []
+                                        chatBuffCommands.Push(firstCommand)
+                                        
+                                        ; Ask for more commands
+                                        cmdIndex := 2
+                                        Loop {
+                                            MsgBox, 4, More Commands?, Do you want to add another chat buff command?
+                                            IfMsgBox No
+                                                break
+                                            defaultNext := cmdIndex <= savedCommands.Length() ? savedCommands[cmdIndex] : ""
+                                            InputBox, nextCommand, Chat Buff Command, Enter next chat command:, , 300, 120, , , , , %defaultNext%
+                                            if (ErrorLevel || nextCommand = "")
+                                                break
+                                            chatBuffCommands.Push(nextCommand)
+                                            cmdIndex++
+                                        }
+                                        
+                                        ; Save commands
+                                        IniDelete, %SettingsFile%, ChatBuffCommands
+                                        IniWrite, % chatBuffCommands.Length(), %SettingsFile%, ChatBuffCommands, Count
+                                        for index, command in chatBuffCommands {
+                                            IniWrite, %command%, %SettingsFile%, ChatBuffCommands, Command%index%
+                                        }
+                                        
+                                        ; Send immediately then start timer
+                                        if (TargetGameWindow != "") {
+                                            gosub, SendChatBuffCommand
+                                            SetTimer, SendChatBuffCommand, % (chatBuffTimerEdit * 60 * 1000)
+                                            SetTimer, UpdateChatBuffTimeLeft, 1000
+                                            chatBuffStartTime := A_TickCount
+                                        }
+                                        
+                                        return true
+                                    }
+
                                     ; Function to start all buff timers (called via network command)
                                     ; This mimics StartAllTimers but without the MsgBox prompt
-                                    StartAllBuffTimers() {
+                                    StartAllBuffTimers(useChatBuffs := -1, usePetBuffs := -1, chatCommands := "") {
                                         global win1, KeyCombination1, KeyDelay1, TimerInterval1
                                         global KeyCombination2, KeyDelay2, TimerInterval2
                                         global KeyCombination3, KeyDelay3, TimerInterval3
@@ -6570,18 +6564,62 @@ AssignHealKeys:
                                         global KeySequence1, KeySequence2, KeySequence3
                                         global NextExecutionTime1, NextExecutionTime2, NextExecutionTime3
                                         global SkipInitial1, dtbuff, gnollbuff, gnollBuffInterval
+                                        global SettingsFile, TargetGameWindow, chatBuffTimerEdit, chatBuffCommands, chatBuffStartTime
 
                                         ; Validate that window is selected
                                         if (win1 = "") {
                                             return
                                         }
 
-                                        ; Auto-activate DT buff (no prompt)
-                                        if (!dtbuff) {
-                                            dtbuff := true
-                                            GuiControl,, dtbuff, 1
-                                            deathtyrant()
-                                            SetTimer, deathtyrant, 3000000
+                                        ; Handle chat buffs based on parameters
+                                        if (useChatBuffs = -1) {
+                                            ; No parameters provided - prompt user
+                                            MsgBox, 4, Chat Buffs, Do you want to activate chat buffs?
+                                            IfMsgBox Yes
+                                            {
+                                                ActivateChatBuffs()
+                                            }
+                                        } else if (useChatBuffs = 1 && chatCommands != "") {
+                                            ; Parameters provided - use them
+                                            chatBuffCommands := []
+                                            commandList := StrSplit(chatCommands, ",")
+                                            for index, cmd in commandList {
+                                                chatBuffCommands.Push(cmd)
+                                            }
+                                            
+                                            ; Save commands
+                                            IniDelete, %SettingsFile%, ChatBuffCommands
+                                            IniWrite, % chatBuffCommands.Length(), %SettingsFile%, ChatBuffCommands, Count
+                                            for index, command in chatBuffCommands {
+                                                IniWrite, %command%, %SettingsFile%, ChatBuffCommands, Command%index%
+                                            }
+                                            
+                                            ; Send immediately then start timer
+                                            if (win1 != "") {
+                                                gosub, SendChatBuffCommand
+                                                SetTimer, SendChatBuffCommand, % (chatBuffTimerEdit * 60 * 1000)
+                                                SetTimer, UpdateChatBuffTimeLeft, 1000
+                                                chatBuffStartTime := A_TickCount
+                                            }
+                                        }
+
+                                        ; Handle DT buff based on parameters
+                                        if (usePetBuffs = -1) {
+                                            ; No parameters - auto-activate (legacy behavior)
+                                            if (!dtbuff) {
+                                                dtbuff := true
+                                                GuiControl,, dtbuff, 1
+                                                deathtyrant()
+                                                SetTimer, deathtyrant, 3000000
+                                            }
+                                        } else if (usePetBuffs = 1) {
+                                            ; Parameters say yes - activate
+                                            if (!dtbuff) {
+                                                dtbuff := true
+                                                GuiControl,, dtbuff, 1
+                                                deathtyrant()
+                                                SetTimer, deathtyrant, 3000000
+                                            }
                                         }
 
                                         ; Start Sequence 1 if configured and not already running
@@ -12463,6 +12501,10 @@ AssignHealKeys:
                                                                             }
 
                                                                             RemoveNavToolTip:
+                                                                                ToolTip
+                                                                            return
+
+                                                                            RemoveCoordToolTip:
                                                                                 ToolTip
                                                                             return
 
@@ -26491,6 +26533,24 @@ across multiple RECEIVED events. This would also demonstrate your application's 
             }
         Return
 
+        SaveCharacterName:
+            Gui, Submit, NoHide
+            IniWrite, %CharacterName%, %SettingsFile%, Settings, CharacterName
+            MsgBox, Character name saved: %CharacterName%
+        Return
+
+        SendHandshake:
+            Global ClientSocket, CharacterName
+            If (ClientSocket != -1) {
+                handshake := "HANDSHAKE:NEXUS:" . CharacterName . "`n"
+                bufferSize := StrPut(handshake, "CP0")
+                VarSetCapacity(handshakeBuffer, bufferSize)
+                StrPut(handshake, &handshakeBuffer, "CP0")
+                AHKsock_Send(ClientSocket, &handshakeBuffer, bufferSize - 1)
+                AddClientLog("Sent handshake: NEXUS:" . CharacterName)
+            }
+        Return
+
         btnConnect:
             GuiControlGet, btnText,, btnConnect
 
@@ -26565,6 +26625,10 @@ across multiple RECEIVED events. This would also demonstrate your application's 
                 GuiControl, Enable, btnConnect
                 AddClientLog("Connected successfully to " sName ":" sPort)
 
+                ; Send handshake to identify as Nexus client with character name
+                ; Use a timer to ensure connection is fully ready
+                SetTimer, SendHandshake, -200
+                
             } Else If (sEvent = "DISCONNECTED") {
                 ; Disconnected from server
                 Connected := False
@@ -26819,14 +26883,56 @@ across multiple RECEIVED events. This would also demonstrate your application's 
                     AddLog("[Network] ERROR: Failed to create temp path file")
                 }
 
+            } Else If (SubStr(command, 1, 10) = "SETCOORDS:") {
+                ; Receive and display coordinates from TopBar controller
+                ; Format: SETCOORDS:X|Y
+                rest := SubStr(command, 11)
+                pipePos := InStr(rest, "|")
+
+                If (pipePos > 0) {
+                    receivedX := SubStr(rest, 1, pipePos - 1)
+                    receivedY := SubStr(rest, pipePos + 1)
+
+                    AddLog("[Network] Received coordinates: X:" receivedX " Y:" receivedY)
+
+                    ; Update the coordinates display if navigation GUI exists
+                    IfWinExist, Navigation ahk_class AutoHotkeyGUI
+                    {
+                        GuiControl,, NavCurrentCoords, Current: X: %receivedX% Y: %receivedY%
+                    }
+
+                    ; Show tooltip with coordinates
+                    ToolTip, Coordinates Received:`nX: %receivedX%`nY: %receivedY%, 10, 10
+                    SetTimer, RemoveCoordToolTip, -3000
+                } Else {
+                    AddLog("[Network] ERROR: Invalid SETCOORDS format: " command)
+                }
+
+            } Else If (command = "HVOUT") {
+                ; Heaven's Voice out - find and click HVpass until it's gone
+                AddLog("[Network] Executing HV Out")
+                ExecuteHVOut()
+
             } Else If (command = "STARTHEALING") {
                 ; Start healing timer
                 global healCheckInterval
                 AddLog("[Network] Starting healing")
                 SetTimer, DynamicHealthCheck, %healCheckInterval%
 
+            } Else If (SubStr(command, 1, 5) = "BUFF:") {
+                ; Start buff cycle with parameters - Format: BUFF:chatBuffs|petBuffs|commands
+                params := SubStr(command, 6)
+                parts := StrSplit(params, "|")
+                
+                useChatBuffs := parts.Length() >= 1 ? parts[1] : 0
+                usePetBuffs := parts.Length() >= 2 ? parts[2] : 0
+                chatCmds := parts.Length() >= 3 ? parts[3] : ""
+                
+                AddLog("[Network] Starting Buff Cycle - ChatBuffs:" useChatBuffs " PetBuffs:" usePetBuffs)
+                StartAllBuffTimers(useChatBuffs, usePetBuffs, chatCmds)
+                
             } Else If (command = "Buff") {
-                ; Start buff cycle
+                ; Legacy buff command - prompt for settings
                 AddLog("[Network] Starting Buff Cycle")
                 gosub, StartAllTimers
 
@@ -26851,25 +26957,29 @@ across multiple RECEIVED events. This would also demonstrate your application's 
                 SetTimer, DPSLoop, Off
 
             } Else If (SubStr(command, 1, 12) = "SETUPDPSNAV:") {
-                ; Setup DPS Navigation - Format: SETUPDPSNAV:radius
-                global dpsNavEnabled, dpsNavTargetX, dpsNavTargetY, dpsNavRadius, currentX, currentY
-                radius := SubStr(command, 13)
-                AddLog("[Network] Setting up DPS Navigation with radius: " radius)
-
-                ; Get current coordinates from screen
-                GetCurrentCoordinates(currentX, currentY)
-                Sleep, 10
-                GetCurrentCoordinates(tempX, tempY)
-
-                If (currentX != "" && currentY != "" && currentX == tempX && currentY == tempY) {
+                ; Setup DPS Navigation - Format: SETUPDPSNAV:X|Y|radius
+                global dpsNavEnabled, dpsNavTargetX, dpsNavTargetY, dpsNavRadius
+                
+                ; Parse the command
+                params := SubStr(command, 13)
+                parts := StrSplit(params, "|")
+                
+                If (parts.Length() = 3) {
+                    ; New format with coordinates included
+                    targetX := parts[1]
+                    targetY := parts[2]
+                    radius := parts[3]
+                    
+                    AddLog("[Network] Setting up DPS Navigation - X:" targetX " Y:" targetY " Radius:" radius)
+                    
                     ; Set target coordinates and radius
-                    dpsNavTargetX := currentX
-                    dpsNavTargetY := currentY
+                    dpsNavTargetX := targetX
+                    dpsNavTargetY := targetY
                     dpsNavRadius := radius
 
                     ; Update GUI controls first
-                    GuiControl,, dpsNavTargetXEdit, %currentX%
-                    GuiControl,, dpsNavTargetYEdit, %currentY%
+                    GuiControl,, dpsNavTargetXEdit, %targetX%
+                    GuiControl,, dpsNavTargetYEdit, %targetY%
                     GuiControl,, dpsNavRadiusEdit, %radius%
                     GuiControl,, dpsNavEnabled, 1
 
@@ -26880,9 +26990,44 @@ across multiple RECEIVED events. This would also demonstrate your application's 
                     dpsNavEnabled := true
                     SetTimer, UpdateNavCoordinatesDisplay, 500
 
-                    AddLog("[Network] DPS Navigation enabled at X:" currentX " Y:" currentY " Radius:" radius)
+                    AddLog("[Network] DPS Navigation enabled at X:" targetX " Y:" targetY " Radius:" radius)
+                } Else If (parts.Length() = 1) {
+                    ; Old format - just radius, try to get coordinates from screen
+                    radius := parts[1]
+                    AddLog("[Network] Setting up DPS Navigation with radius: " radius)
+
+                    ; Get current coordinates from screen
+                    currentX := ""
+                    currentY := ""
+                    GetCurrentCoordinates(currentX, currentY)
+                    Sleep, 10
+                    GetCurrentCoordinates(tempX, tempY)
+
+                    If (currentX != "" && currentY != "" && currentX == tempX && currentY == tempY) {
+                        ; Set target coordinates and radius
+                        dpsNavTargetX := currentX
+                        dpsNavTargetY := currentY
+                        dpsNavRadius := radius
+
+                        ; Update GUI controls first
+                        GuiControl,, dpsNavTargetXEdit, %currentX%
+                        GuiControl,, dpsNavTargetYEdit, %currentY%
+                        GuiControl,, dpsNavRadiusEdit, %radius%
+                        GuiControl,, dpsNavEnabled, 1
+
+                        ; Sync variable with GUI state
+                        GuiControlGet, dpsNavEnabled
+
+                        ; Enable navigation and start timer
+                        dpsNavEnabled := true
+                        SetTimer, UpdateNavCoordinatesDisplay, 500
+
+                        AddLog("[Network] DPS Navigation enabled at X:" currentX " Y:" currentY " Radius:" radius)
+                    } Else {
+                        AddLog("[Network] ERROR: Could not retrieve current coordinates from screen")
+                    }
                 } Else {
-                    AddLog("[Network] ERROR: Could not retrieve current coordinates from screen")
+                    AddLog("[Network] ERROR: Invalid SETUPDPSNAV format")
                 }
 
             } Else If (command = "STARTTRAVEL") {
@@ -26928,6 +27073,15 @@ across multiple RECEIVED events. This would also demonstrate your application's 
                 GuiControl, Disable, StopBtn
                 GuiControl,, RouteStatus, Travel stopped
                 AddLog("[Network] Travel stopped")
+
+            } Else If (SubStr(command, 1, 11) = "NAVIGATETO:") {
+                ; Navigate to coordinates from "Come To Me" command
+                params := SubStr(command, 12)
+                parts := StrSplit(params, "|")
+                targetX := parts[1]
+                targetY := parts[2]
+                AddLog("[Network] Navigate To Me - X:" targetX " Y:" targetY)
+                NavigateToNavCoordinates(targetX, targetY)
 
             } Else If (SubStr(command, 1, 5) = "CALL:") {
                 ; Format: CALL:FunctionName OR CALL:FunctionName(param1,param2)
@@ -27005,6 +27159,60 @@ across multiple RECEIVED events. This would also demonstrate your application's 
                     AddLog("Unknown command: " command)
                     AddLog("[DEBUG] No matching command handler for: '" command "'")
                 }
+            }
+
+            ; Function to execute HV Out - find and click HVpass until it's gone
+            ExecuteHVOut() {
+                global HVpass, TargetGameWindow
+                
+                AddLog("[HV Out] Starting Heaven's Voice exit procedure")
+                
+                If (TargetGameWindow = "") {
+                    AddLog("[HV Out] ERROR: No game window selected")
+                    ToolTip, HV Out Failed: No game window selected, 10, 10
+                    SetTimer, RemoveCoordToolTip, -3000
+                    return
+                }
+                
+                WinGetPos, winX, winY, winWidth, winHeight, ahk_id %TargetGameWindow%
+                
+                If (winX = "" || winY = "") {
+                    AddLog("[HV Out] ERROR: Could not get window position")
+                    return
+                }
+                
+                clickCount := 0
+                maxAttempts := 1200  ; 2 minutes at 100ms intervals
+                startTime := A_TickCount
+                
+                Loop, %maxAttempts% {
+                    ; Search for HVpass button
+                    if (FindText(foundX, foundY, winX, winY, winX + winWidth, winY + winHeight, 0, 0, HVpass)) {
+                        ; Calculate relative coordinates
+                        relX := foundX - winX
+                        relY := foundY - winY
+                        
+                        ; Click the HVpass button
+                        ControlClick, x%relX% y%relY%, ahk_id %TargetGameWindow%,, Left, 1
+                        clickCount++
+                        
+                        AddLog("[HV Out] Clicked HVpass button (attempt " clickCount ")")
+                        Sleep, 100
+                    } else {
+                        ; HVpass no longer visible - we're done
+                        elapsedTime := Round((A_TickCount - startTime) / 1000, 1)
+                        AddLog("[HV Out] Completed! Clicked " clickCount " times in " elapsedTime " seconds")
+                        ToolTip, HV Out Complete! (%clickCount% clicks), 10, 10
+                        SetTimer, RemoveCoordToolTip, -3000
+                        return
+                    }
+                }
+                
+                ; If we got here, max attempts reached
+                elapsedTime := Round((A_TickCount - startTime) / 1000, 1)
+                AddLog("[HV Out] Max attempts reached after " elapsedTime " seconds (" clickCount " clicks)")
+                ToolTip, HV Out: Max time reached (%clickCount% clicks), 10, 10
+                SetTimer, RemoveCoordToolTip, -3000
             }
 
             AttemptReconnect:

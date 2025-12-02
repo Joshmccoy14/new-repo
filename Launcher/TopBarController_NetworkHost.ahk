@@ -3044,7 +3044,7 @@ ClearProcessMemory(pid, windowName, memBefore)
         GuiControl, TopBar:Font, RAMStatusText
         Gui, TopBar:Font, s8 cLime Bold, Segoe UI
         GuiControl, TopBar:Font, RAMStatusText
-        GuiControl, TopBar:, RAMStatusText, % "RAM Cleared: " . windowName . " (" . Round(memFreed, 1) . " MB)"
+        GuiControl, TopBar:, RAMStatusText, % "RAM Cleared"
 
         SetTimer, ResetRAMStatusColor, -5000
     }
