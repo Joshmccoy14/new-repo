@@ -998,30 +998,38 @@ ToggleLauncherGui:
 return
 
 ToggleServer:
-    global ServerListening
+    global ServerListening, ServerPort
     Gui, TopBar:Submit, NoHide
     Gui, Settings:Submit, NoHide
-    GuiControlGet, btnText,, BtnServerToggle
 
-    If (InStr(btnText, "Start")) {
+    If (!ServerListening) {
         ; Start listening
         If (i := AHKsock_Listen(ServerPort, "ServerEvents")) {
             MsgBox, ERROR: Failed to start server (code %i%)
         } Else {
             ServerListening := true
             GuiControl, TopBar:, BtnServerToggle, Stop Svr
-            GuiControl, Settings:, BtnServerToggle, Stop Server
             GuiControl, TopBar:, ServerStatus, Listening: On
+            UpdateSettingsButtons()
         }
     } Else {
         ; Stop listening
         AHKsock_Listen(ServerPort, False)
         ServerListening := false
         GuiControl, TopBar:, BtnServerToggle, Start Svr
-        GuiControl, Settings:, BtnServerToggle, Start Server
         GuiControl, TopBar:, ServerStatus, Listening: Off
+        UpdateSettingsButtons()
     }
 return
+
+UpdateSettingsButtons() {
+    global ServerListening, ConnectedToMaster, SettingsHwnd
+    
+    ; Destroy existing HButtons by destroying and recreating the Settings window
+    ; This is simpler than trying to track individual button references
+    Gui, Settings:Destroy
+    Gosub, OpenSettings
+}
 
 ToggleConnect:
     global ConnectedToMaster, MasterSocket, ConnectIP, ConnectPort
@@ -1040,11 +1048,8 @@ ToggleConnect:
         ConnectedToMaster := false
         MasterSocket := -1
         
-        Gui, Settings:Font, s8 cRed, Segoe UI
-        GuiControl, Settings:Font, ConnectStatusText
-        GuiControl, Settings:, ConnectStatusText, Disconnected
-        
         MsgBox, Disconnected from master TopBar
+        UpdateSettingsButtons()
     } Else {
         ; Connect to master TopBar
         If (ConnectIP = "" || ConnectPort = "") {
@@ -1082,11 +1087,8 @@ ClientEvents(sEvent, iSocket = 0, sName = 0, sAddr = 0, sPort = 0, ByRef bData =
         ; Use a timer to send handshake after socket is fully ready (like Nexus does)
         SetTimer, SendTopBarHandshake, -250
         
-        Gui, Settings:Font, s8 cLime, Segoe UI
-        GuiControl, Settings:Font, ConnectStatusText
-        GuiControl, Settings:, ConnectStatusText, Connected
-        
         MsgBox, Connected to master TopBar
+        UpdateSettingsButtons()
         
     }Else If (sEvent = "DISCONNECTED") {
         ; Disconnected from master
@@ -1094,11 +1096,8 @@ ClientEvents(sEvent, iSocket = 0, sName = 0, sAddr = 0, sPort = 0, ByRef bData =
         ConnectedToMaster := false
         RemoteClients := {}  ; Clear remote clients
         
-        Gui, Settings:Font, s8 cRed, Segoe UI
-        GuiControl, Settings:Font, ConnectStatusText
-        GuiControl, Settings:, ConnectStatusText, Disconnected
-        
         MsgBox, Disconnected from master TopBar
+        UpdateSettingsButtons()
         
     } Else If (sEvent = "RECEIVED") {
         ; Received message from connected TopBar
