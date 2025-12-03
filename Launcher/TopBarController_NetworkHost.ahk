@@ -91,6 +91,9 @@ return
 ; ==========================================
 LoadSettings() {
     global RAMClearingEnabled, MaxRAMValue, ServerPort, ButtonTextColor, LogoTextColor, CheckboxTextColor, BarBackgroundColor, ConnectMode, ConnectIP, ConnectPort
+    global BtnDefaultMainColor1, BtnDefaultMainColor2, BtnDefaultBorderColor, BtnDefaultTextColor
+    global BtnHoverMainColor1, BtnHoverMainColor2, BtnHoverBorderColor, BtnHoverTextColor
+    global BtnPressedMainColor1, BtnPressedMainColor2, BtnPressedBorderColor, BtnPressedTextColor
 
     settingsFile := A_ScriptDir "\Settings.ini"
 
@@ -122,8 +125,8 @@ LoadSettings() {
     IniRead, btnColor, %settingsFile%, Settings, ButtonTextColor, 0xFF00FF00
     ButtonTextColor := btnColor
 
-    ; Load Logo Text Color (default: Gray)
-    IniRead, logoColor, %settingsFile%, Settings, LogoTextColor, Gray
+    ; Load Logo Text Color (default: 808080 - Gray)
+    IniRead, logoColor, %settingsFile%, Settings, LogoTextColor, 808080
     LogoTextColor := logoColor
 
     ; Load Checkbox Text Color (default: Lime)
@@ -133,10 +136,31 @@ LoadSettings() {
     ; Load Bar Background Color (default: 0x1E1E1E)
     IniRead, barBgColor, %settingsFile%, Settings, BarBackgroundColor, 0x1E1E1E
     BarBackgroundColor := barBgColor
+
+    ; Load Button Default Colors
+    IniRead, BtnDefaultMainColor1, %settingsFile%, ButtonColors, DefaultMainColor1, 0xFF272C32
+    IniRead, BtnDefaultMainColor2, %settingsFile%, ButtonColors, DefaultMainColor2, 0xFF272C32
+    IniRead, BtnDefaultBorderColor, %settingsFile%, ButtonColors, DefaultBorderColor, 0xFF161B1F
+    IniRead, BtnDefaultTextColor, %settingsFile%, ButtonColors, DefaultTextColor, 0xFF00FF00
+
+    ; Load Button Hover Colors
+    IniRead, BtnHoverMainColor1, %settingsFile%, ButtonColors, HoverMainColor1, 0xFF373C42
+    IniRead, BtnHoverMainColor2, %settingsFile%, ButtonColors, HoverMainColor2, 0xFF373C42
+    IniRead, BtnHoverBorderColor, %settingsFile%, ButtonColors, HoverBorderColor, 0xFF161B1F
+    IniRead, BtnHoverTextColor, %settingsFile%, ButtonColors, HoverTextColor, 0xFF00FF00
+
+    ; Load Button Pressed Colors
+    IniRead, BtnPressedMainColor1, %settingsFile%, ButtonColors, PressedMainColor1, 0xFF12161a
+    IniRead, BtnPressedMainColor2, %settingsFile%, ButtonColors, PressedMainColor2, 0xFF33383E
+    IniRead, BtnPressedBorderColor, %settingsFile%, ButtonColors, PressedBorderColor, 0xFF62666a
+    IniRead, BtnPressedTextColor, %settingsFile%, ButtonColors, PressedTextColor, 0xFF00FF00
 }
 
 SaveSettingsToFile() {
     global RAMClearingEnabled, MaxRAMValue, ServerPort, ButtonTextColor, LogoTextColor, CheckboxTextColor, BarBackgroundColor
+    global BtnDefaultMainColor1, BtnDefaultMainColor2, BtnDefaultBorderColor, BtnDefaultTextColor
+    global BtnHoverMainColor1, BtnHoverMainColor2, BtnHoverBorderColor, BtnHoverTextColor
+    global BtnPressedMainColor1, BtnPressedMainColor2, BtnPressedBorderColor, BtnPressedTextColor
 
     settingsFile := A_ScriptDir "\Settings.ini"
 
@@ -147,6 +171,24 @@ SaveSettingsToFile() {
     IniWrite, %LogoTextColor%, %settingsFile%, Settings, LogoTextColor
     IniWrite, %CheckboxTextColor%, %settingsFile%, Settings, CheckboxTextColor
     IniWrite, %BarBackgroundColor%, %settingsFile%, Settings, BarBackgroundColor
+
+    ; Save Button Default Colors
+    IniWrite, %BtnDefaultMainColor1%, %settingsFile%, ButtonColors, DefaultMainColor1
+    IniWrite, %BtnDefaultMainColor2%, %settingsFile%, ButtonColors, DefaultMainColor2
+    IniWrite, %BtnDefaultBorderColor%, %settingsFile%, ButtonColors, DefaultBorderColor
+    IniWrite, %BtnDefaultTextColor%, %settingsFile%, ButtonColors, DefaultTextColor
+
+    ; Save Button Hover Colors
+    IniWrite, %BtnHoverMainColor1%, %settingsFile%, ButtonColors, HoverMainColor1
+    IniWrite, %BtnHoverMainColor2%, %settingsFile%, ButtonColors, HoverMainColor2
+    IniWrite, %BtnHoverBorderColor%, %settingsFile%, ButtonColors, HoverBorderColor
+    IniWrite, %BtnHoverTextColor%, %settingsFile%, ButtonColors, HoverTextColor
+
+    ; Save Button Pressed Colors
+    IniWrite, %BtnPressedMainColor1%, %settingsFile%, ButtonColors, PressedMainColor1
+    IniWrite, %BtnPressedMainColor2%, %settingsFile%, ButtonColors, PressedMainColor2
+    IniWrite, %BtnPressedBorderColor%, %settingsFile%, ButtonColors, PressedBorderColor
+    IniWrite, %BtnPressedTextColor%, %settingsFile%, ButtonColors, PressedTextColor
 }
 
 ; ==========================================
@@ -169,8 +211,7 @@ CreateTopBarGUI() {
 
     ; 1.5 Logo Text
     global TopBarLogoText
-    colorHex := GetTextColorHex(LogoTextColor)
-    Gui, TopBar:Font, s9 c%colorHex% Bold, Segoe UI
+    Gui, TopBar:Font, s9 c%LogoTextColor% Bold, Segoe UI
     Gui, TopBar:Add, Text, x90 y7 w150 h16 vTopBarLogoText, Rappelz Nexus Master
 
     ; 2. Nexus Button (shifted right to make room for logo)
@@ -257,8 +298,7 @@ CreateActivationBar() {
         Gui, ActBar:Add, Picture, x962 y0 w60 h30 +0xE, %logoPath%
     } else {
         ; Show placeholder text if logo not found
-        logoColorHex := GetTextColorHex(LogoTextColor)
-        Gui, ActBar:Font, s7 c%logoColorHex%, Segoe UI
+        Gui, ActBar:Font, s7 c%LogoTextColor%, Segoe UI
         Gui, ActBar:Add, Text, x955 y7 w73 h16 Center vLogoText, LOGO
     }
 
@@ -273,6 +313,9 @@ CreateActivationBar() {
 }
 HBCustomButton(){
     global ButtonTextColor, BarBackgroundColor
+    global BtnDefaultMainColor1, BtnDefaultMainColor2, BtnDefaultBorderColor, BtnDefaultTextColor
+    global BtnHoverMainColor1, BtnHoverMainColor2, BtnHoverBorderColor, BtnHoverTextColor
+    global BtnPressedMainColor1, BtnPressedMainColor2, BtnPressedBorderColor, BtnPressedTextColor
     ; (Removed: local MyButtonDesign)
     MyButtonDesign := {}
     MyButtonDesign.All := {}
@@ -285,13 +328,13 @@ HBCustomButton(){
     MyButtonDesign.All.W := 60 , MyButtonDesign.All.H := 24 , MyButtonDesign.All.Text := "Nexus" , MyButtonDesign.All.BackgroundColor := bgColor
     ;********************************
     ;Default
-    MyButtonDesign.Default.W := 60 , MyButtonDesign.Default.H := 24 , MyButtonDesign.Default.Text := "Nexus" , MyButtonDesign.Default.Font := "Arial" , MyButtonDesign.Default.FontOptions := " Bold Center vCenter " , MyButtonDesign.Default.FontSize := "12" , MyButtonDesign.Default.H := "0x0002112F" , MyButtonDesign.Default.TextBottomColor2 := "0x0002112F" , MyButtonDesign.Default.TextTopColor1 := ButtonTextColor , MyButtonDesign.Default.TextTopColor2 := "0xFFFFFFFF" , MyButtonDesign.Default.TextOffsetX := "0" , MyButtonDesign.Default.TextOffsetY := "0" , MyButtonDesign.Default.TextOffsetW := "0" , MyButtonDesign.Default.TextOffsetH := "0" , MyButtonDesign.Default.BackgroundColor := bgColor , MyButtonDesign.Default.ButtonOuterBorderColor := "0xFF161B1F" , MyButtonDesign.Default.ButtonCenterBorderColor := "0xFF262B2F" , MyButtonDesign.Default.ButtonInnerBorderColor1 := "0xFF3F444A" , MyButtonDesign.Default.ButtonInnerBorderColor2 := "0xFF24292D" , MyButtonDesign.Default.ButtonMainColor1 := "0xFF272C32" , MyButtonDesign.Default.ButtonMainColor2 := "0xFF272C32" , MyButtonDesign.Default.ButtonAddGlossy := "1" , MyButtonDesign.Default.GlossTopColor := "0x11FFFFFF" , MyButtonDesign.Default.GlossTopAccentColor := "05FFFFFF" , MyButtonDesign.Default.GlossBottomColor := "33000000"
+    MyButtonDesign.Default.W := 60 , MyButtonDesign.Default.H := 24 , MyButtonDesign.Default.Text := "Nexus" , MyButtonDesign.Default.Font := "Arial" , MyButtonDesign.Default.FontOptions := " Bold Center vCenter " , MyButtonDesign.Default.FontSize := "12" , MyButtonDesign.Default.H := "0x0002112F" , MyButtonDesign.Default.TextBottomColor2 := "0x0002112F" , MyButtonDesign.Default.TextTopColor1 := BtnDefaultTextColor , MyButtonDesign.Default.TextTopColor2 := "0xFFFFFFFF" , MyButtonDesign.Default.TextOffsetX := "0" , MyButtonDesign.Default.TextOffsetY := "0" , MyButtonDesign.Default.TextOffsetW := "0" , MyButtonDesign.Default.TextOffsetH := "0" , MyButtonDesign.Default.BackgroundColor := bgColor , MyButtonDesign.Default.ButtonOuterBorderColor := BtnDefaultBorderColor , MyButtonDesign.Default.ButtonCenterBorderColor := "0xFF262B2F" , MyButtonDesign.Default.ButtonInnerBorderColor1 := "0xFF3F444A" , MyButtonDesign.Default.ButtonInnerBorderColor2 := "0xFF24292D" , MyButtonDesign.Default.ButtonMainColor1 := BtnDefaultMainColor1 , MyButtonDesign.Default.ButtonMainColor2 := BtnDefaultMainColor2 , MyButtonDesign.Default.ButtonAddGlossy := "1" , MyButtonDesign.Default.GlossTopColor := "0x11FFFFFF" , MyButtonDesign.Default.GlossTopAccentColor := "05FFFFFF" , MyButtonDesign.Default.GlossBottomColor := "33000000"
     ;********************************
     ;Hover
-    MyButtonDesign.Hover.W := 60 , MyButtonDesign.Hover.H := 24 , MyButtonDesign.Hover.Text := "Nexus" , MyButtonDesign.Hover.Font := "Arial" , MyButtonDesign.Hover.FontOptions := " Bold Center vCenter " , MyButtonDesign.Hover.FontSize := "12" , MyButtonDesign.Hover.H := "0x0002112F" , MyButtonDesign.Hover.TextBottomColor2 := "0x0002112F" , MyButtonDesign.Hover.TextTopColor1 := ButtonTextColor , MyButtonDesign.Hover.TextTopColor2 := "0xFFFFFFFF" , MyButtonDesign.Hover.TextOffsetX := "0" , MyButtonDesign.Hover.TextOffsetY := "0" , MyButtonDesign.Hover.TextOffsetW := "0" , MyButtonDesign.Hover.TextOffsetH := "0" , MyButtonDesign.Hover.BackgroundColor := bgColor , MyButtonDesign.Hover.ButtonOuterBorderColor := "0xFF161B1F" , MyButtonDesign.Hover.ButtonCenterBorderColor := "0xFF262B2F" , MyButtonDesign.Hover.ButtonInnerBorderColor1 := "0xFF3F444A" , MyButtonDesign.Hover.ButtonInnerBorderColor2 := "0xFF24292D" , MyButtonDesign.Hover.ButtonMainColor1 := "0xFF373C42" , MyButtonDesign.Hover.ButtonMainColor2 := "0xFF373C42" , MyButtonDesign.Hover.ButtonAddGlossy := "1" , MyButtonDesign.Hover.GlossTopColor := "0x11FFFFFF" , MyButtonDesign.Hover.GlossTopAccentColor := "05FFFFFF" , MyButtonDesign.Hover.GlossBottomColor := "33000000"
+    MyButtonDesign.Hover.W := 60 , MyButtonDesign.Hover.H := 24 , MyButtonDesign.Hover.Text := "Nexus" , MyButtonDesign.Hover.Font := "Arial" , MyButtonDesign.Hover.FontOptions := " Bold Center vCenter " , MyButtonDesign.Hover.FontSize := "12" , MyButtonDesign.Hover.H := "0x0002112F" , MyButtonDesign.Hover.TextBottomColor2 := "0x0002112F" , MyButtonDesign.Hover.TextTopColor1 := BtnHoverTextColor , MyButtonDesign.Hover.TextTopColor2 := "0xFFFFFFFF" , MyButtonDesign.Hover.TextOffsetX := "0" , MyButtonDesign.Hover.TextOffsetY := "0" , MyButtonDesign.Hover.TextOffsetW := "0" , MyButtonDesign.Hover.TextOffsetH := "0" , MyButtonDesign.Hover.BackgroundColor := bgColor , MyButtonDesign.Hover.ButtonOuterBorderColor := BtnHoverBorderColor , MyButtonDesign.Hover.ButtonCenterBorderColor := "0xFF262B2F" , MyButtonDesign.Hover.ButtonInnerBorderColor1 := "0xFF3F444A" , MyButtonDesign.Hover.ButtonInnerBorderColor2 := "0xFF24292D" , MyButtonDesign.Hover.ButtonMainColor1 := BtnHoverMainColor1 , MyButtonDesign.Hover.ButtonMainColor2 := BtnHoverMainColor2 , MyButtonDesign.Hover.ButtonAddGlossy := "1" , MyButtonDesign.Hover.GlossTopColor := "0x11FFFFFF" , MyButtonDesign.Hover.GlossTopAccentColor := "05FFFFFF" , MyButtonDesign.Hover.GlossBottomColor := "33000000"
     ;********************************
     ;Pressed
-    MyButtonDesign.Pressed.W := 60 , MyButtonDesign.Pressed.H := 24 , MyButtonDesign.Pressed.Text := "Nexus" , MyButtonDesign.Pressed.Font := "Arial" , MyButtonDesign.Pressed.FontOptions := " Bold Center vCenter " , MyButtonDesign.Pressed.FontSize := "12" , MyButtonDesign.Pressed.H := "0x0002112F" , MyButtonDesign.Pressed.TextBottomColor2 := "0x0002112F" , MyButtonDesign.Pressed.TextTopColor1 := ButtonTextColor , MyButtonDesign.Pressed.TextTopColor2 := "0xFFFFFFFF" , MyButtonDesign.Pressed.TextOffsetX := "0" , MyButtonDesign.Pressed.TextOffsetY := "0" , MyButtonDesign.Pressed.TextOffsetW := "0" , MyButtonDesign.Pressed.TextOffsetH := "0" , MyButtonDesign.Pressed.BackgroundColor := bgColor , MyButtonDesign.Pressed.ButtonOuterBorderColor := "0xFF62666a" , MyButtonDesign.Pressed.ButtonCenterBorderColor := "0xFF262B2F" , MyButtonDesign.Pressed.ButtonInnerBorderColor1 := "0xFF151A20" , MyButtonDesign.Pressed.ButtonInnerBorderColor2 := "0xFF151A20" , MyButtonDesign.Pressed.ButtonMainColor1 := "0xFF12161a" , MyButtonDesign.Pressed.ButtonMainColor2 := "0xFF33383E" , MyButtonDesign.Pressed.ButtonAddGlossy := "0" , MyButtonDesign.Pressed.GlossTopColor := "0x11FFFFFF" , MyButtonDesign.Pressed.GlossTopAccentColor := "05FFFFFF" , MyButtonDesign.Pressed.GlossBottomColor := "33000000"
+    MyButtonDesign.Pressed.W := 60 , MyButtonDesign.Pressed.H := 24 , MyButtonDesign.Pressed.Text := "Nexus" , MyButtonDesign.Pressed.Font := "Arial" , MyButtonDesign.Pressed.FontOptions := " Bold Center vCenter " , MyButtonDesign.Pressed.FontSize := "12" , MyButtonDesign.Pressed.H := "0x0002112F" , MyButtonDesign.Pressed.TextBottomColor2 := "0x0002112F" , MyButtonDesign.Pressed.TextTopColor1 := BtnPressedTextColor , MyButtonDesign.Pressed.TextTopColor2 := "0xFFFFFFFF" , MyButtonDesign.Pressed.TextOffsetX := "0" , MyButtonDesign.Pressed.TextOffsetY := "0" , MyButtonDesign.Pressed.TextOffsetW := "0" , MyButtonDesign.Pressed.TextOffsetH := "0" , MyButtonDesign.Pressed.BackgroundColor := bgColor , MyButtonDesign.Pressed.ButtonOuterBorderColor := BtnPressedBorderColor , MyButtonDesign.Pressed.ButtonCenterBorderColor := "0xFF262B2F" , MyButtonDesign.Pressed.ButtonInnerBorderColor1 := "0xFF151A20" , MyButtonDesign.Pressed.ButtonInnerBorderColor2 := "0xFF151A20" , MyButtonDesign.Pressed.ButtonMainColor1 := BtnPressedMainColor1 , MyButtonDesign.Pressed.ButtonMainColor2 := BtnPressedMainColor2 , MyButtonDesign.Pressed.ButtonAddGlossy := "0" , MyButtonDesign.Pressed.GlossTopColor := "0x11FFFFFF" , MyButtonDesign.Pressed.GlossTopAccentColor := "05FFFFFF" , MyButtonDesign.Pressed.GlossBottomColor := "33000000"
     ;********************************
 
     return MyButtonDesign
@@ -436,7 +479,7 @@ ActivateNexusWindow(winName) {
 }
 
 ToggleActBarVisibility:
-    global SettingsGuiVisible, ActBarVisible, thumbnailsVisible, ActBarHwnd, ActBarHideBtn, ActBarMinBtn
+    global SettingsGuiVisible, ActBarVisible, thumbnailsVisible, ActBarHwnd, ActBarHideBtn, ActBarMinBtn, BarBackgroundColor
 
     if (SettingsGuiVisible) {
         Gui, Settings:Destroy
@@ -444,6 +487,7 @@ ToggleActBarVisibility:
     }
     ActBarVisible := !ActBarVisible
     If (ActBarVisible) {
+        WinSet, TransColor, Off, ahk_id %ActBarHwnd%
         Gui, ActBar:Show, x0 y794 w1028 h30
         if (ActBarMinBtn)
             GuiControl, ActBar:Hide, % ActBarMinBtn
@@ -453,13 +497,14 @@ ToggleActBarVisibility:
         if (thumbnailsVisible) {
             Gosub, HideThumbnails
         }
+        WinSet, TransColor, %BarBackgroundColor%, ahk_id %ActBarHwnd%
         Gui, ActBar:Show, x0 y794 w30 h30
         if (ActBarHideBtn)
             GuiControl, ActBar:Hide, % ActBarHideBtn
         if (!ActBarMinBtn) {
-            Theme1 := HBCustomButton()
+            Theme1 := HBcustomButton()
             GuiButtonType1.SetSessionDefaults( Theme1.All , Theme1.Default , Theme1.Hover , Theme1.Pressed )
-            ActBarMinBtn := New HButton( { Owner: ActBarHwnd , X: 5 , Y: 3 , W: 20 , H: 24 , Text: "[-]" , Label: "ToggleActBarVisibility" } )
+            ActBarMinBtn := New HButton( { Owner: ActBarHwnd , X: 0 , Y: 0 , W: 30 , H: 30 , Text: "[-]" , Label: "ToggleActBarVisibility" } )
         } else {
             GuiControl, ActBar:Show, % ActBarMinBtn
         }
@@ -764,19 +809,21 @@ ToggleBarVisibility:
 
     TopBarVisible := !TopBarVisible
     If (TopBarVisible) {
+        WinSet, TransColor, Off, ahk_id %TopBarHwnd%
         Gui, TopBar:Show, x0 y0 w1027 h27
         if (MinBtn)
             GuiControl, TopBar:Hide, % MinBtn
         if (TopBarHideBtn)
             GuiControl, TopBar:Show, % TopBarHideBtn
     } Else {
+        WinSet, TransColor, %BarBackgroundColor%, ahk_id %TopBarHwnd%
         Gui, TopBar:Show, x0 y0 w30 h27
         if (TopBarHideBtn)
             GuiControl, TopBar:Hide, % TopBarHideBtn
         if (!MinBtn) {
-            Theme1 := HBCustomButton()
+            Theme1 := HBcustomButton()
             GuiButtonType1.SetSessionDefaults( Theme1.All , Theme1.Default , Theme1.Hover , Theme1.Pressed )
-            MinBtn := New HButton( { Owner: TopBarHwnd , X: 5 , Y: 3 , W: 20 , H: 24 , Text: "[-]" , Label: "ToggleBarVisibility" } )
+            MinBtn := New HButton( { Owner: TopBarHwnd , X: 0 , Y: 0 , W: 30 , H: 27 , Text: "[-]" , Label: "ToggleBarVisibility" } )
         } else {
             GuiControl, TopBar:Show, % MinBtn
         }
@@ -4472,28 +4519,123 @@ OpenSettings:
 
     ; Appearance Settings GroupBox
     Gui, Settings:Font, s8 cWhite, Segoe UI
-    Gui, Settings:Add, GroupBox, x220 y190 w210 h155, Appearance
-
-    ; Button Color
-    Gui, Settings:Font, s8 cWhite, Segoe UI
-    Gui, Settings:Add, Text, x230 y210 w80 h20, Button Color:
-    Gui, Settings:Font, s9 cWhite, Segoe UI
-    Gui, Settings:Add, DropDownList, x230 y225 w130 h100 vButtonColorChoice, Green||Lime|Red|Blue|Yellow|Cyan|Magenta|White|Orange|Purple|Pink|Silver
-    New HButton( { Owner: SettingsHwnd , X: 365 , Y: 225 , W: 55 , H: 24 , Text: "Apply" , Label: "ApplyButtonColor" } )
+    Gui, Settings:Add, GroupBox, x220 y190 w210 h110, Appearance
 
     ; Logo Color
     Gui, Settings:Font, s8 cWhite, Segoe UI
-    Gui, Settings:Add, Text, x230 y255 w80 h20, Logo Color:
-    Gui, Settings:Font, s9 cWhite, Segoe UI
-    Gui, Settings:Add, DropDownList, x230 y270 w130 h100 vLogoColorChoice, Gray||Green|Lime|Red|Blue|Yellow|Cyan|Magenta|White|Orange|Purple|Pink|Silver
-    New HButton( { Owner: SettingsHwnd , X: 365 , Y: 270 , W: 55 , H: 24 , Text: "Apply" , Label: "ApplyLogoColor" } )
+    Gui, Settings:Add, Text, x230 y210 w80 h20, Logo Color:
+    Gui, Settings:Font, s8 cBlack, Segoe UI
+    Gui, Settings:Add, Edit, x230 y225 w80 h24 vLogoColorHex, %LogoTextColor%
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    New HButton( { Owner: SettingsHwnd , X: 315 , Y: 225 , W: 25 , H: 24 , Text: "..." , Label: "PickLogoColor" } )
+    New HButton( { Owner: SettingsHwnd , X: 365 , Y: 225 , W: 55 , H: 24 , Text: "Apply" , Label: "ApplyLogoColor" } )
 
     ; Bar Color
     Gui, Settings:Font, s8 cWhite, Segoe UI
-    Gui, Settings:Add, Text, x230 y300 w80 h20, Bar Color:
-    Gui, Settings:Font, s9 cWhite, Segoe UI
-    Gui, Settings:Add, DropDownList, x230 y315 w130 h100 vBarColorChoice, Dark Gray||Black|Charcoal|Slate Gray|Dark Blue|Navy Blue|Midnight Blue
-    New HButton( { Owner: SettingsHwnd , X: 365 , Y: 315 , W: 55 , H: 24 , Text: "Apply" , Label: "ApplyBarColor" } )
+    Gui, Settings:Add, Text, x230 y255 w80 h20, Bar Color:
+    barHexColor := SubStr(BarBackgroundColor, 3)
+    Gui, Settings:Font, s8 cBlack, Segoe UI
+    Gui, Settings:Add, Edit, x230 y270 w80 h24 vBarColorHex, %barHexColor%
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    New HButton( { Owner: SettingsHwnd , X: 315 , Y: 270 , W: 25 , H: 24 , Text: "..." , Label: "PickBarColor" } )
+    New HButton( { Owner: SettingsHwnd , X: 365 , Y: 270 , W: 55 , H: 24 , Text: "Apply" , Label: "ApplyBarColor" } )
+
+    ; ===== BUTTON CUSTOMIZATION COLUMN =====
+
+    ; Button Colors GroupBox
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    Gui, Settings:Add, GroupBox, x435 y5 w210 h365, Button Customization
+
+    ; Default State
+    Gui, Settings:Font, s9 cLime Bold, Segoe UI
+    Gui, Settings:Add, Text, x445 y25 w190 h20, Default State:
+    
+    defaultMainHex := SubStr(BtnDefaultMainColor1, 3)
+    defaultBorderHex := SubStr(BtnDefaultBorderColor, 3)
+    defaultTextHex := SubStr(BtnDefaultTextColor, 3)
+    
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    Gui, Settings:Add, Text, x445 y50 w100 h15, Main Color:
+    Gui, Settings:Font, s8 cBlack, Segoe UI
+    Gui, Settings:Add, Edit, x545 y47 w50 h20 vBtnDefaultMainColor, %defaultMainHex%
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    New HButton( { Owner: SettingsHwnd , X: 600 , Y: 47 , W: 20 , H: 20 , Text: "..." , Label: "PickDefaultMain" } )
+    
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    Gui, Settings:Add, Text, x445 y75 w100 h15, Border Color:
+    Gui, Settings:Font, s8 cBlack, Segoe UI
+    Gui, Settings:Add, Edit, x545 y72 w50 h20 vBtnDefaultBorder, %defaultBorderHex%
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    New HButton( { Owner: SettingsHwnd , X: 600 , Y: 72 , W: 20 , H: 20 , Text: "..." , Label: "PickDefaultBorder" } )
+    
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    Gui, Settings:Add, Text, x445 y100 w100 h15, Text Color:
+    Gui, Settings:Font, s8 cBlack, Segoe UI
+    Gui, Settings:Add, Edit, x545 y97 w50 h20 vBtnDefaultText, %defaultTextHex%
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    New HButton( { Owner: SettingsHwnd , X: 600 , Y: 97 , W: 20 , H: 20 , Text: "..." , Label: "PickDefaultText" } )
+
+    ; Hover State
+    Gui, Settings:Font, s9 cYellow Bold, Segoe UI
+    Gui, Settings:Add, Text, x445 y130 w190 h20, Hover State:
+    
+    hoverMainHex := SubStr(BtnHoverMainColor1, 3)
+    hoverBorderHex := SubStr(BtnHoverBorderColor, 3)
+    hoverTextHex := SubStr(BtnHoverTextColor, 3)
+    
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    Gui, Settings:Add, Text, x445 y155 w100 h15, Main Color:
+    Gui, Settings:Font, s8 cBlack, Segoe UI
+    Gui, Settings:Add, Edit, x545 y152 w50 h20 vBtnHoverMainColor, %hoverMainHex%
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    New HButton( { Owner: SettingsHwnd , X: 600 , Y: 152 , W: 20 , H: 20 , Text: "..." , Label: "PickHoverMain" } )
+    
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    Gui, Settings:Add, Text, x445 y180 w100 h15, Border Color:
+    Gui, Settings:Font, s8 cBlack, Segoe UI
+    Gui, Settings:Add, Edit, x545 y177 w50 h20 vBtnHoverBorder, %hoverBorderHex%
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    New HButton( { Owner: SettingsHwnd , X: 600 , Y: 177 , W: 20 , H: 20 , Text: "..." , Label: "PickHoverBorder" } )
+    
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    Gui, Settings:Add, Text, x445 y205 w100 h15, Text Color:
+    Gui, Settings:Font, s8 cBlack, Segoe UI
+    Gui, Settings:Add, Edit, x545 y202 w50 h20 vBtnHoverText, %hoverTextHex%
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    New HButton( { Owner: SettingsHwnd , X: 600 , Y: 202 , W: 20 , H: 20 , Text: "..." , Label: "PickHoverText" } )
+
+    ; Pressed State
+    Gui, Settings:Font, s9 cRed Bold, Segoe UI
+    Gui, Settings:Add, Text, x445 y235 w190 h20, Pressed State:
+    
+    pressedMainHex := SubStr(BtnPressedMainColor1, 3)
+    pressedBorderHex := SubStr(BtnPressedBorderColor, 3)
+    pressedTextHex := SubStr(BtnPressedTextColor, 3)
+    
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    Gui, Settings:Add, Text, x445 y260 w100 h15, Main Color:
+    Gui, Settings:Font, s8 cBlack, Segoe UI
+    Gui, Settings:Add, Edit, x545 y257 w50 h20 vBtnPressedMainColor, %pressedMainHex%
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    New HButton( { Owner: SettingsHwnd , X: 600 , Y: 257 , W: 20 , H: 20 , Text: "..." , Label: "PickPressedMain" } )
+    
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    Gui, Settings:Add, Text, x445 y285 w100 h15, Border Color:
+    Gui, Settings:Font, s8 cBlack, Segoe UI
+    Gui, Settings:Add, Edit, x545 y282 w50 h20 vBtnPressedBorder, %pressedBorderHex%
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    New HButton( { Owner: SettingsHwnd , X: 600 , Y: 282 , W: 20 , H: 20 , Text: "..." , Label: "PickPressedBorder" } )
+    
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    Gui, Settings:Add, Text, x445 y310 w100 h15, Text Color:
+    Gui, Settings:Font, s8 cBlack, Segoe UI
+    Gui, Settings:Add, Edit, x545 y307 w50 h20 vBtnPressedText, %pressedTextHex%
+    Gui, Settings:Font, s8 cWhite, Segoe UI
+    New HButton( { Owner: SettingsHwnd , X: 600 , Y: 307 , W: 20 , H: 20 , Text: "..." , Label: "PickPressedText" } )
+
+    ; Apply and Reset Buttons
+    New HButton( { Owner: SettingsHwnd , X: 445 , Y: 340 , W: 95 , H: 24 , Text: "Apply Colors" , Label: "ApplyCustomButtonColors" } )
+    New HButton( { Owner: SettingsHwnd , X: 545 , Y: 340 , W: 90 , H: 24 , Text: "Reset Defaults" , Label: "ResetButtonDefaults" } )
 
     ; Show GUI
     global actBarGuiHandle
@@ -4501,8 +4643,8 @@ OpenSettings:
     settingsOffsetX := -295
     settingsOffsetY := 0
 
-    settingsW := 440
-    settingsH := 350
+    settingsW := 655
+    settingsH := 380
     settingsX := actBarX + (actBarW // 2) - (settingsW // 2) + settingsOffsetX
     settingsY := actBarY - settingsH + settingsOffsetY
     if (settingsX < 0)
@@ -4651,28 +4793,48 @@ GetColorHex(colorName) {
 return colors.HasKey(colorName) ? colors[colorName] : "0xFF00FF00"
 }
 
+PickButtonColor:
+    PickColorForControl("ButtonColorHex")
+return
+
 ApplyButtonColor:
-    global ButtonTextColor
+    global ButtonTextColor, SettingsGuiVisible
     Gui, Settings:Submit, NoHide
-    ButtonTextColor := GetColorHex(ButtonColorChoice)
+    if (ButtonColorHex != "")
+        ButtonTextColor := "0xFF" . ButtonColorHex
     SaveSettingsToFile()
-    MsgBox, Button color saved! Please restart the script to apply the new button color.`n`n(Button colors require restart due to custom rendering)
+    
+    ; Destroy and recreate GUIs
+    Gui, Settings:Destroy
+    SettingsGuiVisible := false
+    Gui, TopBar:Destroy
+    Gui, ActBar:Destroy
+    CreateTopBarGUI()
+    CreateActivationBar()
+    
+    MsgBox, Button color applied!
+return
+
+PickLogoColor:
+    PickColorForControlName("LogoColorHex")
 return
 
 ApplyLogoColor:
-    global LogoTextColor
+    global LogoTextColor, SettingsGuiVisible
     Gui, Settings:Submit, NoHide
-    LogoTextColor := LogoColorChoice
+    if (LogoColorHex != "")
+        LogoTextColor := LogoColorHex
     SaveSettingsToFile()
-
-    ; Apply color immediately to logo text and Nexus Master text
-    colorHex := GetTextColorHex(LogoTextColor)
-    Gui, ActBar:Font, s7 c%colorHex%, Segoe UI
-    GuiControl, ActBar:Font, LogoText
-    Gui, TopBar:Font, s9 c%colorHex% Bold, Segoe UI
-    GuiControl, TopBar:Font, TopBarLogoText
-
-    MsgBox, Logo color changed!
+    
+    ; Destroy and recreate GUIs
+    Gui, Settings:Destroy
+    SettingsGuiVisible := false
+    Gui, TopBar:Destroy
+    Gui, ActBar:Destroy
+    CreateTopBarGUI()
+    CreateActivationBar()
+    
+    MsgBox, Logo color applied!
 return
 
 GetTextColorHex(colorName) {
@@ -4701,13 +4863,240 @@ GetBarColorHex(colorName) {
 return colors.HasKey(colorName) ? colors[colorName] : "0x1E1E1E"
 }
 
-ApplyBarColor:
-    global BarBackgroundColor
-    Gui, Settings:Submit, NoHide
-    BarBackgroundColor := GetBarColorHex(BarColorChoice)
-    SaveSettingsToFile()
-    MsgBox, Bar color saved! Please restart the script to apply the new bar color.`n`n(Bar colors require restart due to GUI rendering)
+PickBarColor:
+    PickColorForControl("BarColorHex")
 return
+
+ApplyBarColor:
+    global BarBackgroundColor, SettingsGuiVisible
+    Gui, Settings:Submit, NoHide
+    if (BarColorHex != "")
+        BarBackgroundColor := "0x" . BarColorHex
+    SaveSettingsToFile()
+    
+    ; Destroy and recreate GUIs
+    Gui, Settings:Destroy
+    SettingsGuiVisible := false
+    Gui, TopBar:Destroy
+    Gui, ActBar:Destroy
+    CreateTopBarGUI()
+    CreateActivationBar()
+    
+    MsgBox, Bar color applied!
+return
+
+ApplyCustomButtonColors:
+    global BtnDefaultMainColor1, BtnDefaultMainColor2, BtnDefaultBorderColor, BtnDefaultTextColor
+    global BtnHoverMainColor1, BtnHoverMainColor2, BtnHoverBorderColor, BtnHoverTextColor
+    global BtnPressedMainColor1, BtnPressedMainColor2, BtnPressedBorderColor, BtnPressedTextColor
+    global SettingsGuiVisible
+    
+    Gui, Settings:Submit, NoHide
+    
+    ; Update global variables from controls
+    if (BtnDefaultMainColor != "") {
+        BtnDefaultMainColor1 := "0xFF" . BtnDefaultMainColor
+        BtnDefaultMainColor2 := "0xFF" . BtnDefaultMainColor
+    }
+    if (BtnDefaultBorder != "")
+        BtnDefaultBorderColor := "0xFF" . BtnDefaultBorder
+    if (BtnDefaultText != "")
+        BtnDefaultTextColor := "0xFF" . BtnDefaultText
+    
+    if (BtnHoverMainColor != "") {
+        BtnHoverMainColor1 := "0xFF" . BtnHoverMainColor
+        BtnHoverMainColor2 := "0xFF" . BtnHoverMainColor
+    }
+    if (BtnHoverBorder != "")
+        BtnHoverBorderColor := "0xFF" . BtnHoverBorder
+    if (BtnHoverText != "")
+        BtnHoverTextColor := "0xFF" . BtnHoverText
+    
+    if (BtnPressedMainColor != "") {
+        BtnPressedMainColor1 := "0xFF" . BtnPressedMainColor
+        BtnPressedMainColor2 := "0xFF" . BtnPressedMainColor
+    }
+    if (BtnPressedBorder != "")
+        BtnPressedBorderColor := "0xFF" . BtnPressedBorder
+    if (BtnPressedText != "")
+        BtnPressedTextColor := "0xFF" . BtnPressedText
+    
+    ; Save to file
+    SaveSettingsToFile()
+    
+    ; Destroy and recreate GUIs
+    Gui, Settings:Destroy
+    SettingsGuiVisible := false
+    Gui, TopBar:Destroy
+    Gui, ActBar:Destroy
+    CreateTopBarGUI()
+    CreateActivationBar()
+    
+    MsgBox, Button colors applied!
+return
+
+ResetButtonDefaults:
+    global BtnDefaultMainColor1, BtnDefaultMainColor2, BtnDefaultBorderColor, BtnDefaultTextColor
+    global BtnHoverMainColor1, BtnHoverMainColor2, BtnHoverBorderColor, BtnHoverTextColor
+    global BtnPressedMainColor1, BtnPressedMainColor2, BtnPressedBorderColor, BtnPressedTextColor
+    global SettingsGuiVisible
+    
+    ; Reset to default values
+    BtnDefaultMainColor1 := "0xFF272C32"
+    BtnDefaultMainColor2 := "0xFF272C32"
+    BtnDefaultBorderColor := "0xFF161B1F"
+    BtnDefaultTextColor := "0xFF00FF00"
+    
+    BtnHoverMainColor1 := "0xFF373C42"
+    BtnHoverMainColor2 := "0xFF373C42"
+    BtnHoverBorderColor := "0xFF161B1F"
+    BtnHoverTextColor := "0xFF00FF00"
+    
+    BtnPressedMainColor1 := "0xFF12161a"
+    BtnPressedMainColor2 := "0xFF33383E"
+    BtnPressedBorderColor := "0xFF62666a"
+    BtnPressedTextColor := "0xFF00FF00"
+    
+    SaveSettingsToFile()
+    
+    ; Destroy and recreate GUIs
+    Gui, Settings:Destroy
+    SettingsGuiVisible := false
+    Gui, TopBar:Destroy
+    Gui, ActBar:Destroy
+    CreateTopBarGUI()
+    CreateActivationBar()
+    
+    MsgBox, Button colors reset to defaults!
+return
+
+PickDefaultMain:
+    PickColorForControl("BtnDefaultMainColor")
+return
+
+PickDefaultBorder:
+    PickColorForControl("BtnDefaultBorder")
+return
+
+PickDefaultText:
+    PickColorForControl("BtnDefaultText")
+return
+
+PickHoverMain:
+    PickColorForControl("BtnHoverMainColor")
+return
+
+PickHoverBorder:
+    PickColorForControl("BtnHoverBorder")
+return
+
+PickHoverText:
+    PickColorForControl("BtnHoverText")
+return
+
+PickPressedMain:
+    PickColorForControl("BtnPressedMainColor")
+return
+
+PickPressedBorder:
+    PickColorForControl("BtnPressedBorder")
+return
+
+PickPressedText:
+    PickColorForControl("BtnPressedText")
+return
+
+PickColorForControl(controlName) {
+    global BtnDefaultMainColor1, BtnDefaultBorderColor, BtnDefaultTextColor
+    global BtnHoverMainColor1, BtnHoverBorderColor, BtnHoverTextColor
+    global BtnPressedMainColor1, BtnPressedBorderColor, BtnPressedTextColor
+    
+    ; Get current value from control
+    GuiControlGet, currentHex, Settings:, %controlName%
+    
+    ; Convert hex to BGR for ColorPicker
+    if (currentHex != "" && StrLen(currentHex) = 6) {
+        r := "0x" . SubStr(currentHex, 1, 2)
+        g := "0x" . SubStr(currentHex, 3, 2)
+        b := "0x" . SubStr(currentHex, 5, 2)
+        bgrColor := (b << 16) | (g << 8) | r
+    } else {
+        bgrColor := 0x000000
+    }
+    
+    ; Show color picker dialog
+    selectedColor := ChooseColor(bgrColor)
+    
+    if (selectedColor != "") {
+        ; Convert BGR back to RGB hex
+        b := (selectedColor >> 16) & 0xFF
+        g := (selectedColor >> 8) & 0xFF
+        r := selectedColor & 0xFF
+        
+        hexColor := Format("{:02X}{:02X}{:02X}", r, g, b)
+        
+        ; Update the Edit control
+        GuiControl, Settings:, %controlName%, %hexColor%
+    }
+}
+
+PickColorForControlName(controlName) {
+    ; Get current value from control
+    GuiControlGet, currentHex, Settings:, %controlName%
+    
+    ; Convert hex to BGR for ColorPicker
+    if (currentHex != "" && StrLen(currentHex) = 6) {
+        r := "0x" . SubStr(currentHex, 1, 2)
+        g := "0x" . SubStr(currentHex, 3, 2)
+        b := "0x" . SubStr(currentHex, 5, 2)
+        bgrColor := (b << 16) | (g << 8) | r
+    } else {
+        bgrColor := 0x000000
+    }
+    
+    ; Show color picker dialog
+    selectedColor := ChooseColor(bgrColor)
+    
+    if (selectedColor != "") {
+        ; Convert BGR back to RGB hex
+        b := (selectedColor >> 16) & 0xFF
+        g := (selectedColor >> 8) & 0xFF
+        r := selectedColor & 0xFF
+        
+        hexColor := Format("{:02X}{:02X}{:02X}", r, g, b)
+        
+        ; Update the Edit control
+        GuiControl, Settings:, %controlName%, %hexColor%
+    }
+}
+
+ChooseColor(defaultColor := 0x000000) {
+    global CustomColorArray
+    static customColors
+    
+    ; Initialize custom colors array on first run
+    if (!VarSetCapacity(customColors)) {
+        VarSetCapacity(customColors, 64, 0)
+        ; Pre-populate with some common colors
+        Loop, 16
+            NumPut(0xFFFFFF, customColors, (A_Index - 1) * 4, "UInt")
+    }
+    
+    ; Windows Color Picker Dialog
+    VarSetCapacity(CHOOSECOLOR, 36, 0)
+    NumPut(36, CHOOSECOLOR, 0, "UInt")
+    NumPut(defaultColor, CHOOSECOLOR, 12, "UInt")
+    NumPut(0x00000103, CHOOSECOLOR, 20, "UInt") ; CC_RGBINIT | CC_FULLOPEN
+    NumPut(&customColors, CHOOSECOLOR, 16, "UPtr")
+    
+    result := DllCall("comdlg32\ChooseColor", "Ptr", &CHOOSECOLOR)
+    
+    if (result) {
+        return NumGet(CHOOSECOLOR, 12, "UInt")
+    }
+    return ""
+}
+
 ; Gdip standard library v1.45 by tic (Tariq Porter) 07/09/11
 ;
 ;#####################################################################################
