@@ -198,7 +198,7 @@ CreateTopBarGUI() {
 
     ; 8. RAM Status indicator
     Gui, TopBar:Font, s8 cLime Bold, Segoe UI
-    Gui, TopBar:Add, Text, x820 y7 w200 h16 vRAMStatusText,
+    Gui, TopBar:Add, Text, x820 y7 w100 h16 vRAMStatusText,
 
     ; 9. Shutdown Button (far right)
     New HButton( { Owner: TopBarHwnd , X: 975 , Y: 3 , W: 75 , H: 24 , Text: "Shutdown" , Label: "ShutdownAll" } )
