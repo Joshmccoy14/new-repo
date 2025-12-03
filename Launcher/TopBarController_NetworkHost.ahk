@@ -198,7 +198,7 @@ CreateTopBarGUI() {
 
     ; 8. RAM Status indicator
     Gui, TopBar:Font, s8 cLime Bold, Segoe UI
-    Gui, TopBar:Add, Text, x820 y7 w100 h16 vRAMStatusText,
+    Gui, TopBar:Add, Text, x820 y7 w200 h16 vRAMStatusText,
 
     ; 9. Shutdown Button (far right)
     New HButton( { Owner: TopBarHwnd , X: 975 , Y: 3 , W: 75 , H: 24 , Text: "Shutdown" , Label: "ShutdownAll" } )
@@ -1075,20 +1075,12 @@ ClientEvents(sEvent, iSocket = 0, sName = 0, sAddr = 0, sPort = 0, ByRef bData =
         MasterSocket := iSocket
         ConnectedToMaster := true
         
-        ; Send handshake to identify as TopBar
-        handshake := "HANDSHAKE:TOPBAR`n"
-        bufferSize := StrPut(handshake, "CP0")
-        VarSetCapacity(buffer, bufferSize)
-        StrPut(handshake, &buffer, "CP0")
-        AHKsock_Send(iSocket, &buffer, bufferSize - 1)
+        ; Debug logging
+        logFile := A_ScriptDir . "\topbar_debug.log"
+        FileAppend, %A_Now% - ClientEvents: CONNECTED to master. Socket=%iSocket%`n, %logFile%
         
-        ; Request client list from the remote TopBar
-        Sleep, 100
-        requestMsg := "REQUEST_CLIENT_LIST`n"
-        bufferSize2 := StrPut(requestMsg, "CP0")
-        VarSetCapacity(buffer2, bufferSize2)
-        StrPut(requestMsg, &buffer2, "CP0")
-        AHKsock_Send(iSocket, &buffer2, bufferSize2 - 1)
+        ; Use a timer to send handshake after socket is fully ready (like Nexus does)
+        SetTimer, SendTopBarHandshake, -250
         
         Gui, Settings:Font, s8 cLime, Segoe UI
         GuiControl, Settings:Font, ConnectStatusText
@@ -1115,11 +1107,16 @@ ClientEvents(sEvent, iSocket = 0, sName = 0, sAddr = 0, sPort = 0, ByRef bData =
         data := StrReplace(data, "`r", "")
         
         If (data != "") {
+            ; Debug: Log received data
+            logFile := A_ScriptDir . "\topbar_debug.log"
+            FileAppend, %A_Now% - ClientEvents RECEIVED: "%data%"`n, %logFile%
+            
             ; Check if this is a client list message
             If (SubStr(data, 1, 12) = "CLIENT_LIST:") {
                 ; Parse client list: CLIENT_LIST:name1,name2,name3
                 clientListData := SubStr(data, 13)
-                UpdateRemoteClientList(clientListData)
+                FileAppend, %A_Now% - Processing CLIENT_LIST: "%clientListData%"`n, %logFile%
+                UpdateRemoteClientList(clientListData, iSocket)
             }
             ; Check if this is a request for our client list
             Else If (data = "REQUEST_CLIENT_LIST") {
@@ -1143,6 +1140,40 @@ ClientEvents(sEvent, iSocket = 0, sName = 0, sAddr = 0, sPort = 0, ByRef bData =
         }
     }
 }
+
+; ==========================================
+; SEND TOPBAR HANDSHAKE (Timer Label)
+; ==========================================
+SendTopBarHandshake:
+    Global MasterSocket
+    logFile := A_ScriptDir . "\topbar_debug.log"
+    
+    ; Send handshake to identify as TopBar with unique identifier
+    topBarID := A_ComputerName . ":" . A_IPAddress1
+    If (topBarID = ":" || topBarID = "") {
+        topBarID := "TopBar-" . A_TickCount
+    }
+    handshake := "HANDSHAKE:TOPBAR:" . topBarID . "`n"
+    FileAppend, %A_Now% - Sending handshake: "%handshake%"`n, %logFile%
+    
+    bufferSize := StrPut(handshake, "CP0")
+    VarSetCapacity(buffer, bufferSize)
+    StrPut(handshake, &buffer, "CP0")
+    sendResult := AHKsock_Send(MasterSocket, &buffer, bufferSize - 1)
+    FileAppend, %A_Now% - AHKsock_Send result: %sendResult%`n, %logFile%
+    
+    ; Send request for client list
+    Sleep, 100
+    requestMsg := "REQUEST_CLIENT_LIST`n"
+    bufferSize2 := StrPut(requestMsg, "CP0")
+    VarSetCapacity(buffer2, bufferSize2)
+    StrPut(requestMsg, &buffer2, "CP0")
+    AHKsock_Send(MasterSocket, &buffer2, bufferSize2 - 1)
+    
+    ; Send our client list to the master
+    Sleep, 100
+    SendClientListToRemote(MasterSocket)
+Return
 
 ; ==========================================
 ; COMMAND EXECUTION
@@ -1179,10 +1210,20 @@ ShowClientSelector:
     
     Gui, ClientSelector:Add, Text, x10 y10 w200 h20, Select clients to send command:
     
-    ; Add checkbox for each connected client
+    ; Add checkbox for each connected client (local and remote)
     yPos := 35
     clientIndex := 0
+    
+    ; First, add local clients from Clients array (only Nexus clients, skip TopBars)
     For index, socket in Clients {
+        If (ClientInfo.HasKey(socket)) {
+            clientType := ClientInfo[socket].type
+            ; Skip TopBar connections, only show Nexus clients
+            If (clientType = "topbar") {
+                continue
+            }
+        }
+        
         clientIndex++
         If (ClientInfo.HasKey(socket)) {
             clientName := ClientInfo[socket].HasKey("name") ? ClientInfo[socket].name : ""
@@ -1197,6 +1238,22 @@ ShowClientSelector:
         
         Gui, ClientSelector:Add, Checkbox, x10 y%yPos% w200 h20 vClientCheck%clientIndex%, %displayName%
         yPos += 25
+    }
+    
+    ; Then, add remote clients (negative socket IDs in ClientInfo)
+    For socket, info in ClientInfo {
+        If (socket < 0) {  ; Remote client
+            clientIndex++
+            clientName := info.HasKey("name") ? info.name : ""
+            If (clientName != "" && clientName != " ") {
+                displayName := clientName . " [Remote]"
+            } Else {
+                displayName := "Unknown [Remote]"
+            }
+            
+            Gui, ClientSelector:Add, Checkbox, x10 y%yPos% w200 h20 vClientCheck%clientIndex%, %displayName%
+            yPos += 25
+        }
     }
     
     ; Add HButtons below checkboxes
@@ -1222,11 +1279,28 @@ ShowClientSelector:
 Return
 
 ClientSelectorSelectAll:
-    Global Clients
+    Global Clients, ClientInfo
+    
+    ; Count total checkboxes (local Nexus clients + remote clients, skip TopBars)
+    totalClients := 0
+    For index, socket in Clients {
+        If (ClientInfo.HasKey(socket)) {
+            clientType := ClientInfo[socket].type
+            If (clientType = "topbar") {
+                continue
+            }
+        }
+        totalClients++
+    }
+    For socket, info in ClientInfo {
+        If (socket < 0) {  ; Remote client
+            totalClients++
+        }
+    }
     
     ; Check if all are selected
     allSelected := true
-    Loop, % Clients.MaxIndex()
+    Loop, %totalClients%
     {
         GuiControlGet, isChecked, ClientSelector:, ClientCheck%A_Index%
         If (!isChecked) {
@@ -1237,7 +1311,7 @@ ClientSelectorSelectAll:
     
     ; If all selected, deselect all. Otherwise select all
     newState := allSelected ? 0 : 1
-    Loop, % Clients.MaxIndex()
+    Loop, %totalClients%
         GuiControl, ClientSelector:, ClientCheck%A_Index%, %newState%
 Return
 
@@ -1246,10 +1320,20 @@ ClientSelectorSend:
     
     Gui, ClientSelector:Submit, NoHide
     
-    ; Build list of selected clients
+    ; Build list of selected clients (with their display names including [Remote] suffix)
     ClientSelectorList := ""
     clientIndex := 0
+    
+    ; Process local clients (only Nexus clients, skip TopBars)
     For index, socket in Clients {
+        If (ClientInfo.HasKey(socket)) {
+            clientType := ClientInfo[socket].type
+            ; Skip TopBar connections
+            If (clientType = "topbar") {
+                continue
+            }
+        }
+        
         clientIndex++
         GuiControlGet, isChecked, ClientSelector:, ClientCheck%clientIndex%
         
@@ -1260,6 +1344,23 @@ ClientSelectorSend:
                     ClientSelectorList .= clientName . "`n"
                 } Else {
                     ClientSelectorList .= "Unknown`n"
+                }
+            }
+        }
+    }
+    
+    ; Process remote clients
+    For socket, info in ClientInfo {
+        If (socket < 0) {  ; Remote client
+            clientIndex++
+            GuiControlGet, isChecked, ClientSelector:, ClientCheck%clientIndex%
+            
+            If (isChecked) {
+                clientName := info.HasKey("name") ? info.name : ""
+                If (clientName != "" && clientName != " ") {
+                    ClientSelectorList .= clientName . " [Remote]`n"
+                } Else {
+                    ClientSelectorList .= "Unknown [Remote]`n"
                 }
             }
         }
@@ -1410,19 +1511,26 @@ SendNetworkCommand(command) {
     targetSockets := []
     remoteTargets := []
     
+    logFile := A_ScriptDir . "\topbar_debug.log"
+    FileAppend, %A_Now% - SendNetworkCommand: Processing selected clients`n, %logFile%
+    
     For idx, selectedName in selectedNames {
+        FileAppend, %A_Now% -   Selected: "%selectedName%"`n, %logFile%
         ; Check if this is a remote client
         If (InStr(selectedName, "[Remote]")) {
             ; Extract client name (remove " [Remote]" suffix)
             clientName := StrReplace(selectedName, " [Remote]", "")
+            FileAppend, %A_Now% -     Identified as REMOTE client: "%clientName%"`n, %logFile%
             remoteTargets.Push(clientName)
         } Else {
             ; Local client - extract name and find socket
             clientName := StrReplace(selectedName, " [Local]", "")
+            FileAppend, %A_Now% -     Identified as LOCAL client: "%clientName%"`n, %logFile%
             For index, socket in Clients {
                 If (ClientInfo.HasKey(socket)) {
                     socketClientName := ClientInfo[socket].HasKey("name") ? ClientInfo[socket].name : ""
                     If (socketClientName = clientName) {
+                        FileAppend, %A_Now% -     Found local socket: %socket%`n, %logFile%
                         targetSockets.Push(socket)
                         Break
                     }
@@ -1433,10 +1541,13 @@ SendNetworkCommand(command) {
     
     ; Send command to local sockets
     If (targetSockets.MaxIndex() != "" && targetSockets.MaxIndex() > 0) {
+        localCount := targetSockets.MaxIndex()
+        FileAppend, %A_Now% - Sending to %localCount% local sockets`n, %logFile%
         message := command . "`n"
         bufferSize := StrPut(message, "CP0")
         
         For index, socket in targetSockets {
+            FileAppend, %A_Now% -   Sending "%command%" to local socket %socket%`n, %logFile%
             VarSetCapacity(msgBuffer, bufferSize)
             StrPut(message, &msgBuffer, "CP0")
             AHKsock_Send(socket, &msgBuffer, bufferSize - 1)
@@ -1445,6 +1556,8 @@ SendNetworkCommand(command) {
     
     ; Send commands to remote clients via connected TopBar
     If (remoteTargets.MaxIndex() != "" && remoteTargets.MaxIndex() > 0) {
+        remoteCount := remoteTargets.MaxIndex()
+        FileAppend, %A_Now% - Sending to %remoteCount% remote clients via SendCommandToRemoteClients`n, %logFile%
         SendCommandToRemoteClients(remoteTargets, command)
     }
 }
@@ -1461,26 +1574,50 @@ ExecuteBuffSequential() {
     }
     
     ; Build array of selected client names and their sockets
+    ; Separate local and remote clients
     targetSockets := []
+    remoteTargets := []
+    
     Loop, Parse, selectedItems, `n
     {
         If (A_LoopField != "") {
             selectedName := A_LoopField
-            ; Find socket for this client name
-            For index, socket in Clients {
-                If (ClientInfo.HasKey(socket)) {
-                    clientName := ClientInfo[socket].HasKey("name") ? ClientInfo[socket].name : ""
-                    If (clientName != "" && (InStr(selectedName, clientName) || selectedName = clientName)) {
-                        targetSockets.Push(socket)
-                        Break
+            
+            ; Check if this is a remote client
+            If (InStr(selectedName, "[Remote]")) {
+                ; Extract client name (remove " [Remote]" suffix)
+                clientName := StrReplace(selectedName, " [Remote]", "")
+                remoteTargets.Push(clientName)
+            } Else {
+                ; Local client - extract name and find socket
+                clientName := StrReplace(selectedName, " [Local]", "")
+                For index, socket in Clients {
+                    If (ClientInfo.HasKey(socket)) {
+                        socketClientName := ClientInfo[socket].HasKey("name") ? ClientInfo[socket].name : ""
+                        If (socketClientName = clientName) {
+                            targetSockets.Push(socket)
+                            Break
+                        }
                     }
                 }
             }
         }
     }
 
-    If (targetSockets.MaxIndex() = "" || targetSockets.MaxIndex() = 0) {
-        MsgBox, Could not find sockets for selected clients
+    localCount := targetSockets.MaxIndex()
+    remoteCount := remoteTargets.MaxIndex()
+    If (localCount = "" || localCount = 0) {
+        localCount := 0
+    }
+    If (remoteCount = "" || remoteCount = 0) {
+        remoteCount := 0
+    }
+    
+    logFile := A_ScriptDir . "\topbar_debug.log"
+    FileAppend, %A_Now% - ExecuteBuffSequential: localCount=%localCount% remoteCount=%remoteCount%`n, %logFile%
+    
+    If (localCount = 0 && remoteCount = 0) {
+        MsgBox, Could not find any valid clients
         return
     }
 
@@ -1519,7 +1656,7 @@ ExecuteBuffSequential() {
         usePetBuffs := 1
     }
 
-    ; Send BUFF command to each socket sequentially with parameters
+    ; Send BUFF command to each LOCAL socket sequentially with parameters
     For index, socket in targetSockets {
         ; Format: BUFF:chatBuffs|petBuffs|commands
         buffCmd := "BUFF:" . useChatBuffs . "|" . usePetBuffs . "|" . chatBuffCommands
@@ -1531,6 +1668,12 @@ ExecuteBuffSequential() {
 
         ; Wait between commands to allow each window to process
         Sleep, 60000
+    }
+    
+    ; Send BUFF command to REMOTE clients via their TopBar
+    If (remoteCount > 0) {
+        buffCmd := "BUFF:" . useChatBuffs . "|" . usePetBuffs . "|" . chatBuffCommands
+        SendCommandToRemoteClients(remoteTargets, buffCmd)
     }
 }
 ExecuteGetCoordsSequential() {
@@ -1558,27 +1701,47 @@ ExecuteGetCoordsSequential() {
         return
     }
 
-    ; Build array of selected LOCAL client sockets only (remote clients can't do sequential Get Coords)
+    ; Separate local and remote clients
     targetSockets := []
+    remoteTargets := []
+    
     Loop, Parse, selectedItems, `n
     {
-        If (A_LoopField != "" && !InStr(A_LoopField, "[Remote]")) {
-            selectedName := StrReplace(A_LoopField, " [Local]", "")
-            ; Find socket for this client name
-            For index, socket in Clients {
-                If (ClientInfo.HasKey(socket)) {
-                    clientName := ClientInfo[socket].HasKey("name") ? ClientInfo[socket].name : ""
-                    If (clientName = selectedName) {
-                        targetSockets.Push(socket)
-                        Break
+        If (A_LoopField != "") {
+            selectedName := A_LoopField
+            
+            ; Check if this is a remote client
+            If (InStr(selectedName, "[Remote]")) {
+                ; Extract client name (remove " [Remote]" suffix)
+                clientName := StrReplace(selectedName, " [Remote]", "")
+                remoteTargets.Push(clientName)
+            } Else {
+                ; Local client - extract name and find socket
+                clientName := StrReplace(selectedName, " [Local]", "")
+                For index, socket in Clients {
+                    If (ClientInfo.HasKey(socket)) {
+                        socketClientName := ClientInfo[socket].HasKey("name") ? ClientInfo[socket].name : ""
+                        If (socketClientName = clientName) {
+                            targetSockets.Push(socket)
+                            Break
+                        }
                     }
                 }
             }
         }
     }
 
-    If (targetSockets.MaxIndex() = "" || targetSockets.MaxIndex() = 0) {
-        MsgBox, Get Coords only works with local clients
+    localCount := targetSockets.MaxIndex()
+    remoteCount := remoteTargets.MaxIndex()
+    If (localCount = "" || localCount = 0) {
+        localCount := 0
+    }
+    If (remoteCount = "" || remoteCount = 0) {
+        remoteCount := 0
+    }
+    
+    If (localCount = 0 && remoteCount = 0) {
+        MsgBox, Could not find any valid clients
         return
     }
 
@@ -1587,7 +1750,7 @@ ExecuteGetCoordsSequential() {
     coordY := ""
     GetCurrentCoordinatesFromScreen(coordX, coordY)
 
-    ; Send GETCOORDS to each socket sequentially
+    ; Send GETCOORDS to each LOCAL socket sequentially
     For index, socket in targetSockets {
         message := "GETCOORDS`n"
         bufferSize := StrPut(message, "CP0")
@@ -1598,6 +1761,13 @@ ExecuteGetCoordsSequential() {
         ; Wait between commands to allow each window to process
         Sleep, 1000
     }
+    
+    ; Send GETCOORDS to REMOTE clients
+    If (remoteCount > 0) {
+        SendCommandToRemoteClients(remoteTargets, "GETCOORDS")
+        ; Wait for remote clients to process
+        Sleep, 1000
+    }
 
     ; If we successfully captured coordinates, send them to all selected clients
     If (coordX != "" && coordY != "") {
@@ -1605,11 +1775,18 @@ ExecuteGetCoordsSequential() {
         message := coordCmd . "`n"
         bufferSize := StrPut(message, "CP0")
         
+        ; Send to local clients
         For index, socket in targetSockets {
             VarSetCapacity(msgBuffer, bufferSize)
             StrPut(message, &msgBuffer, "CP0")
             AHKsock_Send(socket, &msgBuffer, bufferSize - 1)
         }
+        
+        ; Send to remote clients
+        If (remoteCount > 0) {
+            SendCommandToRemoteClients(remoteTargets, coordCmd)
+        }
+        
         ToolTip, Coordinates X:%coordX% Y:%coordY% sent to selected clients
         SetTimer, RemoveToolTip, -2000
     } Else {
@@ -1766,7 +1943,15 @@ ServerEvents(sEvent, iSocket = 0, sName = 0, sAddr = 0, sPort = 0, ByRef bData =
         If (!alreadyExists) {
             Clients.Push(iSocket)
             ClientInfo[iSocket] := {type: "unknown", ip: sAddr}
+            ; Count clients for debug
+            clientsCount := 0
+            For idx, sock in Clients {
+                clientsCount++
+            }
+            FileAppend, %A_Now% - ACCEPTED: Added socket %iSocket% to Clients array. Clients now has %clientsCount% sockets`n, %logFile%
             UpdateClientCount()
+        } Else {
+            FileAppend, %A_Now% - ACCEPTED: Socket %iSocket% already exists in Clients`n, %logFile%
         }
 
     } Else If (sEvent = "DISCONNECTED") {
@@ -1789,6 +1974,8 @@ ServerEvents(sEvent, iSocket = 0, sName = 0, sAddr = 0, sPort = 0, ByRef bData =
         
         data := StrReplace(data, "`n", "")
         data := StrReplace(data, "`r", "")
+
+        FileAppend, %A_Now% - Processing data: "%data%"`n, %logFile%
 
         If (data != "") {
             ; Check if this is a handshake message (format: HANDSHAKE:TYPE or HANDSHAKE:TYPE:NAME)
@@ -1823,6 +2010,36 @@ ServerEvents(sEvent, iSocket = 0, sName = 0, sAddr = 0, sPort = 0, ByRef bData =
                     If (clientType = "TOPBAR") {
                         SendClientListToRemote(iSocket)
                     }
+                }
+                Return
+            }
+            
+            ; Check if this is a CLIENT_LIST message from a connected TopBar
+            If (SubStr(data, 1, 12) = "CLIENT_LIST:") {
+                clientListData := SubStr(data, 13)
+                logFile := A_ScriptDir . "\topbar_debug.log"
+                FileAppend, %A_Now% - ServerEvents: Processing CLIENT_LIST from socket %iSocket%: "%clientListData%"`n, %logFile%
+                UpdateRemoteClientList(clientListData, iSocket)
+                Return
+            }
+            
+            ; Check if this is a REQUEST_CLIENT_LIST message
+            If (data = "REQUEST_CLIENT_LIST") {
+                SendClientListToRemote(iSocket)
+                Return
+            }
+            
+            ; Check if this is a targeted command: TARGET:ClientName:COMMAND
+            If (SubStr(data, 1, 7) = "TARGET:") {
+                targetData := SubStr(data, 8)
+                colonPos := InStr(targetData, ":")
+                If (colonPos > 0) {
+                    targetName := SubStr(targetData, 1, colonPos - 1)
+                    actualCommand := SubStr(targetData, colonPos + 1)
+                    logFile := A_ScriptDir . "\topbar_debug.log"
+                    FileAppend, %A_Now% - ServerEvent: Received TARGET command for "%targetName%": "%actualCommand%"`n, %logFile%
+                    ; Send to the specific local client
+                    SendCommandToNamedClient(targetName, actualCommand)
                 }
                 Return
             }
@@ -1867,6 +2084,11 @@ UpdateConnectedClientsList() {
     
     ; If we're connected to another TopBar, send them our updated client list
     Global MasterSocket, ConnectedToMaster, Clients, ClientInfo
+    
+    ; Debug: Log state
+    logFile := A_ScriptDir . "\topbar_debug.log"
+    FileAppend, %A_Now% - UpdateConnectedClientsList called. ConnectedToMaster=%ConnectedToMaster% MasterSocket=%MasterSocket%`n, %logFile%
+    
     If (ConnectedToMaster && MasterSocket != -1) {
         SendClientListToRemote(MasterSocket)
     }
@@ -1889,6 +2111,7 @@ ShowClientListPopup:
     ; Build client list
     clientList := ""
     
+    ; Show local clients
     For index, socket in Clients {
         If (ClientInfo.HasKey(socket)) {
             clientType := ClientInfo[socket].type
@@ -1901,6 +2124,18 @@ ShowClientListPopup:
             }
         } Else {
             clientList .= "Pending...`n"
+        }
+    }
+    
+    ; Show remote clients (negative socket IDs)
+    For socket, info in ClientInfo {
+        If (socket < 0) {  ; Remote client
+            clientType := info.type
+            clientName := info.HasKey("name") ? info.name : ""
+            
+            If (clientName != "" && clientName != " ") {
+                clientList .= clientName . " (" . clientType . ")`n"
+            }
         }
     }
     
@@ -2072,48 +2307,156 @@ SendCommandToNamedClient(clientName, command) {
 
 ; Send commands to remote clients via connected TopBar
 SendCommandToRemoteClients(clientNames, command) {
-    Global MasterSocket, ConnectedToMaster
+    Global MasterSocket, ConnectedToMaster, ClientInfo
     
-    If (!ConnectedToMaster || MasterSocket = -1) {
-        MsgBox, Not connected to remote TopBar!
-        Return
+    logFile := A_ScriptDir . "\topbar_debug.log"
+    clientCount := clientNames.MaxIndex()
+    FileAppend, %A_Now% - SendCommandToRemoteClients called. Command="%command%"`n, %logFile%
+    FileAppend, %A_Now% - ClientNames count: %clientCount%`n, %logFile%
+    For idx, name in clientNames {
+        FileAppend, %A_Now% -   Client %idx%: "%name%"`n, %logFile%
     }
     
-    ; Send targeted command for each remote client: TARGET:ClientName:COMMAND
-    For index, clientName in clientNames {
-        targetMsg := "TARGET:" . clientName . ":" . command . "`n"
-        bufferSize := StrPut(targetMsg, "CP0")
-        VarSetCapacity(msgBuffer, bufferSize)
-        StrPut(targetMsg, &msgBuffer, "CP0")
-        AHKsock_Send(MasterSocket, &msgBuffer, bufferSize - 1)
+    FileAppend, %A_Now% - Current state: ConnectedToMaster=%ConnectedToMaster% MasterSocket=%MasterSocket%`n, %logFile%
+    
+    ; Determine if we're acting as client or server
+    ; Client mode: use MasterSocket
+    ; Server mode: find the TopBar socket that owns these remote clients
+    
+    If (ConnectedToMaster && MasterSocket != -1) {
+        ; Client mode - send to master TopBar
+        FileAppend, %A_Now% - Running in CLIENT mode. MasterSocket=%MasterSocket%`n, %logFile%
+        For index, clientName in clientNames {
+            targetMsg := "TARGET:" . clientName . ":" . command . "`n"
+            FileAppend, %A_Now% - Sending to master: "%targetMsg%" via socket %MasterSocket%`n, %logFile%
+            bufferSize := StrPut(targetMsg, "CP0")
+            VarSetCapacity(msgBuffer, bufferSize)
+            StrPut(targetMsg, &msgBuffer, "CP0")
+            sendResult := AHKsock_Send(MasterSocket, &msgBuffer, bufferSize - 1)
+            FileAppend, %A_Now% - AHKsock_Send result: %sendResult%`n, %logFile%
+        }
+    } Else {
+        ; Server mode - find source TopBar sockets for these remote clients
+        FileAppend, %A_Now% - Running in SERVER mode. ConnectedToMaster=%ConnectedToMaster% MasterSocket=%MasterSocket%`n, %logFile%
+        
+        targetSockets := {}
+        For index, clientName in clientNames {
+            FileAppend, %A_Now% - Looking for remote client: "%clientName%"`n, %logFile%
+            ; Find the remote client's source socket
+            found := false
+            For socket, info in ClientInfo {
+                If (socket < 0 && info.HasKey("name") && info.name = clientName) {
+                    FileAppend, %A_Now% -   Found socket %socket% for "%clientName%"`n, %logFile%
+                    If (info.HasKey("sourceSocket")) {
+                        sourceSocket := info.sourceSocket
+                        FileAppend, %A_Now% -   SourceSocket: %sourceSocket%`n, %logFile%
+                        If (!targetSockets.HasKey(sourceSocket)) {
+                            targetSockets[sourceSocket] := []
+                        }
+                        targetSockets[sourceSocket].Push(clientName)
+                        found := true
+                    } Else {
+                        FileAppend, %A_Now% -   ERROR: No sourceSocket field!`n, %logFile%
+                    }
+                    Break
+                }
+            }
+            If (!found) {
+                FileAppend, %A_Now% -   ERROR: Client "%clientName%" not found in ClientInfo!`n, %logFile%
+            }
+        }
+        
+        ; Send TARGET commands to each source TopBar socket
+        socketsCount := 0
+        For sourceSocket, names in targetSockets {
+            socketsCount++
+        }
+        FileAppend, %A_Now% - Sending to %socketsCount% target sockets`n, %logFile%
+        For sourceSocket, names in targetSockets {
+            FileAppend, %A_Now% - Sending to sourceSocket %sourceSocket%:`n, %logFile%
+            For index, clientName in names {
+                targetMsg := "TARGET:" . clientName . ":" . command . "`n"
+                FileAppend, %A_Now% -   Sending: "%targetMsg%"`n, %logFile%
+                bufferSize := StrPut(targetMsg, "CP0")
+                VarSetCapacity(msgBuffer, bufferSize)
+                StrPut(targetMsg, &msgBuffer, "CP0")
+                AHKsock_Send(sourceSocket, &msgBuffer, bufferSize - 1)
+            }
+        }
     }
 }
 
 ; Update the remote clients list when receiving from connected TopBar
-UpdateRemoteClientList(clientListData) {
-    Global RemoteClients
+UpdateRemoteClientList(clientListData, sourceSocket) {
+    Global RemoteClients, ClientInfo
+    
+    logFile := A_ScriptDir . "\topbar_debug.log"
+    FileAppend, %A_Now% - UpdateRemoteClientList called with: "%clientListData%" from socket %sourceSocket%`n, %logFile%
+    
+    ; Clear existing remote clients from THIS TopBar (same sourceSocket)
+    ; Remote clients have negative socket IDs to distinguish them
+    For socket, info in ClientInfo {
+        If (socket < 0 && info.HasKey("sourceSocket") && info.sourceSocket = sourceSocket) {
+            ClientInfo.Delete(socket)
+        }
+    }
     
     ; Clear existing remote clients
     RemoteClients := {}
     
-    ; Parse comma-separated list
+    ; Parse comma-separated list and add to ClientInfo
     If (clientListData != "") {
+        remoteSocketID := -1000  ; Start with negative ID
         Loop, Parse, clientListData, `,
         {
             If (A_LoopField != "") {
                 RemoteClients[A_LoopField] := true
+                ; Add to ClientInfo so it shows in the client list
+                ; CRITICAL: Store sourceSocket so we know which TopBar owns this client
+                ClientInfo[remoteSocketID] := {type: "remote-nexus", name: A_LoopField, ip: "remote", sourceSocket: sourceSocket}
+                FileAppend, %A_Now% - Added remote client: Socket=%remoteSocketID% Name="%A_LoopField%" SourceSocket=%sourceSocket%`n, %logFile%
+                remoteSocketID--
             }
         }
     }
+    
+    ; Count ClientInfo entries for debug
+    clientInfoCount := 0
+    For socket, info in ClientInfo {
+        clientInfoCount++
+    }
+    FileAppend, %A_Now% - UpdateRemoteClientList complete. ClientInfo now has %clientInfoCount% entries`n, %logFile%
+    
+    ; Note: We don't call UpdateClientCount() here to avoid infinite loop
+    ; The remote client list will be visible when clicking the ? button
 }
 
 ; Send our client list to a connected TopBar
 SendClientListToRemote(targetSocket) {
     Global Clients, ClientInfo
     
+    logFile := A_ScriptDir . "\topbar_debug.log"
+    
+    ; Debug: Log Clients array
+    clientsCount := 0
+    For index, socket in Clients {
+        clientsCount++
+    }
+    FileAppend, %A_Now% - SendClientListToRemote: Clients array has %clientsCount% sockets`n, %logFile%
+    
     ; Build comma-separated list of our Nexus client names
     clientList := ""
     For index, socket in Clients {
+        ; Debug each socket
+        hasKey := ClientInfo.HasKey(socket)
+        If (hasKey) {
+            socketType := ClientInfo[socket].type
+            socketName := ClientInfo[socket].HasKey("name") ? ClientInfo[socket].name : ""
+            FileAppend, %A_Now% -   Socket %socket%: type="%socketType%" name="%socketName%"`n, %logFile%
+        } Else {
+            FileAppend, %A_Now% -   Socket %socket%: NOT IN ClientInfo`n, %logFile%
+        }
+        
         If (ClientInfo.HasKey(socket) && ClientInfo[socket].type = "nexus") {
             clientName := ClientInfo[socket].HasKey("name") ? ClientInfo[socket].name : ""
             If (clientName != "") {
@@ -2123,6 +2466,9 @@ SendClientListToRemote(targetSocket) {
             }
         }
     }
+    
+    ; Debug: Log what we're sending
+    FileAppend, %A_Now% - Sending CLIENT_LIST to socket %targetSocket%: "%clientList%"`n, %logFile%
     
     ; Send CLIENT_LIST message
     message := "CLIENT_LIST:" . clientList . "`n"
